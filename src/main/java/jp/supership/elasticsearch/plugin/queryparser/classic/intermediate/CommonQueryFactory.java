@@ -29,15 +29,6 @@ public abstract class CommonQueryFactory extends QueryBuilder {
      */
     public static class DeprecatedMethodCall extends Throwable {}
 
-    /** Holds default field for query terms. */
-    protected String defaultField;
-
-    /** Holds the default operator parsers use to combine query terms. */
-    protected Operator defaultOperator = Operators.OR;
-
-    /** Holds default field for query terms. */
-    protected boolean phaseQueryAutoGeneration;
-
     /**
      * Creates {@link org.apache.lucene.search.Query} in accordance with the given raw query string.
      * @param  field the default field for query terms.
