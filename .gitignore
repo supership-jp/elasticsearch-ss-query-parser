@@ -1,0 +1,12 @@
+*.class
+.mtj.tmp/
+*~
+*.jar
+*.war
+*.ear
+hs_err_pid*
+/target/
+
+/.settings/
+.project
+.classpath
