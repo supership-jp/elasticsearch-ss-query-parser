@@ -4,10 +4,14 @@
 package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
+import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.MultiTermQuery;
 import static org.apache.lucene.util.automaton.Operations.DEFALUT_MAX_DETERMINIZED_STATES;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Operators;
 
@@ -41,16 +45,40 @@ public class DSQParsingContext implements QueryParsingContext {
     /** Holds maximum number of states. */
     protected int maxDeterminizedStates = DEFALUT_MAX_DETERMINIZED_STATES;
 
+    /** Holds minimum value of the fuzzy query similarity. */
+    protected float fuzzyMinSim = FuzzyQuery.defaultMinSimilarity;
+
+    /** Holds prefix length of the fuzzy queries. */
+    protected int fuzzyPrefixLength = FuzzyQuery.defaultPrefixLength;
+
+    /** Holds slop width for the phrase query. */
+    protected int phraseSlop = 0;
+
+    /** Holds leading-wildcard-allowance functionality setting. */
+    protected boolean allowLeadingWildcard = false;
+
+    /** Holds auto-lowercase-expansion functionality setting. */
+    protected boolean lowercaseExpandedTerms = true;
+
+    /** Holds multi-term-query-rewrite-method functionality setting. */
+    protected MultiTermQuery.RewriteMethod multiTermRewriteMethod = MultiTermQuery.CONSTANT_SCORE_REWRITE_DEFAULT;
+
+    /** Holds locale. */
+    protected Locale locale = Locale.getDefault();
+
+    /** Holds timezone. */
+    protected TimeZone timeZone = TimeZone.getDefault();
+
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
-    public void setDefaultField(String field) {
-	this.defaultField = field;
+    public void setDefaultField(String defaultField) {
+	this.defaultField = defaultField;
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public String getDefaultField() {
@@ -58,15 +86,15 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
-    public void setDefaultOperator(Operator operator) {
-	this.defaultOperator = operator;
+    public void setDefaultOperator(Operator defaultOperator) {
+	this.defaultOperator = defaultOperator;
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public Operator getDefaultOperator() {
@@ -74,15 +102,15 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
-    public void setPhraseQueryAutoGeneration(boolean value) {
-	this.phraseQueryAutoGeneration = value;
+    public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
+	this.phraseQueryAutoGeneration = phraseQueryAutoGeneration;
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public boolean getPhraseQueryAutoGeneration() {
@@ -90,7 +118,143 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
+     */
+    @Override
+    public void setFuzzyMinSim(float fuzzyMinSim) {
+	this.fuzzyMinSim = fuzzyMinSim;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public float getFuzzyMinSim() {
+	return this.fuzzyMinSim;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
+	this.fuzzyPrefixLength = fuzzyPrefixLength;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public int getFuzzyPrefixLength() {
+	return this.fuzzyPrefixLength;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setPhraseSlop(int phraseSlop) {
+	this.phraseSlop = phraseSlop;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public int getPhraseSlop() {
+	return this.phraseSlop;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
+	this.allowLeadingWildcard = allowLeadingWildcard;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getAllowLeadingWildcard() {
+	return this.allowLeadingWildcard;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
+	this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getLowercaseExpandedTerms() {
+	return this.lowercaseExpandedTerms;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
+	this.multiTermRewriteMethod = multiTermRewriteMethod;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
+	return this.multiTermRewriteMethod;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setLocale(Locale locale) {
+	this.locale = locale;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public Locale getLocale() {
+	return this.locale;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setTimeZone(TimeZone timeZone) {
+	this.timeZone = timeZone;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public TimeZone getTimeZone() {
+	return this.timeZone;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setDateResolution(DateTools.Resolution dateResolution) {
+	this.dateResolution = dateResolution;
+    }
+
+    /**
+     * @inheritDoc
      */
     @Override
     public void setDateResolution(String field, DateTools.Resolution resolution) {
@@ -104,7 +268,7 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public DateTools.Resolution getDateResolution(String field) {
@@ -122,7 +286,7 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public void setRangeTermAnalysis(boolean value) {
@@ -130,7 +294,7 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public boolean getRangeTermAnalysis() {
@@ -138,7 +302,7 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public void setMaxDeterminizedStates(int max) {
@@ -146,7 +310,7 @@ public class DSQParsingContext implements QueryParsingContext {
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     @Override
     public int getMaxDeterminizedStates() {
