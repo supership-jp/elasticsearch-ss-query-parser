@@ -7,7 +7,7 @@ import CommonLexerRules;
 query      : (clause)*
            ;
 
-clause     : expression (operator=('OR' | '|')? expression)*
+clause     : expression (conjunction=('AND' | 'OR' | '|')? expression)*
            ;
 
 expression : modifier=('-' | '_')? FIELD ':' term

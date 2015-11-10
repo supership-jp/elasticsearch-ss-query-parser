@@ -18,9 +18,28 @@ public interface QueryParsingContext extends CommonQueryParserConfiguration {
     /**
      * Holds pre-defined operators.
      */
-    public static interface Operators {
-	public static final Operator AND = Operator.AND;
-	public static final Operator OR  = Operator.OR;
+    public static enum Operator {
+	NONE,
+	AND,
+	OR
+    }
+
+    /**
+     * Holds pre-defined modifiers.
+     */
+    public static enum Modifier {
+	NONE,
+	NOT,
+	REQUIRED
+    }
+
+    /**
+     * Holds pre-defined conjuinctions.
+     */
+    public static enum Conjunction {
+	NONE,
+	AND,
+	OR
     }
 
     /**

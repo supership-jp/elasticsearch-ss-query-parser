@@ -3,21 +3,25 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
 
+import java.util.List;
 // TODO: Check which CharStream is called.
 // TODO: Check if the FastCharStream must be implemented or not.
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.util.Version;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Operator;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Modifier;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Conjunction;
 
 /**
- * This class is responsible for instanciating Lucene internal queries, query parser delegates
- * all sub-query instanciation tasks to this class.
- * This implementation assumes that concrete query handler will be constructed in accordance to
- * the given ANTLR grammar.
+ * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
+ * instanciation tasks to this class. This implementation assumes that concrete query handler will be 
+ * constructed in accordance to the given ANTLR grammar.
  *
  * @author Shingo OKAWA
  * @since  08/11/2015
@@ -28,6 +32,9 @@ public abstract class CommonQueryFactory extends QueryBuilder {
      * This exception will be thrown when you are using methods that should not be used any longer.
      */
     public static class DeprecatedMethodCall extends Throwable {}
+
+    /** Holds query-parsing-contect. */
+    protected QueryParsingContext queryParsingContext;
 
     /**
      * Creates {@link org.apache.lucene.search.Query} in accordance with the given raw query string.
@@ -44,6 +51,15 @@ public abstract class CommonQueryFactory extends QueryBuilder {
      */
     protected CommonQueryFactory() {
 	this.super(null);
+	this.queryPasingContext = new DSQParsingContext();
+    }
+
+    /**
+     * Constructor.
+     */
+    protected CommonQueryFactory(QueryParsingContext queryParsingContext) {
+	this.super(null);
+	this.queryPasingContext = queryParsingContext;
     }
 
     /**
@@ -92,6 +108,64 @@ public abstract class CommonQueryFactory extends QueryBuilder {
 	    ParseException exception = new ParseException("could not parse '" + query + "': too many boolean clauses");
 	    exception.initCause(cause);
 	    throw exception;
+	}
+    }
+
+    /**
+     * Conjugates the given clause into the currently handling parsing context.
+     * @param clauses     the preceding clauses which is currently handled by the query parser.
+     * @param conjunction the assigen conjunction, this determines the proceeding process.
+     * @param midifier    the preceeding modifier which midifies the handling clause.
+     * @param query       the currently handling query.
+     */
+    protected void conjugate(List<BooleanClause> clauses, Conjunction conjunction, Modifier modifier, Query query) {
+	boolean required;
+	boolean prohibited;
+
+	// If this term is introduced by AND, make the preceding term required, unless it is already prohibited.
+	if (clauses.size() > 0 && conjunction == Conjunction.AND) {
+	    BooleanClause clause = clauses.get(clauses.size() - 1);
+	    if (!clause.isProhibited()) {
+		clause.setOccur(BooleanClause.Occur.SHOULD);
+	    }
+	}
+
+	// If this term is introduced by OR, make the preceeding term optional, unless it is prohibited.
+	if (cluases.size() > 0 && this.defaultOperator == Operator.AND && conjunction == Conjunction.OR) {
+	    BooleanCaluse clause = cluases.get(clauses.get(clauses.size() - 1));
+	    if (!clause.isProhibited()) {
+		clause.setOccur(BooleanClause.Occur.SHOULD);
+	    }
+	}
+
+	// A null query might have been passed, that means the term might have been filtered out by the analyzer.
+	if (query == null) {
+	    return;
+	}
+
+	// The term is set to be REQUIRED if the term is introduced by AND or +;
+	// otherwise, REQUIRED if not PROHIBITED and not introduced by OR.
+	if (this.defaultOperator == Operator.OR) {
+	    prohibited = (modifier == Modifier.NOT);
+	    required = (modifier == Modifier.REQUIRED);
+	    if (conjunction == Conjunction.AND && !prohibited) {
+		required = true;
+	    }
+	// The term is set ti be PROHIBITED if the term is introduced by NOT;
+        // otherwise, REQIURED if not PROHIBITED and not introduce by OR.
+	} else {
+	    prohibited = (modifier == Modifier.NOT);
+	    required = (!prohibited && conjunction != Conjunction.OR);
+	}
+
+	if (required && !prohibited) {
+	    clauses.add(this.createBooleanClause(query, BooleanClause.Occur.MUST));
+	} else if (!required && !prohibited) {
+	    clauses.add(this.createBooleanClause(query, BooleanClause.Occur.SHOULD));
+	} else if (!required && prohibited) {
+	    clauses.add(this.createBooleanClause(query, BooleanClause.Occur.MUST_NOT));
+	} else {
+	    throw new RuntimeException("clause could not be both required and prohibited.");
 	}
     }
 }

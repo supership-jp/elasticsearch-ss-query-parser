@@ -8,16 +8,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import org.apache.lucene.document.DateTools;
-import org.apache.lucene.queryparser.classic.QueryParser.Operator;
+//import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import static org.apache.lucene.util.automaton.Operations.DEFALUT_MAX_DETERMINIZED_STATES;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Operators;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Operator;
 
 /**
- * This interface specifies the implementing class can be configured in accordance with the
- * Lucene's {@code CommonQueryParserConfiguration} API and some additional context.
+ * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for
+ * Supership, inc.
  *
  * @author Shingo OKAWA
  * @since  08/11/2015
@@ -28,7 +28,7 @@ public class DSQParsingContext implements QueryParsingContext {
     protected String defaultField = "";
 
     /** Holds the default operator parsers use to combine query terms. */
-    protected Operator defaultOperator = Operators.OR;
+    protected Operator defaultOperator = Operator.OR;
 
     /** Holds phrase-query-auto-genertion functionality setting. */
     protected boolean phraseQueryAutoGeneration = false;
