@@ -14,6 +14,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.util.Version;
+import org.elasticsearch.index.analysis.NamedAnalyzer;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Operator;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Modifier;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Conjunction;
@@ -173,6 +174,13 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected Query newFieldQuery(Analyzer analyzer, String field, String query, boolean quoted) throws ParseException {
 	BooleanClause.Occur occurence = this.queryParsingContext.getDefaultOperator() == Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
+
 	String analyzerName = null;
+	if (this.analyzer instanceof NamedAnalyzer) {
+	    analyzerName = ((NamedAnalyzer) this.analyzer).name();
+	}
+
+	if (analyzerName != null && ()) {
+	}
     }
 }
