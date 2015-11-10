@@ -3,7 +3,7 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.util;
 
-import java.util.IllegalFormatException
+import java.util.IllegalFormatException;
 
 /**
  * A collection of operations that relates to {@code String} instances.

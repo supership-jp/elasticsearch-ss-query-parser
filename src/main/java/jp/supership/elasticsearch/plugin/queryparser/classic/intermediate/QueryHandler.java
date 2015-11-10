@@ -4,6 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
 
 import java.io.InputStream;
+import org.apache.lucene.analysis.Token;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.queryparser.classic.ParseException;
 
@@ -16,11 +17,28 @@ import org.apache.lucene.queryparser.classic.ParseException;
  */
 interface QueryHandler {
     /**
+     * Represents query handling context, i.e., in accordance to this instance's state, appropriate
+     * {@code Query} will be instanciated.
+     */
+    protected class QueryHandlingContext {
+	public boolean fuzzySlop = false;
+	public boolean prefix = false;
+	public boolean wildcard = false;
+	public boolean fuzzy = false;
+	public boolean regexp = false;
+    }
+
+    /**
      * Creates {@link org.apache.lucene.search.Query} in accordance with the given raw query string.
      * @param  field the default field for query terms.
      * @throws ParseException if the parsing fails.
      */
     public Query handle(String defaultField) throws ParseException;
+
+    /**
+     * Dispatches 
+     */
+    public Query dispatch(String field, Token term, Token fuzzySlop, QueryHandlingContext context) throws ParseException;
 
     /**
      * Fetches the given {@link java.io.InputStream} to this handler.
