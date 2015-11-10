@@ -4,7 +4,6 @@
 package jp.supership.elasticsearch.plugin.queryparser.util;
 
 import java.util.IllegalFormatException
-import java.util.IllegalFormatCodePointException
 
 /**
  * A collection of operations that relates to {@code String} instances.
@@ -13,6 +12,9 @@ import java.util.IllegalFormatCodePointException
  * @since  09/11/2015
  */
 public final class StringUtils {
+    /** Holds unicode START OF HEADING code point. */
+    public static String UNICODE_START_OF_HEADING = "\u0001";
+
     /**
      * Returns the numeric value of the hexadecimal character.
      * @param  input the handling character.
@@ -54,7 +56,7 @@ public final class StringUtils {
      * @param  input the input String to be operated.
      * @return the translated {@code String}.
      */
-    public static String discardEscapeChar(String input) throws IllegalFormatCodePointException {
+    public static String discardEscapeChar(String input) throws IllegalFormatException {
 	char[] buffer = new char[input.length()];
 	int length = 0;
 	boolean wasEscaped = false;
@@ -89,9 +91,9 @@ public final class StringUtils {
 	}
 
 	if (multiplier > 0) {
-	    throw new IllegalFormatCodePointException("truncated unicode escape sequence.");
+	    throw new IllegalFormatException("truncated unicode escape sequence.");
 	} else if (wasEscaped) {
-	    throw new IllegalFormatCodePointException("term can not end with escape character.");
+	    throw new IllegalFormatException("term can not end with escape character.");
 	}
 
 	return new String(buffer, 0, length);
