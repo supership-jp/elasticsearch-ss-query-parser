@@ -22,7 +22,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public class DSQParsingContext implements QueryParsingContext {
+public class StandardParsingContext implements QueryParsingContext {
     // TODO: FIX THIS DEFAULT VALUE TO BE APPROPRIATE ONE.
     /** Holds default field for query terms. */
     protected String defaultField = "";

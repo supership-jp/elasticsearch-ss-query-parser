@@ -26,7 +26,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public abstract class CommonQueryFactory extends QueryBuilder {
+public abstract class QueryParser extends QueryBuilder implements QueryHandler {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
@@ -37,27 +37,17 @@ public abstract class CommonQueryFactory extends QueryBuilder {
     protected QueryParsingContext queryParsingContext;
 
     /**
-     * Creates {@link org.apache.lucene.search.Query} in accordance with the given raw query string.
-     * @param  field the default field for query terms.
-     * @throws ParseException if the parsing fails.
-     */
-    public abstract Query parse(String field) throws ParseException;
-
-    // This method is temporal.
-    public abstract void fetch();
-
-    /**
      * Constructor.
      */
-    protected CommonQueryFactory() {
+    protected QueryParser() {
 	this.super(null);
-	this.queryPasingContext = new DSQParsingContext();
+	this.queryParsingContext = new StandardParsingContext();
     }
 
     /**
      * Constructor.
      */
-    protected CommonQueryFactory(QueryParsingContext queryParsingContext) {
+    protected QueryParser(QueryParsingContext queryParsingContext) {
 	this.super(null);
 	this.queryPasingContext = queryParsingContext;
     }
@@ -71,7 +61,7 @@ public abstract class CommonQueryFactory extends QueryBuilder {
     public void init(Version version, String field, Analyzer analyzer) {
 	this.init(field, analyzer);
 	if (version.onOrAfter(Version.LUCENE_3_1) == false) {
-	    this.setPhaseQueryAutoGeneration(true);
+	    this.queryParsingContext.setPhaseQueryAutoGeneration(true);
 	}
     }
 
@@ -82,8 +72,8 @@ public abstract class CommonQueryFactory extends QueryBuilder {
      */
     public void init(String field, Analyzer analyzer) {
 	this.setAnalyzer(analyzer);
-	this.setDefaultField(field);
-	this.setPhaseQueryAutoGeneration(false);
+	this.queryParsingContext.setDefaultField(field);
+	this.queryParsingContext.setPhaseQueryAutoGeneration(false);
     }
 
     /**
@@ -91,10 +81,10 @@ public abstract class CommonQueryFactory extends QueryBuilder {
      * @param  query the query string to be parsed.
      * @throws ParseException if the parsing fails.
      */
-    public Query create(String query) throws ParseException {
+    public Query parse(String query) throws ParseException {
 	this.fetch(new FastCharStream(new StringReader(query)));
 	try {
-	    Query instanciated = this.parse(this.defaultField);
+	    Query instanciated = this.handle(this.queryParsingContext.getDefaultField());
 	    return instanciated != null ? instanciated : this.newBooleanQuery(false);
 	} catch (ParseException cause) {
 	    ParseException exception = new ParseException("could not parse '" + query + "': " + cause.getMessage());
@@ -167,5 +157,22 @@ public abstract class CommonQueryFactory extends QueryBuilder {
 	} else {
 	    throw new RuntimeException("clause could not be both required and prohibited.");
 	}
+    }
+
+    /**
+     * Returns 
+     * @throws ParseException if the parsing fails.
+     */
+    protected Query getFieldQuery(String field, String query, boolean quoted) throws ParseException {
+	return this.newFieldQuery(this.getAnalyzer(), field, query, quoted);
+    }
+
+    /**
+     *
+     * @throws ParseException if the parsing fails.
+     */
+    protected Query newFieldQuery(Analyzer analyzer, String field, String query, boolean quoted) throws ParseException {
+	BooleanClause.Occur occurence = this.queryParsingContext.getDefaultOperator() == Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
+	String analyzerName = null;
     }
 }
