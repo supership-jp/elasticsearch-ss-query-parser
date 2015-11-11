@@ -288,22 +288,22 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
     }
 
     /** Holds query-parsing-contect. */
-    protected QueryParser.Context queryParsingContext;
+    protected QueryParser.Context context;
 
     /**
      * Constructor.
      */
     protected QueryParser() {
         this.super(null);
-        this.queryParsingContext = new StandardParsingContext();
+        this.context = new DefaultQueryParserContext();
     }
 
     /**
      * Constructor.
      */
-    protected QueryParser(QueryParser.Context queryParsingContext) {
+    protected QueryParser(QueryParser.Context context) {
         this.super(null);
-        this.queryParsingContext = queryParsingContext;
+        this.context = context;
     }
 
     /**
@@ -315,7 +315,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
     public void init(Version version, String field, Analyzer analyzer) {
         this.init(field, analyzer);
         if (version.onOrAfter(Version.LUCENE_3_1) == false) {
-            this.queryParsingContext.setPhaseQueryAutoGeneration(true);
+            this.context.setPhaseQueryAutoGeneration(true);
         }
     }
 
@@ -326,8 +326,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     public void init(String field, Analyzer analyzer) {
         this.setAnalyzer(analyzer);
-        this.queryParsingContext.setDefaultField(field);
-        this.queryParsingContext.setPhaseQueryAutoGeneration(false);
+        this.context.setDefaultField(field);
+        this.context.setPhaseQueryAutoGeneration(false);
     }
 
     /**
@@ -338,7 +338,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
     public Query parse(String queryText) throws ParseException {
         this.fetch(new FastCharStream(new StringReader(queryText)));
         try {
-            Query instanciated = this.handle(this.queryParsingContext.getDefaultField());
+            Query instanciated = this.handle(this.context.getDefaultField());
             return instanciated != null ? instanciated : this.newBooleanQuery(false);
         } catch (ParseException cause) {
             ParseException exception = new ParseException("could not parse '" + queryText + "': " + cause.getMessage());
@@ -453,7 +453,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
-        BooleanClause.Occur occurence = this.queryParsingContext.getDefaultOperator() == Context.Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
+        BooleanClause.Occur occurence = this.context.getDefaultOperator() == Context.Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
 
         String analyzerName = null;
         if (this.analyzer instanceof NamedAnalyzer) {
@@ -476,12 +476,12 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         // TODO: THIS MUST BE HANDLED WITHIN {@code TokenFileter} WHICH IMPLEMENTS NAIVE BAYSIAN FILTER.
         } else if (quoted == false && queryText.matches("^\\d+(\\.\\d+)?.{1,2}?$")) {
 	    quoted = true;
-	    this.queryParsingContext.setPhraseSlop(0);
+	    this.context.setPhraseSlop(0);
         } else {
-	    quoted = quoted || this.queryParsingContext.getPhraseQueryAutoGeneration();
+	    quoted = quoted || this.context.getPhraseQueryAutoGeneration();
 	}
 
-	return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.queryParsingContext.getPhraseSlop());
+	return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.context.getPhraseSlop());
     }
 
     /**
@@ -640,14 +640,14 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getRangeQuery(String field, String infinimum, String supremum, boolean leftInclusive, boolean rightInclusive) throws ParseException {
-        if (this.queryParsingContext.getLowercaseExpandedTerms()) {
-            infinimum = infinimum == null ? null : infinimum.toLowerCase(this.queryParsingContext.getLocale());
-            supremum = supremum == null ? null : supremum.toLowerCase(this.queryParsingContext.getLocale());
+        if (this.context.getLowercaseExpandedTerms()) {
+            infinimum = infinimum == null ? null : infinimum.toLowerCase(this.context.getLocale());
+            supremum = supremum == null ? null : supremum.toLowerCase(this.context.getLocale());
         }
 
-        DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, locale);
+        DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, this.context.getLocale());
         dateFormat.setLenient(true);
-        DateTools.Resolution resolution = this.queryParsingContext.getDateResolution(field);
+        DateTools.Resolution resolution = this.context.getDateResolution(field);
 
         try {
             infinimum = DateTools.dateToString(dateFormat.parse(infinimum), resolution);
@@ -661,7 +661,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
                 // The user can only specify the date, not the time, so make sure
                 // the time is set to the latest possible time of that date to really
                 // include all documents:
-                Calendar calendar = Calendar.getInstance(this.queryParsingContext.getTimeZone(), this.queryParsingContext.getLocale());
+                Calendar calendar = Calendar.getInstance(this.context.getTimeZone(), this.context.getLocale());
                 calendar.setTime(until);
                 calendar.set(Calendar.HOUR_OF_DAY, 23);
                 calendar.set(Calendar.MINUTE, 59);
@@ -693,17 +693,17 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         if (infinimum == null) {
             left = null;
         } else {
-            left = this.queryParsingContext.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, infinimum) : new BytesRef(infinimum);
+            left = this.context.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, infinimum) : new BytesRef(infinimum);
         }
      
         if (supremum == null) {
             right = null;
         } else {
-            right = this.queryParsingContext.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, supremum) : new BytesRef(supremum);
+            right = this.context.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, supremum) : new BytesRef(supremum);
         }
       
         final TermRangeQuery query = new TermRangeQuery(field, left, right, leftInclusive, rightInclusive);
-        query.setRewriteMethod(this.queryParsingContext.getMultiTermRewriteMethod());
+        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
         return query;
     }
 
@@ -756,7 +756,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected Query newPrefixQuery(Term prefix){
 	PrefixQuery query = new PrefixQuery(prefix);
-	query.setRewriteMethod(this.queryParsingContext.getMultiTermRewriteMethod());
+	query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
 	return query;
     }
 
@@ -781,8 +781,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @exception org.apache.lucene.queryparser.classic.ParseException throw in overridden method to disallow
      */
     protected Query getRegexpQuery(String field, String termStr) throws ParseException {
-	if (lowercaseExpandedTerms) {
-	    termStr = termStr.toLowerCase(locale);
+	if (this.context.getLowercaseExpandedTerms()) {
+	    termStr = termStr.toLowerCase(this.context.getLocale());
 	}
 	Term t = new Term(field, termStr);
 	return newRegexpQuery(t);
@@ -795,7 +795,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected Query newRegexpQuery(Term regexp) {
 	RegexpQuery query = new RegexpQuery(regexp, RegExp.ALL, maxDeterminizedStates);
-	query.setRewriteMethod(this.queryParsingContext.getMultiTermRewriteMethod());
+	query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
 	return query;
     }
 
@@ -828,7 +828,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected Query newWildcardQuery(Term wildcard) {
 	WildcardQuery query = new WildcardQuery(wildcard);
-	query.setRewriteMethod(this.queryParsingContext.getMultiTermRewriteMethod());
+	query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
 	return query;
     }
 
@@ -856,8 +856,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
 	    throw new ParseException("'*' or '?' not allowed as first character in WildcardQuery");
 	}
 
-	if (lowercaseExpandedTerms) {
-	    termText = termText.toLowerCase(locale);
+        if (this.context.getLowercaseExpandedTerms()) {
+	    termText = termText.toLowerCase(this.context.getLocale());
 	}
 
 	Term term = new Term(field, termText);

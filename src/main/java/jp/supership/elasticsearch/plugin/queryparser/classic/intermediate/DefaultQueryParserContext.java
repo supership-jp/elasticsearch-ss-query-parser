@@ -21,7 +21,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public class StandardParsingContext implements QueryParser.Context {
+public class DefaultQueryParserContext implements QueryParser.Context {
     // TODO: FIX THIS DEFAULT VALUE TO BE APPROPRIATE ONE.
     /** Holds default field for query terms. */
     protected String defaultField = "";
