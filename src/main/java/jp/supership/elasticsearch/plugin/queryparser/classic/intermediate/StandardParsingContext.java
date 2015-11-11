@@ -8,12 +8,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import org.apache.lucene.document.DateTools;
-//import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import static org.apache.lucene.util.automaton.Operations.DEFALUT_MAX_DETERMINIZED_STATES;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParsingContext.Operator;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParser.Context.Operator;
 
 /**
  * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for
@@ -22,7 +21,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public class StandardParsingContext implements QueryParsingContext {
+public class StandardParsingContext implements QueryParser.Context {
     // TODO: FIX THIS DEFAULT VALUE TO BE APPROPRIATE ONE.
     /** Holds default field for query terms. */
     protected String defaultField = "";

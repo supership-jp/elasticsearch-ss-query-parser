@@ -4,7 +4,6 @@
 package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
 
 import org.apache.lucene.document.DateTools;
-import org.apache.lucene.queryparser.classic.QueryParser.Operator;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 
 /**
@@ -14,32 +13,149 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public interface QueryParsingContext extends CommonQueryParserConfiguration {
+public static interface QueryParsingContext extends CommonQueryParserConfiguration {
     /**
      * Holds pre-defined operators.
      */
     public static enum Operator {
-	NONE,
-	AND,
-	OR
+        NONE("", 0),
+        AND("AND", 1),
+        OR("OR", 1)
+
+        // Holds actual string expression.
+        private String expression;
+        // Holds actual string expression.
+        private int precedence;
+
+        // Constructor.
+        private Operator(String expression, int precedence) {
+            this.expression = expression;
+            this.precedence = precedence;
+        }
+
+        // Returns corresponding enum instance from the given expression.
+        public static Operator find(String expression) {
+            for (Operator operator : Operator.values()) {
+                if (expression.equals(operator.expression)) {
+                    return operator;
+                }
+            }
+            return Operator.NONE;
+        }
+
+        /** @inheritDoc */
+        @Override
+        public String toString() {
+            return this.expression;
+        }
     }
 
     /**
      * Holds pre-defined modifiers.
      */
     public static enum Modifier {
-	NONE,
-	NOT,
-	REQUIRED
+        NONE("", 0),
+        NOT("-", 1),
+        REQUIRED("_", 1)
+
+        // Holds actual string expression.
+        private String expression;
+        // Holds actual string expression.
+        private int precedence;
+
+        // Constructor.
+        private Modifier(String expression, int precedence) {
+            this.expression = expression;
+            this.precedence = precedence;
+        }
+
+        // Returns corresponding enum instance from the given expression.
+        public static Modifier find(String expression) {
+            for (Modifier modifier : Modifier.values()) {
+                if (expression.equals(modifier.expression)) {
+                    return modifier;
+                }
+            }
+            return Modifier.NONE;
+        }
+
+        /** @inheritDoc */
+        @Override
+        public String toString() {
+            return this.expression;
+        }
     }
 
     /**
      * Holds pre-defined conjuinctions.
      */
     public static enum Conjunction {
-	NONE,
-	AND,
-	OR
+        NONE("", 0),
+        AND("AND", 1),
+        OR("OR", 1)
+
+        // Holds actual string expression.
+        private String expression;
+        // Holds actual string expression.
+        private int precedence;
+
+        // Constructor.
+        private Conjunction(String expression, int precedence) {
+            this.expression = expression;
+            this.precedence = precedence;
+        }
+
+        // Returns corresponding enum instance from the given expression.
+        public static Conjunction find(String expression) {
+            for (Conjunction conjunction : Conjunction.values()) {
+                if (expression.equals(conjunction.expression)) {
+                    return conjunction;
+                }
+            }
+            return Conjunction.NONE;
+        }
+
+        /** @inheritDoc */
+        @Override
+        public String toString() {
+            return this.expression;
+        }
+    }
+
+    /**
+     * Holds pre-defined wildcards.
+     */
+    public static enum Wildcard {
+        NONE("", 0),
+        ANY_STRING("*", 1),
+        ANY_CHARACTER("?", 1)
+
+        // Holds actual string expression.
+        private String expression;
+        // Holds actual string expression.
+        private int precedence;
+
+        // Constructor.
+        private Wildcard(String expression, int precedence) {
+            this.expression = expression;
+            this.precedence = precedence;
+        }
+
+        // Returns corresponding enum instance from the given expression.
+        public static Wildcard find(String expression) {
+            for (Wildcard wildcard : Wildcard.values()) {
+                if (expression.equals(wildcard.expression)) {
+                    return wildcard;
+                }
+            }
+            return Wildcard.NONE;
+        }
+
+        /** @inheritDoc */
+        @Override
+        public String toString() {
+            return this.expression;
+        }
     }
 
     /**

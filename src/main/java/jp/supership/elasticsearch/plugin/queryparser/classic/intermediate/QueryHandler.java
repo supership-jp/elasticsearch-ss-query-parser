@@ -20,7 +20,7 @@ interface QueryHandler {
      * Represents query handling context, i.e., in accordance to this instance's state, appropriate
      * {@code Query} will be instanciated.
      */
-    protected class QueryHandlingContext {
+    protected class Context {
 	public boolean fuzzySlop = false;
 	public boolean prefix = false;
 	public boolean wildcard = false;
@@ -38,7 +38,7 @@ interface QueryHandler {
     /**
      * Dispatches 
      */
-    public Query dispatch(String field, Token term, Token fuzzySlop, QueryHandlingContext context) throws ParseException;
+    public Query dispatch(String field, Token term, Token fuzzySlop, QueryHandler.Context context) throws ParseException;
 
     /**
      * Fetches the given {@link java.io.InputStream} to this handler.
