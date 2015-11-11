@@ -1,0 +1,11 @@
+MINUS=1
+LPAREN=2
+RPAREN=3
+COLON=4
+STRING=5
+NUMBER=6
+FIELD=7
+'-'=1
+'('=2
+')'=3
+':'=4

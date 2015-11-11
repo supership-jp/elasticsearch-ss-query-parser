@@ -3,7 +3,7 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.util;
 
-import java.util.IllegalFormatException;
+import java.util.IllegalFormatCodePointException;
 
 /**
  * A collection of operations that relates to {@code String} instances.
@@ -20,7 +20,7 @@ public final class StringUtils {
      * @param  input the handling character.
      * @return the converted integer.
      */
-    public static int hexToInt(char input) throws IllegalFormatException {
+    public static int hexToInt(char input) throws IllegalFormatCodePointException {
 	if ('0' <= input && input <= '9') {
 	    return input - '0';
 	} else if ('a' <= input && input <= 'f'){
@@ -28,7 +28,7 @@ public final class StringUtils {
 	} else if ('A' <= input && input <= 'F') {
 	    return input - 'A' + 10;
 	} else {
-	    throw new IllegalFormatException("non-hex character: " + input);
+	    throw new IllegalFormatCodePointException(input);
 	}
     }
 
@@ -39,12 +39,12 @@ public final class StringUtils {
      */
     public static String escape(String input) {
 	StringBuilder builder = new StringBuilder();
-	for (int i = 0; i < s.length(); i++) {
+	for (int i = 0; i < input.length(); i++) {
 	    char c = input.charAt(i);
 	    if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':'
 		|| c == '^' || c == '[' || c == ']' || c == '\"' || c == '{' || c == '}' || c == '~'
 		|| c == '*' || c == '?' || c == '|' || c == '&' || c == '/') {
-		sb.append('\\');
+		builder.append('\\');
 	    }
 	    builder.append(c);
 	}
@@ -56,7 +56,7 @@ public final class StringUtils {
      * @param  input the input String to be operated.
      * @return the translated {@code String}.
      */
-    public static String discardEscapeChar(String input) throws IllegalFormatException {
+    public static String discardEscapeChar(String input) throws IllegalArgumentException {
 	char[] buffer = new char[input.length()];
 	int length = 0;
 	boolean wasEscaped = false;
@@ -91,9 +91,9 @@ public final class StringUtils {
 	}
 
 	if (multiplier > 0) {
-	    throw new IllegalFormatException("truncated unicode escape sequence.");
+	    throw new IllegalArgumentException("truncated unicode escape sequence.");
 	} else if (wasEscaped) {
-	    throw new IllegalFormatException("term can not end with escape character.");
+	    throw new IllegalArgumentException("term can not end with escape character.");
 	}
 
 	return new String(buffer, 0, length);

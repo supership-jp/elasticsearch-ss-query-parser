@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 // TODO: Check which CharStream is called.
 // TODO: Check if the FastCharStream must be implemented or not.
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CachingTokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
-import org.apache.lucene.analysis.tokenattributes.PoistionIncrementAttreibute;
+import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
@@ -24,6 +26,7 @@ import org.apache.lucene.search.DisjunctionMaxQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiPhraseQuery;
+import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
@@ -35,10 +38,15 @@ import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
+import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Operator;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Modifier;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Conjunction;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Wildcard;
 
 /**
  * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
@@ -48,261 +56,29 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public abstract class QueryParser extends QueryBuilder implements QueryHandler {
+public abstract class QueryParser extends QueryBuilder implements QueryHandler, ContextizedQueryParser {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
      */
     public static class DeprecatedMethodCall extends Throwable {}
 
-    /**
-     * This interface specifies the implementing class can be configured in accordance with the
-     * Lucene's {@code CommonQueryParserConfiguration} API and some additional context.
-     *
-     * @author Shingo OKAWA
-     * @since  08/11/2015
-     */
-    public static interface Context extends CommonQueryParserConfiguration {
-        /**
-         * Holds pre-defined operators.
-         */
-        public static enum Operator {
-            NONE("", 0),
-            AND("AND", 1),
-            OR("OR", 1)
-
-            // Holds actual string expression.
-            private String expression;
-            // Holds actual string expression.
-            private int precedence;
-
-            // Constructor.
-            private Operator(String expression, int precedence) {
-                this.expression = expression;
-                this.precedence = precedence;
-            }
-
-            // Returns corresponding enum instance from the given expression.
-            public static Operator find(String expression) {
-                for (Operator operator : Operator.values()) {
-                    if (expression.equals(operator.expression)) {
-                        return operator;
-                    }
-                }
-                return Operator.NONE;
-            }
-
-            /** @inheritDoc */
-            @Override
-            public String toString() {
-                return this.expression;
-            }
-        }
-
-        /**
-         * Holds pre-defined modifiers.
-         */
-        public static enum Modifier {
-            NONE("", 0),
-            NOT("-", 1),
-            REQUIRED("_", 1)
-
-            // Holds actual string expression.
-            private String expression;
-            // Holds actual string expression.
-            private int precedence;
-
-            // Constructor.
-            private Modifier(String expression, int precedence) {
-                this.expression = expression;
-                this.precedence = precedence;
-            }
-
-            // Returns corresponding enum instance from the given expression.
-            public static Modifier find(String expression) {
-                for (Modifier modifier : Modifier.values()) {
-                    if (expression.equals(modifier.expression)) {
-                        return modifier;
-                    }
-                }
-                return Modifier.NONE;
-            }
-
-            /** @inheritDoc */
-            @Override
-            public String toString() {
-                return this.expression;
-            }
-        }
-
-        /**
-         * Holds pre-defined conjuinctions.
-         */
-        public static enum Conjunction {
-            NONE("", 0),
-            AND("AND", 1),
-            OR("OR", 1)
-
-            // Holds actual string expression.
-            private String expression;
-            // Holds actual string expression.
-            private int precedence;
-
-            // Constructor.
-            private Conjunction(String expression, int precedence) {
-                this.expression = expression;
-                this.precedence = precedence;
-            }
-
-            // Returns corresponding enum instance from the given expression.
-            public static Conjunction find(String expression) {
-                for (Conjunction conjunction : Conjunction.values()) {
-                    if (expression.equals(conjunction.expression)) {
-                        return conjunction;
-                    }
-                }
-                return Conjunction.NONE;
-            }
-
-            /** @inheritDoc */
-            @Override
-            public String toString() {
-                return this.expression;
-            }
-        }
-
-        /**
-         * Holds pre-defined wildcards.
-         */
-        public static enum Wildcard {
-            NONE("", 0),
-            ANY_STRING("*", 1),
-            ANY_CHARACTER("?", 1)
-
-            // Holds actual string expression.
-            private String expression;
-            // Holds actual string expression.
-            private int precedence;
-
-            // Constructor.
-            private Wildcard(String expression, int precedence) {
-                this.expression = expression;
-                this.precedence = precedence;
-            }
-
-            // Returns corresponding enum instance from the given expression.
-            public static Wildcard find(String expression) {
-                for (Wildcard wildcard : Wildcard.values()) {
-                    if (expression.equals(wildcard.expression)) {
-                        return wildcard;
-                    }
-                }
-                return Wildcard.NONE;
-            }
-
-            /** @inheritDoc */
-            @Override
-            public String toString() {
-                return this.expression;
-            }
-        }
-
-        /**
-         * Sets the default field.
-         * @param defaultField the default field to be set.
-         */
-        public void setDefaultField(String defaultField);
-
-        /**
-         * Returns the default field.
-         * @return the assigned default field.
-         */
-        public String getDefaultField();
-
-        /**
-         * Sets the boolean operator for the query parser.
-         * In default, <code>Operators.OR</code> is set, i.e., terms without any modifiers are considered optional:
-         * for example <code>capital of Hungary</code> is equal to <code>capital OR of OR Hungary</code>.<br/>
-         * @param defaultOperator the boolean operator to be set.
-         */
-        public void setDefaultOperator(Operator defaultOperator);
-
-        /**
-         * Returns the default boolean operator, which will be either <code>Operators.AND</code> or <code>Operators.OR</code>.
-         * @return the assigned default boolean operator.
-         */
-        public Operator getDefaultOperator();
-
-        /**
-         * {@link PhraseQuery}s will be automatically generated when the analyzer returns more than one term
-         * from whitespace-delimited text, if this value is set to be true. This behavior may not be
-         * appropriate for some languages.
-         * @param phraseQueryAutoGeneration the value to be set.
-         */
-        public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration);
-
-        /**
-         * Returns the configured value of the phase-query-auto-generation functionality.
-         * @return the assigned value of phase-query-auto-generation functionality.
-         */
-        public boolean getPhraseQueryAutoGeneration();
-
-        /**
-         * Sets the date resolution used by range queries for a specific field.
-         * @param field          field for which the date resolution is to be set.
-         * @param dateResolution date resolution to set.
-         */
-        public void setDateResolution(String field, DateTools.Resolution dateResolution);
-
-        /**
-         * Returns the date resolution that is used by RangeQueries for the given field.
-         * @return null if no default or field specific date resolution has been set for the given field.
-         */
-        public DateTools.Resolution getDateResolution(String field);
-
-        /**
-         * {@link TermRangeQuery}s will be analyzed if this value is set to be true.
-         * For example, setting this to true can enable analyzing terms into collation keys for locale-sensitive
-         * {@link TermRangeQuery}.
-         * @param rangeTermAnalysis whether or not terms should be analyzed for RangeQuerys
-         */
-        public void setRangeTermAnalysis(boolean rangeTermAnalysis);
-
-        /**
-         * Returns the configured value of the range-term-analysis functionality.
-         * @return whether or not to analyze range terms when constructing {@link TermRangeQuery}s.
-         */
-        public boolean getRangeTermAnalysis();
-
-        /**
-         * Sets the maximum number of states that determinizing a regexp query can result in.
-         * @param maxDeterminizedStates the maximum number of states to be set.
-         */
-        public void setMaxDeterminizedStates(int maxDeterminizedStates);
-
-        /**
-         * Returns the configured maximum number of states.
-         * @return the maximum number of states that determinizing a regexp query can result in.
-         */
-        public int getMaxDeterminizedStates();
-    }
-
     /** Holds query-parsing-contect. */
-    protected QueryParser.Context context;
+    protected QueryParserContext context;
 
     /**
      * Constructor.
      */
     protected QueryParser() {
-        this.super(null);
+        super(null);
         this.context = new DefaultQueryParserContext();
     }
 
     /**
      * Constructor.
      */
-    protected QueryParser(QueryParser.Context context) {
-        this.super(null);
+    protected QueryParser(QueryParserContext context) {
+        super(null);
         this.context = context;
     }
 
@@ -315,7 +91,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
     public void init(Version version, String field, Analyzer analyzer) {
         this.init(field, analyzer);
         if (version.onOrAfter(Version.LUCENE_3_1) == false) {
-            this.context.setPhaseQueryAutoGeneration(true);
+            this.setPhraseQueryAutoGeneration(true);
         }
     }
 
@@ -326,8 +102,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     public void init(String field, Analyzer analyzer) {
         this.setAnalyzer(analyzer);
-        this.context.setDefaultField(field);
-        this.context.setPhaseQueryAutoGeneration(false);
+        this.setDefaultField(field);
+        this.setPhraseQueryAutoGeneration(false);
     }
 
     /**
@@ -336,9 +112,9 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     public Query parse(String queryText) throws ParseException {
-        this.fetch(new FastCharStream(new StringReader(queryText)));
+        //this.fetch(new FastCharStream(new StringReader(queryText)));
         try {
-            Query instanciated = this.handle(this.context.getDefaultField());
+            Query instanciated = this.handle(this.getDefaultField());
             return instanciated != null ? instanciated : this.newBooleanQuery(false);
         } catch (ParseException cause) {
             ParseException exception = new ParseException("could not parse '" + queryText + "': " + cause.getMessage());
@@ -362,12 +138,12 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @param midifier    the preceeding modifier which midifies the handling clause.
      * @param query       the currently handling query.
      */
-    protected void conjugate(List<BooleanClause> clauses, Context.Conjunction conjunction, Context.Modifier modifier, Query query) {
+    protected void conjugate(List<BooleanClause> clauses, Conjunction conjunction, Modifier modifier, Query query) {
         boolean required;
         boolean prohibited;
 
         // If this term is introduced by AND, make the preceding term required, unless it is already prohibited.
-        if (clauses.size() > 0 && conjunction == Context.Conjunction.AND) {
+        if (clauses.size() > 0 && conjunction == Conjunction.AND) {
             BooleanClause clause = clauses.get(clauses.size() - 1);
             if (!clause.isProhibited()) {
                 clause.setOccur(BooleanClause.Occur.SHOULD);
@@ -375,8 +151,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         }
 
         // If this term is introduced by OR, make the preceeding term optional, unless it is prohibited.
-        if (cluases.size() > 0 && this.defaultOperator == Context.Operator.AND && conjunction == Context.Conjunction.OR) {
-            BooleanCaluse clause = cluases.get(clauses.get(clauses.size() - 1));
+        if (clauses.size() > 0 && this.context.getDefaultOperator() == Operator.AND && conjunction == Conjunction.OR) {
+            BooleanClause clause = clauses.get(clauses.size() - 1);
             if (!clause.isProhibited()) {
                 clause.setOccur(BooleanClause.Occur.SHOULD);
             }
@@ -389,17 +165,17 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
 
         // The term is set to be REQUIRED if the term is introduced by AND or +;
         // otherwise, REQUIRED if not PROHIBITED and not introduced by OR.
-        if (this.defaultOperator == Context.Operator.OR) {
-            prohibited = (modifier == Context.Modifier.NOT);
-            required = (modifier == Context.Modifier.REQUIRED);
-            if (conjunction == Context.Conjunction.AND && !prohibited) {
+        if (this.getDefaultOperator() == Operator.OR) {
+            prohibited = (modifier == Modifier.NOT);
+            required = (modifier == Modifier.REQUIRED);
+            if (conjunction == Conjunction.AND && !prohibited) {
                 required = true;
             }
         // The term is set ti be PROHIBITED if the term is introduced by NOT;
         // otherwise, REQIURED if not PROHIBITED and not introduce by OR.
         } else {
-            prohibited = (modifier == Context.Modifier.NOT);
-            required = (!prohibited && conjunction != Context.Conjunction.OR);
+            prohibited = (modifier == Modifier.NOT);
+            required = (!prohibited && conjunction != Conjunction.OR);
         }
 
         if (required && !prohibited) {
@@ -437,7 +213,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
             ((PhraseQuery) query).setSlop(phraseSlop);
         }
         if (query instanceof MultiPhraseQuery) {
-            ((MultiPhraseQuery) query).setSlop(phrasSlop);
+            ((MultiPhraseQuery) query).setSlop(phraseSlop);
         }
 
         return query;
@@ -453,18 +229,18 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
-        BooleanClause.Occur occurence = this.context.getDefaultOperator() == Context.Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
+        BooleanClause.Occur occurence = this.getDefaultOperator() == Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
 
         String analyzerName = null;
-        if (this.analyzer instanceof NamedAnalyzer) {
-            analyzerName = ((NamedAnalyzer) this.analyzer).name();
+        if (analyzer instanceof NamedAnalyzer) {
+            analyzerName = ((NamedAnalyzer) analyzer).name();
         }
 
         if (analyzerName != null && (analyzerName.startsWith("ngram_"))) {
             List<BooleanClause> clauses = new ArrayList<BooleanClause>();
-            String tokens = queryText.split(StringUtils.UNICODE_START_OF_HEADING);
+            String[] tokens = queryText.split(StringUtils.UNICODE_START_OF_HEADING);
             for (String token : tokens) {
-                Query query = this.createFieldQuery(this.analyzer, occurence, field, queryText, true, 0);
+                Query query = this.createFieldQuery(analyzer, occurence, field, queryText, true, 0, true);
                 if (query != null) {
                     clauses.add(new BooleanClause(query, occurence));
                 }
@@ -476,19 +252,30 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         // TODO: THIS MUST BE HANDLED WITHIN {@code TokenFileter} WHICH IMPLEMENTS NAIVE BAYSIAN FILTER.
         } else if (quoted == false && queryText.matches("^\\d+(\\.\\d+)?.{1,2}?$")) {
             quoted = true;
-            this.context.setPhraseSlop(0);
+            this.setPhraseSlop(0);
         } else {
-            quoted = quoted || this.context.getPhraseQueryAutoGeneration();
+            quoted = quoted || this.getPhraseQueryAutoGeneration();
         }
 
-        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.context.getPhraseSlop());
+        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.getPhraseSlop(), true);
     }
 
+    // TODO: FIX THIS MECHANISM TO BE APPROPRIATE FOR THE ANTLR-BASED IMPLEMENTATION.
     /**
-     * @inheritDoc
+     * Creates a query from the analysis chain.
+     * @param analyzer the analyzer for this query.
+     * @param operator the default boolean operator used for this query.
+     * @param field the field to create queries against.
+     * @param queryText the text to be passed to the analysis chain.
+     * @param quoted true if phrases should be generated when terms occur at more than one position.
+     * @param phraseSlop slop factor for phrase/multiphrase queries.
+     * @param yetAnother true if the yet-another implementation is used.
      */
-    @Override
-    protected Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop) {
+    protected Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop, boolean yetAnother) {
+	if (!yetAnother) {
+	    return this.createFieldQuery(analyzer, operator, field, queryText, quoted, phraseSlop);
+	}
+
         assert operator == BooleanClause.Occur.SHOULD || operator == BooleanClause.Occur.MUST;
         TokenStream source = null;
         TokenStreamHandler handler = null;
@@ -569,7 +356,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
                     for (int i = 0; i < handler.numberOfTokens; i++) {
                         int increment = 1;
                         try {
-                            boolean hasNext = buffer.incrementToken();
+                            boolean hasNext = handler.incrementToken();
                             assert hasNext == true;
                             handler.fillBytesRef();
                             if (handler.positionIncrement != null) {
@@ -640,14 +427,14 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getRangeQuery(String field, String infinimum, String supremum, boolean leftInclusive, boolean rightInclusive) throws ParseException {
-        if (this.context.getLowercaseExpandedTerms()) {
-            infinimum = infinimum == null ? null : infinimum.toLowerCase(this.context.getLocale());
-            supremum = supremum == null ? null : supremum.toLowerCase(this.context.getLocale());
+        if (this.getLowercaseExpandedTerms()) {
+            infinimum = infinimum == null ? null : infinimum.toLowerCase(this.getLocale());
+            supremum = supremum == null ? null : supremum.toLowerCase(this.getLocale());
         }
 
-        DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, this.context.getLocale());
+        DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT, this.getLocale());
         dateFormat.setLenient(true);
-        DateTools.Resolution resolution = this.context.getDateResolution(field);
+        DateTools.Resolution resolution = this.getDateResolution(field);
 
         try {
             infinimum = DateTools.dateToString(dateFormat.parse(infinimum), resolution);
@@ -661,7 +448,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
                 // The user can only specify the date, not the time, so make sure
                 // the time is set to the latest possible time of that date to really
                 // include all documents:
-                Calendar calendar = Calendar.getInstance(this.context.getTimeZone(), this.context.getLocale());
+                Calendar calendar = Calendar.getInstance(this.getTimeZone(), this.getLocale());
                 calendar.setTime(until);
                 calendar.set(Calendar.HOUR_OF_DAY, 23);
                 calendar.set(Calendar.MINUTE, 59);
@@ -693,17 +480,17 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         if (infinimum == null) {
             left = null;
         } else {
-            left = this.context.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, infinimum) : new BytesRef(infinimum);
+            left = this.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, infinimum) : new BytesRef(infinimum);
         }
      
         if (supremum == null) {
             right = null;
         } else {
-            right = this.context.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, supremum) : new BytesRef(supremum);
+            right = this.getRangeTermAnalysis() ? this.analyzeAsSingleMultiTerm(field, supremum) : new BytesRef(supremum);
         }
       
         final TermRangeQuery query = new TermRangeQuery(field, left, right, leftInclusive, rightInclusive);
-        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        query.setRewriteMethod(this.getMultiTermRewriteMethod());
         return query;
     }
 
@@ -759,10 +546,10 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getPrefixQuery(String field, String termText) throws ParseException {
-        if (!this.context.getAllowLeadingWildcard() && termText.startsWith(Context.Wildcard.ANY_STRING.toString()))
+        if (!this.getAllowLeadingWildcard() && termText.startsWith(Wildcard.ANY_STRING.toString()))
             throw new ParseException("'*' not allowed as first character in PrefixQuery");
-        if (this.context.getLowercaseExpandedTerms()) {
-            termText = termText.toLowerCase(this.context.getLocale());
+        if (this.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.getLocale());
         }
         Term term = new Term(field, termText);
         return this.newPrefixQuery(term);
@@ -775,7 +562,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected Query newPrefixQuery(Term prefix){
         PrefixQuery query = new PrefixQuery(prefix);
-        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        query.setRewriteMethod(this.getMultiTermRewriteMethod());
         return query;
     }
 
@@ -789,8 +576,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getRegexpQuery(String field, String termText) throws ParseException {
-        if (this.context.getLowercaseExpandedTerms()) {
-            termText = termText.toLowerCase(this.context.getLocale());
+        if (this.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.getLocale());
         }
         Term term = new Term(field, termText);
         return this.newRegexpQuery(term);
@@ -802,8 +589,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link RegexpQuery} instance
      */
     protected Query newRegexpQuery(Term regexp) {
-        RegexpQuery query = new RegexpQuery(regexp, RegExp.ALL, this.context.getMaxDeterminizedStates());
-        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        RegexpQuery query = new RegexpQuery(regexp, RegExp.ALL, this.getMaxDeterminizedStates());
+        query.setRewriteMethod(this.getMultiTermRewriteMethod());
         return query;
     }
 
@@ -817,11 +604,11 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getFuzzyQuery(String field, String termText, float minimumSimilarity) throws ParseException {
-        if (this.context.getLowercaseExpandedTerms()) {
-            termText = termText.toLowerCase(this.context.getLocale());
+        if (this.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.getLocale());
         }
         Term term = new Term(field, termText);
-        return this.newFuzzyQuery(term, minimumSimilarity, this.context.getFuzzyPrefixLength());
+        return this.newFuzzyQuery(term, minimumSimilarity, this.getFuzzyPrefixLength());
     }
 
     /**
@@ -853,7 +640,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected Query newWildcardQuery(Term wildcard) {
         WildcardQuery query = new WildcardQuery(wildcard);
-        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        query.setRewriteMethod(this.getMultiTermRewriteMethod());
         return query;
     }
 
@@ -867,21 +654,21 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getWildcardQuery(String field, String termText) throws ParseException {
-        Context.Wildcard fieldWildcard = Context.Wildcard.find(file);
-        Context.Wildcard termWildcard = Context.Wildcard.find(termText);
+        Wildcard fieldWildcard = Wildcard.find(field);
+        Wildcard termWildcard = Wildcard.find(termText);
 
-        if (fieldWildcard == Context.Wildcard.ANY_STRING && termWildcard == Context.Wildcard.ANY_STRING)) {
+        if (fieldWildcard == Wildcard.ANY_STRING && termWildcard == Wildcard.ANY_STRING) {
             return this.newMatchAllDocsQuery();
         }
 
-        if (!this.context.getAllowLeadingWildcard()
-            && (termText.startsWith(Context.Wildcard.ANY_STRING.toString())
-                || termText.startsWith(Context.Wildcard.ANY_CHARACTER.toString()))) {
+        if (!this.getAllowLeadingWildcard()
+            && (termText.startsWith(Wildcard.ANY_STRING.toString())
+                || termText.startsWith(Wildcard.ANY_CHARACTER.toString()))) {
             throw new ParseException("'*' or '?' not allowed as first character in WildcardQuery");
         }
 
-        if (this.context.getLowercaseExpandedTerms()) {
-            termText = termText.toLowerCase(this.context.getLocale());
+        if (this.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.getLocale());
         }
 
         Term term = new Term(field, termText);
@@ -909,7 +696,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         public boolean hasMoreTokens = false;
 
         // Constructor.
-        public TokenStreamHandler(TokenStream tokenStream, boolean reset) {
+        public TokenStreamHandler(TokenStream tokenStream, boolean reset) throws IOException {
             if (reset) {
                 tokenStream.reset();
             }
@@ -921,7 +708,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         }
 
         // Constructor.
-        public TokenStreamHandler(TokenStream tokenStream) {
+        public TokenStreamHandler(TokenStream tokenStream) throws IOException {
             this(tokenStream, true);
         }
 
@@ -945,16 +732,6 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
                 }
             }
             this.buffer.reset();
-        }
-
-        // Delegates {@code TokenStream}'s method.
-        public void resetTokenStream() throws IOException {
-            this.tokenStream.reset();
-        }
-
-        // Delegates {@code TokenStream}'s method.
-        public void endTokenStream() throws IOException {
-            this.tokenStream.end();
         }
 
         // Delegates {@code CachingTokenFilter}'s method.
@@ -985,7 +762,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link BytesRef} instance
      */
     protected BytesRef analyzeAsSingleMultiTerm(String field, String queryPart) {
-        return this.analyzeMultitermTerm(field, queryPart, this.getAnalyzer());
+        return this.analyzeAsSingleMultiTerm(field, queryPart, this.getAnalyzer());
     }
 
     /**
@@ -995,7 +772,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @param  analyzer the analyzer instance which is responsible for the raw query analysis.
      * @return new {@link BytesRef} instance
      */
-    protected BytesRef analyzeAzSingleMultiTerm(String field, String queryPart, Analyzer analyzer) {
+    protected BytesRef analyzeAsSingleMultiTerm(String field, String queryPart, Analyzer analyzer) {
         if (analyzer == null) {
             analyzer = this.getAnalyzer();
         }
@@ -1014,12 +791,268 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
             if (handler.incrementToken()) {
                 throw new IllegalArgumentException("analyzer returned too many terms for multiTerm term: " + queryPart);
             }
-            handler.endTokenStream();
+            source.end();
             return BytesRef.deepCopyOf(bytes);
         } catch (IOException cause) {
             throw new RuntimeException("error analyzing multiTerm term: " + queryPart, cause);
         } finally {
             IOUtils.closeWhileHandlingException(source);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public Analyzer getAnalyzer() {
+	return this.context.getAnalyzer();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setDefaultField(String defaultField) {
+        this.context.setDefaultField(defaultField);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public String getDefaultField() {
+        return this.context.getDefaultField();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setDefaultOperator(Operator defaultOperator) {
+        this.context.setDefaultOperator(defaultOperator);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public Operator getDefaultOperator() {
+        return this.context.getDefaultOperator();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
+        this.context.setPhraseQueryAutoGeneration(phraseQueryAutoGeneration);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getPhraseQueryAutoGeneration() {
+        return this.context.getPhraseQueryAutoGeneration();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setEnablePositionIncrements(boolean positionIncrements) {
+        this.context.setEnablePositionIncrements(positionIncrements);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getEnablePositionIncrements() {
+        return this.context.getEnablePositionIncrements();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setFuzzyMinSim(float fuzzyMinSim) {
+        this.context.setFuzzyMinSim(fuzzyMinSim);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public float getFuzzyMinSim() {
+        return this.context.getFuzzyMinSim();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
+        this.context.setFuzzyPrefixLength(fuzzyPrefixLength);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public int getFuzzyPrefixLength() {
+        return this.context.getFuzzyPrefixLength();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setPhraseSlop(int phraseSlop) {
+        this.context.setPhraseSlop(phraseSlop);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public int getPhraseSlop() {
+        return this.context.getPhraseSlop();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
+        this.context.setAllowLeadingWildcard(allowLeadingWildcard);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getAllowLeadingWildcard() {
+        return this.context.getAllowLeadingWildcard();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
+        this.context.setLowercaseExpandedTerms(lowercaseExpandedTerms);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getLowercaseExpandedTerms() {
+        return this.context.getLowercaseExpandedTerms();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
+        this.context.setMultiTermRewriteMethod(multiTermRewriteMethod);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
+        return this.context.getMultiTermRewriteMethod();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setLocale(Locale locale) {
+        this.context.setLocale(locale);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public Locale getLocale() {
+        return this.context.getLocale();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setTimeZone(TimeZone timeZone) {
+        this.context.setTimeZone(timeZone);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public TimeZone getTimeZone() {
+        return this.context.getTimeZone();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setDateResolution(DateTools.Resolution dateResolution) {
+        this.context.setDateResolution(dateResolution);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setDateResolution(String field, DateTools.Resolution resolution) {
+        this.context.setDateResolution(field, resolution);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public DateTools.Resolution getDateResolution(String field) {
+        return this.context.getDateResolution(field);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setRangeTermAnalysis(boolean value) {
+        this.context.setRangeTermAnalysis(value);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getRangeTermAnalysis() {
+        return this.context.getRangeTermAnalysis();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setMaxDeterminizedStates(int max) {
+        this.context.setMaxDeterminizedStates(max);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public int getMaxDeterminizedStates() {
+        return this.context.getMaxDeterminizedStates();
     }
 }

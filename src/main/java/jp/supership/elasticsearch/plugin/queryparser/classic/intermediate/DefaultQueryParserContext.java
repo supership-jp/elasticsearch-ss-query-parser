@@ -7,21 +7,25 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
-import static org.apache.lucene.util.automaton.Operations.DEFALUT_MAX_DETERMINIZED_STATES;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParser.Context.Operator;
+import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZED_STATES;
+import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Operator;
 
 /**
- * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for
- * Supership, inc.
+ * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for Supership, inc.
  *
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public class DefaultQueryParserContext implements QueryParser.Context {
+public class DefaultQueryParserContext implements QueryParserContext {
+    /** Holds default analyzer. */
+    protected Analyzer analyzer = null;
+
     // TODO: FIX THIS DEFAULT VALUE TO BE APPROPRIATE ONE.
     /** Holds default field for query terms. */
     protected String defaultField = "";
@@ -31,6 +35,9 @@ public class DefaultQueryParserContext implements QueryParser.Context {
 
     /** Holds phrase-query-auto-genertion functionality setting. */
     protected boolean phraseQueryAutoGeneration = false;
+
+    /** Holds position-incremention functionality setting. */
+    protected boolean positionIncrements = true;
 
     /** Holds default date resolution. */
     protected DateTools.Resolution dateResolution = null;
@@ -42,7 +49,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
     protected boolean rangeTermAnalysis = false;
 
     /** Holds maximum number of states. */
-    protected int maxDeterminizedStates = DEFALUT_MAX_DETERMINIZED_STATES;
+    protected int maxDeterminizedStates = DEFAULT_MAX_DETERMINIZED_STATES;
 
     /** Holds minimum value of the fuzzy query similarity. */
     protected float fuzzyMinSim = FuzzyQuery.defaultMinSimilarity;
@@ -60,7 +67,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
     protected boolean lowercaseExpandedTerms = true;
 
     /** Holds multi-term-query-rewrite-method functionality setting. */
-    protected MultiTermQuery.RewriteMethod multiTermRewriteMethod = MultiTermQuery.CONSTANT_SCORE_REWRITE_DEFAULT;
+    protected MultiTermQuery.RewriteMethod multiTermRewriteMethod = MultiTermQuery.CONSTANT_SCORE_AUTO_REWRITE_DEFAULT;
 
     /** Holds locale. */
     protected Locale locale = Locale.getDefault();
@@ -72,8 +79,16 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      * @inheritDoc
      */
     @Override
+    public Analyzer getAnalyzer() {
+	return this.analyzer;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
     public void setDefaultField(String defaultField) {
-	this.defaultField = defaultField;
+        this.defaultField = defaultField;
     }
 
     /**
@@ -81,7 +96,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public String getDefaultField() {
-	return this.defaultField;
+        return this.defaultField;
     }
 
     /**
@@ -89,7 +104,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setDefaultOperator(Operator defaultOperator) {
-	this.defaultOperator = defaultOperator;
+        this.defaultOperator = defaultOperator;
     }
 
     /**
@@ -97,7 +112,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public Operator getDefaultOperator() {
-	return this.defaultOperator;
+        return this.defaultOperator;
     }
 
     /**
@@ -105,7 +120,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
-	this.phraseQueryAutoGeneration = phraseQueryAutoGeneration;
+        this.phraseQueryAutoGeneration = phraseQueryAutoGeneration;
     }
 
     /**
@@ -113,7 +128,23 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public boolean getPhraseQueryAutoGeneration() {
-	return this.phraseQueryAutoGeneration;
+        return this.phraseQueryAutoGeneration;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public void setEnablePositionIncrements(boolean positionIncrements) {
+        this.positionIncrements = positionIncrements;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public boolean getEnablePositionIncrements() {
+        return this.positionIncrements;
     }
 
     /**
@@ -121,7 +152,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setFuzzyMinSim(float fuzzyMinSim) {
-	this.fuzzyMinSim = fuzzyMinSim;
+        this.fuzzyMinSim = fuzzyMinSim;
     }
 
     /**
@@ -129,7 +160,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public float getFuzzyMinSim() {
-	return this.fuzzyMinSim;
+        return this.fuzzyMinSim;
     }
 
     /**
@@ -137,7 +168,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
-	this.fuzzyPrefixLength = fuzzyPrefixLength;
+        this.fuzzyPrefixLength = fuzzyPrefixLength;
     }
 
     /**
@@ -145,7 +176,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public int getFuzzyPrefixLength() {
-	return this.fuzzyPrefixLength;
+        return this.fuzzyPrefixLength;
     }
 
     /**
@@ -153,7 +184,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setPhraseSlop(int phraseSlop) {
-	this.phraseSlop = phraseSlop;
+        this.phraseSlop = phraseSlop;
     }
 
     /**
@@ -161,7 +192,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public int getPhraseSlop() {
-	return this.phraseSlop;
+        return this.phraseSlop;
     }
 
     /**
@@ -169,7 +200,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
-	this.allowLeadingWildcard = allowLeadingWildcard;
+        this.allowLeadingWildcard = allowLeadingWildcard;
     }
 
     /**
@@ -177,7 +208,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public boolean getAllowLeadingWildcard() {
-	return this.allowLeadingWildcard;
+        return this.allowLeadingWildcard;
     }
 
     /**
@@ -185,7 +216,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
-	this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+        this.lowercaseExpandedTerms = lowercaseExpandedTerms;
     }
 
     /**
@@ -193,7 +224,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public boolean getLowercaseExpandedTerms() {
-	return this.lowercaseExpandedTerms;
+        return this.lowercaseExpandedTerms;
     }
 
     /**
@@ -201,7 +232,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
-	this.multiTermRewriteMethod = multiTermRewriteMethod;
+        this.multiTermRewriteMethod = multiTermRewriteMethod;
     }
 
     /**
@@ -209,7 +240,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
-	return this.multiTermRewriteMethod;
+        return this.multiTermRewriteMethod;
     }
 
     /**
@@ -217,7 +248,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setLocale(Locale locale) {
-	this.locale = locale;
+        this.locale = locale;
     }
 
     /**
@@ -225,7 +256,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public Locale getLocale() {
-	return this.locale;
+        return this.locale;
     }
 
     /**
@@ -233,7 +264,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setTimeZone(TimeZone timeZone) {
-	this.timeZone = timeZone;
+        this.timeZone = timeZone;
     }
 
     /**
@@ -241,7 +272,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public TimeZone getTimeZone() {
-	return this.timeZone;
+        return this.timeZone;
     }
 
     /**
@@ -249,7 +280,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setDateResolution(DateTools.Resolution dateResolution) {
-	this.dateResolution = dateResolution;
+        this.dateResolution = dateResolution;
     }
 
     /**
@@ -257,13 +288,13 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setDateResolution(String field, DateTools.Resolution resolution) {
-	if (field == null) {
-	    throw new IllegalArgumentException("field cannot be null.");
-	}
-	if (this.fieldToDateResolution == null) {
-	    this.fieldToDateResolution = new HashMap<String, DateTools.Resolution>();
-	}
-	this.fieldToDateResolution.put(field, resolution);
+        if (field == null) {
+            throw new IllegalArgumentException("field cannot be null.");
+        }
+        if (this.fieldToDateResolution == null) {
+            this.fieldToDateResolution = new HashMap<String, DateTools.Resolution>();
+        }
+        this.fieldToDateResolution.put(field, resolution);
     }
 
     /**
@@ -271,17 +302,17 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public DateTools.Resolution getDateResolution(String field) {
-	if (field == null) {
-	    throw new IllegalArgumentException("field cannot be null.");
-	}
-	if (this.fieldToDateResolution == null) {
-	    return this.dateResolution;
-	}
-	DateTools.Resolution resolution = this.fieldToDateResolution.get(field);
-	if (resolution == null) {
-	    resulution = this.dateResolution;
-	}
-	return resolution;
+        if (field == null) {
+            throw new IllegalArgumentException("field cannot be null.");
+        }
+        if (this.fieldToDateResolution == null) {
+            return this.dateResolution;
+        }
+        DateTools.Resolution resolution = this.fieldToDateResolution.get(field);
+        if (resolution == null) {
+            resolution = this.dateResolution;
+        }
+        return resolution;
     }
 
     /**
@@ -289,7 +320,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setRangeTermAnalysis(boolean value) {
-	this.rangeTermAnalysis = value;
+        this.rangeTermAnalysis = value;
     }
 
     /**
@@ -297,7 +328,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public boolean getRangeTermAnalysis() {
-	return this.rangeTermAnalysis;
+        return this.rangeTermAnalysis;
     }
 
     /**
@@ -305,7 +336,7 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public void setMaxDeterminizedStates(int max) {
-	this.maxDeterminizedStates = max;
+        this.maxDeterminizedStates = max;
     }
 
     /**
@@ -313,6 +344,6 @@ public class DefaultQueryParserContext implements QueryParser.Context {
      */
     @Override
     public int getMaxDeterminizedStates() {
-	return this.maxDeterminizedStates;
+        return this.maxDeterminizedStates;
     }
 }

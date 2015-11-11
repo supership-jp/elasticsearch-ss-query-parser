@@ -15,12 +15,12 @@ import org.apache.lucene.queryparser.classic.ParseException;
  * @author Shingo OKAWA
  * @since  09/11/2015
  */
-interface QueryHandler {
+public interface QueryHandler {
     /**
      * Represents query handling context, i.e., in accordance to this instance's state, appropriate
      * {@code Query} will be instanciated.
      */
-    protected class Context {
+    public class Context {
 	public boolean fuzzySlop = false;
 	public boolean prefix = false;
 	public boolean wildcard = false;
