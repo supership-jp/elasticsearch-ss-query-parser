@@ -63,228 +63,228 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @since  08/11/2015
      */
     public static interface Context extends CommonQueryParserConfiguration {
-	/**
-	 * Holds pre-defined operators.
-	 */
-	public static enum Operator {
-	    NONE("", 0),
-	    AND("AND", 1),
-	    OR("OR", 1)
+        /**
+         * Holds pre-defined operators.
+         */
+        public static enum Operator {
+            NONE("", 0),
+            AND("AND", 1),
+            OR("OR", 1)
 
-	    // Holds actual string expression.
-	    private String expression;
-	    // Holds actual string expression.
-	    private int precedence;
+            // Holds actual string expression.
+            private String expression;
+            // Holds actual string expression.
+            private int precedence;
 
-	    // Constructor.
-	    private Operator(String expression, int precedence) {
-		this.expression = expression;
-		this.precedence = precedence;
-	    }
+            // Constructor.
+            private Operator(String expression, int precedence) {
+                this.expression = expression;
+                this.precedence = precedence;
+            }
 
-	    // Returns corresponding enum instance from the given expression.
-	    public static Operator find(String expression) {
-		for (Operator operator : Operator.values()) {
-		    if (expression.equals(operator.expression)) {
-			return operator;
-		    }
-		}
-		return Operator.NONE;
-	    }
+            // Returns corresponding enum instance from the given expression.
+            public static Operator find(String expression) {
+                for (Operator operator : Operator.values()) {
+                    if (expression.equals(operator.expression)) {
+                        return operator;
+                    }
+                }
+                return Operator.NONE;
+            }
 
-	    /** @inheritDoc */
-	    @Override
-	    public String toString() {
-		return this.expression;
-	    }
-	}
+            /** @inheritDoc */
+            @Override
+            public String toString() {
+                return this.expression;
+            }
+        }
 
-	/**
-	 * Holds pre-defined modifiers.
-	 */
-	public static enum Modifier {
-	    NONE("", 0),
-	    NOT("-", 1),
-	    REQUIRED("_", 1)
+        /**
+         * Holds pre-defined modifiers.
+         */
+        public static enum Modifier {
+            NONE("", 0),
+            NOT("-", 1),
+            REQUIRED("_", 1)
 
-	    // Holds actual string expression.
-	    private String expression;
-	    // Holds actual string expression.
-	    private int precedence;
+            // Holds actual string expression.
+            private String expression;
+            // Holds actual string expression.
+            private int precedence;
 
-	    // Constructor.
-	    private Modifier(String expression, int precedence) {
-		this.expression = expression;
-		this.precedence = precedence;
-	    }
+            // Constructor.
+            private Modifier(String expression, int precedence) {
+                this.expression = expression;
+                this.precedence = precedence;
+            }
 
-	    // Returns corresponding enum instance from the given expression.
-	    public static Modifier find(String expression) {
-		for (Modifier modifier : Modifier.values()) {
-		    if (expression.equals(modifier.expression)) {
-			return modifier;
-		    }
-		}
-		return Modifier.NONE;
-	    }
+            // Returns corresponding enum instance from the given expression.
+            public static Modifier find(String expression) {
+                for (Modifier modifier : Modifier.values()) {
+                    if (expression.equals(modifier.expression)) {
+                        return modifier;
+                    }
+                }
+                return Modifier.NONE;
+            }
 
-	    /** @inheritDoc */
-	    @Override
-	    public String toString() {
-		return this.expression;
-	    }
-	}
+            /** @inheritDoc */
+            @Override
+            public String toString() {
+                return this.expression;
+            }
+        }
 
-	/**
-	 * Holds pre-defined conjuinctions.
-	 */
-	public static enum Conjunction {
-	    NONE("", 0),
-	    AND("AND", 1),
-	    OR("OR", 1)
+        /**
+         * Holds pre-defined conjuinctions.
+         */
+        public static enum Conjunction {
+            NONE("", 0),
+            AND("AND", 1),
+            OR("OR", 1)
 
-	    // Holds actual string expression.
-	    private String expression;
-	    // Holds actual string expression.
-	    private int precedence;
+            // Holds actual string expression.
+            private String expression;
+            // Holds actual string expression.
+            private int precedence;
 
-	    // Constructor.
-	    private Conjunction(String expression, int precedence) {
-		this.expression = expression;
-		this.precedence = precedence;
-	    }
+            // Constructor.
+            private Conjunction(String expression, int precedence) {
+                this.expression = expression;
+                this.precedence = precedence;
+            }
 
-	    // Returns corresponding enum instance from the given expression.
-	    public static Conjunction find(String expression) {
-		for (Conjunction conjunction : Conjunction.values()) {
-		    if (expression.equals(conjunction.expression)) {
-			return conjunction;
-		    }
-		}
-		return Conjunction.NONE;
-	    }
+            // Returns corresponding enum instance from the given expression.
+            public static Conjunction find(String expression) {
+                for (Conjunction conjunction : Conjunction.values()) {
+                    if (expression.equals(conjunction.expression)) {
+                        return conjunction;
+                    }
+                }
+                return Conjunction.NONE;
+            }
 
-	    /** @inheritDoc */
-	    @Override
-	    public String toString() {
-		return this.expression;
-	    }
-	}
+            /** @inheritDoc */
+            @Override
+            public String toString() {
+                return this.expression;
+            }
+        }
 
-	/**
-	 * Holds pre-defined wildcards.
-	 */
-	public static enum Wildcard {
-	    NONE("", 0),
-	    ANY_STRING("*", 1),
-	    ANY_CHARACTER("?", 1)
+        /**
+         * Holds pre-defined wildcards.
+         */
+        public static enum Wildcard {
+            NONE("", 0),
+            ANY_STRING("*", 1),
+            ANY_CHARACTER("?", 1)
 
-	    // Holds actual string expression.
-	    private String expression;
-	    // Holds actual string expression.
-	    private int precedence;
+            // Holds actual string expression.
+            private String expression;
+            // Holds actual string expression.
+            private int precedence;
 
-	    // Constructor.
-	    private Wildcard(String expression, int precedence) {
-		this.expression = expression;
-		this.precedence = precedence;
-	    }
+            // Constructor.
+            private Wildcard(String expression, int precedence) {
+                this.expression = expression;
+                this.precedence = precedence;
+            }
 
-	    // Returns corresponding enum instance from the given expression.
-	    public static Wildcard find(String expression) {
-		for (Wildcard wildcard : Wildcard.values()) {
-		    if (expression.equals(wildcard.expression)) {
-			return wildcard;
-		    }
-		}
-		return Wildcard.NONE;
-	    }
+            // Returns corresponding enum instance from the given expression.
+            public static Wildcard find(String expression) {
+                for (Wildcard wildcard : Wildcard.values()) {
+                    if (expression.equals(wildcard.expression)) {
+                        return wildcard;
+                    }
+                }
+                return Wildcard.NONE;
+            }
 
-	    /** @inheritDoc */
-	    @Override
-	    public String toString() {
-		return this.expression;
-	    }
-	}
+            /** @inheritDoc */
+            @Override
+            public String toString() {
+                return this.expression;
+            }
+        }
 
-	/**
-	 * Sets the default field.
-	 * @param defaultField the default field to be set.
-	 */
-	public void setDefaultField(String defaultField);
+        /**
+         * Sets the default field.
+         * @param defaultField the default field to be set.
+         */
+        public void setDefaultField(String defaultField);
 
-	/**
-	 * Returns the default field.
-	 * @return the assigned default field.
-	 */
-	public String getDefaultField();
+        /**
+         * Returns the default field.
+         * @return the assigned default field.
+         */
+        public String getDefaultField();
 
-	/**
-	 * Sets the boolean operator for the query parser.
-	 * In default, <code>Operators.OR</code> is set, i.e., terms without any modifiers are considered optional:
-	 * for example <code>capital of Hungary</code> is equal to <code>capital OR of OR Hungary</code>.<br/>
-	 * @param defaultOperator the boolean operator to be set.
-	 */
-	public void setDefaultOperator(Operator defaultOperator);
+        /**
+         * Sets the boolean operator for the query parser.
+         * In default, <code>Operators.OR</code> is set, i.e., terms without any modifiers are considered optional:
+         * for example <code>capital of Hungary</code> is equal to <code>capital OR of OR Hungary</code>.<br/>
+         * @param defaultOperator the boolean operator to be set.
+         */
+        public void setDefaultOperator(Operator defaultOperator);
 
-	/**
-	 * Returns the default boolean operator, which will be either <code>Operators.AND</code> or <code>Operators.OR</code>.
-	 * @return the assigned default boolean operator.
-	 */
-	public Operator getDefaultOperator();
+        /**
+         * Returns the default boolean operator, which will be either <code>Operators.AND</code> or <code>Operators.OR</code>.
+         * @return the assigned default boolean operator.
+         */
+        public Operator getDefaultOperator();
 
-	/**
-	 * {@link PhraseQuery}s will be automatically generated when the analyzer returns more than one term
-	 * from whitespace-delimited text, if this value is set to be true. This behavior may not be
-	 * appropriate for some languages.
-	 * @param phraseQueryAutoGeneration the value to be set.
-	 */
-	public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration);
+        /**
+         * {@link PhraseQuery}s will be automatically generated when the analyzer returns more than one term
+         * from whitespace-delimited text, if this value is set to be true. This behavior may not be
+         * appropriate for some languages.
+         * @param phraseQueryAutoGeneration the value to be set.
+         */
+        public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration);
 
-	/**
-	 * Returns the configured value of the phase-query-auto-generation functionality.
-	 * @return the assigned value of phase-query-auto-generation functionality.
-	 */
-	public boolean getPhraseQueryAutoGeneration();
+        /**
+         * Returns the configured value of the phase-query-auto-generation functionality.
+         * @return the assigned value of phase-query-auto-generation functionality.
+         */
+        public boolean getPhraseQueryAutoGeneration();
 
-	/**
-	 * Sets the date resolution used by range queries for a specific field.
-	 * @param field          field for which the date resolution is to be set.
-	 * @param dateResolution date resolution to set.
-	 */
-	public void setDateResolution(String field, DateTools.Resolution dateResolution);
+        /**
+         * Sets the date resolution used by range queries for a specific field.
+         * @param field          field for which the date resolution is to be set.
+         * @param dateResolution date resolution to set.
+         */
+        public void setDateResolution(String field, DateTools.Resolution dateResolution);
 
-	/**
-	 * Returns the date resolution that is used by RangeQueries for the given field.
-	 * @return null if no default or field specific date resolution has been set for the given field.
-	 */
-	public DateTools.Resolution getDateResolution(String field);
+        /**
+         * Returns the date resolution that is used by RangeQueries for the given field.
+         * @return null if no default or field specific date resolution has been set for the given field.
+         */
+        public DateTools.Resolution getDateResolution(String field);
 
-	/**
-	 * {@link TermRangeQuery}s will be analyzed if this value is set to be true.
-	 * For example, setting this to true can enable analyzing terms into collation keys for locale-sensitive
-	 * {@link TermRangeQuery}.
-	 * @param rangeTermAnalysis whether or not terms should be analyzed for RangeQuerys
-	 */
-	public void setRangeTermAnalysis(boolean rangeTermAnalysis);
+        /**
+         * {@link TermRangeQuery}s will be analyzed if this value is set to be true.
+         * For example, setting this to true can enable analyzing terms into collation keys for locale-sensitive
+         * {@link TermRangeQuery}.
+         * @param rangeTermAnalysis whether or not terms should be analyzed for RangeQuerys
+         */
+        public void setRangeTermAnalysis(boolean rangeTermAnalysis);
 
-	/**
-	 * Returns the configured value of the range-term-analysis functionality.
-	 * @return whether or not to analyze range terms when constructing {@link TermRangeQuery}s.
-	 */
-	public boolean getRangeTermAnalysis();
+        /**
+         * Returns the configured value of the range-term-analysis functionality.
+         * @return whether or not to analyze range terms when constructing {@link TermRangeQuery}s.
+         */
+        public boolean getRangeTermAnalysis();
 
-	/**
-	 * Sets the maximum number of states that determinizing a regexp query can result in.
-	 * @param maxDeterminizedStates the maximum number of states to be set.
-	 */
-	public void setMaxDeterminizedStates(int maxDeterminizedStates);
+        /**
+         * Sets the maximum number of states that determinizing a regexp query can result in.
+         * @param maxDeterminizedStates the maximum number of states to be set.
+         */
+        public void setMaxDeterminizedStates(int maxDeterminizedStates);
 
-	/**
-	 * Returns the configured maximum number of states.
-	 * @return the maximum number of states that determinizing a regexp query can result in.
-	 */
-	public int getMaxDeterminizedStates();
+        /**
+         * Returns the configured maximum number of states.
+         * @return the maximum number of states that determinizing a regexp query can result in.
+         */
+        public int getMaxDeterminizedStates();
     }
 
     /** Holds query-parsing-contect. */
@@ -475,13 +475,13 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
             return this.getBooleanQuery(clauses, true);
         // TODO: THIS MUST BE HANDLED WITHIN {@code TokenFileter} WHICH IMPLEMENTS NAIVE BAYSIAN FILTER.
         } else if (quoted == false && queryText.matches("^\\d+(\\.\\d+)?.{1,2}?$")) {
-	    quoted = true;
-	    this.context.setPhraseSlop(0);
+            quoted = true;
+            this.context.setPhraseSlop(0);
         } else {
-	    quoted = quoted || this.context.getPhraseQueryAutoGeneration();
-	}
+            quoted = quoted || this.context.getPhraseQueryAutoGeneration();
+        }
 
-	return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.context.getPhraseSlop());
+        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.context.getPhraseSlop());
     }
 
     /**
@@ -652,8 +652,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
         try {
             infinimum = DateTools.dateToString(dateFormat.parse(infinimum), resolution);
         } catch (Exception e) {
-	    // DO NOTHING, we know the boundaries are filled with somewhat instances.
-	}
+            // DO NOTHING, we know the boundaries are filled with somewhat instances.
+        }
 
         try {
             Date until = dateFormat.parse(supremum);
@@ -671,8 +671,8 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
             }
             supremum = DateTools.dateToString(until, resolution);
         } catch (Exception e) {
-	    // DO NOTHING, we know the boundaries are filled with somewhat instances.
-	}
+            // DO NOTHING, we know the boundaries are filled with somewhat instances.
+        }
 
         return this.newRangeQuery(field, infinimum, supremum, leftInclusive, rightInclusive);
     }
@@ -715,7 +715,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException {
-	return this.getBooleanQuery(clauses, false);
+        return this.getBooleanQuery(clauses, false);
     }
 
     /**
@@ -727,16 +727,16 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @throws ParseException if the parsing fails.
      */
     protected Query getBooleanQuery(List<BooleanClause> clauses, boolean disableCoord) throws ParseException {
-	if (clauses.size() == 0) {
-	    // all clause words were filtered away by the analyzer.
-	    return null;
-	}
+        if (clauses.size() == 0) {
+            // all clause words were filtered away by the analyzer.
+            return null;
+        }
 
-	BooleanQuery query = this.newBooleanQuery(disableCoord);
-	for(final BooleanClause clause: clauses) {
-	    query.add(clause);
-	}
-	return query;
+        BooleanQuery query = this.newBooleanQuery(disableCoord);
+        for(final BooleanClause clause: clauses) {
+            query.add(clause);
+        }
+        return query;
     }
 
     /**
@@ -746,7 +746,26 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link BooleanClause} instance.
      */
     protected BooleanClause newBooleanClause(Query query, BooleanClause.Occur occurence) {
-	return new BooleanClause(query, occurence);
+        return new BooleanClause(query, occurence);
+    }
+
+    /**
+     * Returns {@code PrefixQuery} in accordance to the assigned configuration.
+     * Can be overridden by extending classes, to provide custom handling for
+     * wildcard queries, which may be necessary due to missing analyzer calls.
+     * @param  field the currently handling field.
+     * @param  termText term to use for building term for the query without trailing '*'.
+     * @return new {@link Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    protected Query getPrefixQuery(String field, String termText) throws ParseException {
+        if (!this.context.getAllowLeadingWildcard() && termText.startsWith(Context.Wildcard.ANY_STRING.toString()))
+            throw new ParseException("'*' not allowed as first character in PrefixQuery");
+        if (this.context.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.context.getLocale());
+        }
+        Term term = new Term(field, termText);
+        return this.newPrefixQuery(term);
     }
 
     /**
@@ -755,37 +774,26 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link PrefixQuery} instance.
      */
     protected Query newPrefixQuery(Term prefix){
-	PrefixQuery query = new PrefixQuery(prefix);
-	query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
-	return query;
+        PrefixQuery query = new PrefixQuery(prefix);
+        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        return query;
     }
 
     /**
-     * Factory method for generating a query. Called when parser
-     * parses an input term token that contains a regular expression
-     * query.
-     *<p>
-     * Depending on settings, pattern term may be lower-cased
-     * automatically. It will not go through the default Analyzer,
-     * however, since normal Analyzers are unlikely to work properly
-     * with regular expression templates.
-     *<p>
+     * Returns {@code RegexpQuery} in accordance to the assigned configuration.
      * Can be overridden by extending classes, to provide custom handling for
-     * regular expression queries, which may be necessary due to missing analyzer
-     * calls.
-     *
-     * @param field Name of the field query will use.
-     * @param termStr Term token that contains a regular expression
-     *
-     * @return Resulting {@link org.apache.lucene.search.Query} built for the term
-     * @exception org.apache.lucene.queryparser.classic.ParseException throw in overridden method to disallow
+     * wildcard queries, which may be necessary due to missing analyzer calls.
+     * @param  field the currently handling field.
+     * @param  termText term that contains one or more wild card characters (? or *), but is not simple prefix term.
+     * @return new {@link Query} instance.
+     * @throws ParseException if the parsing fails.
      */
-    protected Query getRegexpQuery(String field, String termStr) throws ParseException {
-	if (this.context.getLowercaseExpandedTerms()) {
-	    termStr = termStr.toLowerCase(this.context.getLocale());
-	}
-	Term t = new Term(field, termStr);
-	return newRegexpQuery(t);
+    protected Query getRegexpQuery(String field, String termText) throws ParseException {
+        if (this.context.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.context.getLocale());
+        }
+        Term term = new Term(field, termText);
+        return this.newRegexpQuery(term);
     }
 
     /**
@@ -794,9 +802,26 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link RegexpQuery} instance
      */
     protected Query newRegexpQuery(Term regexp) {
-	RegexpQuery query = new RegexpQuery(regexp, RegExp.ALL, maxDeterminizedStates);
-	query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
-	return query;
+        RegexpQuery query = new RegexpQuery(regexp, RegExp.ALL, this.context.getMaxDeterminizedStates());
+        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        return query;
+    }
+
+    /**
+     * Returns {@code FuzzyQuery} in accordance to the assigned configuration.
+     * Can be overridden by extending classes, to provide custom handling for
+     * wildcard queries, which may be necessary due to missing analyzer calls.
+     * @param  field the currently handling field.
+     * @param  termText term to be used for creation of a fuzzy query..
+     * @return new {@link Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    protected Query getFuzzyQuery(String field, String termText, float minimumSimilarity) throws ParseException {
+        if (this.context.getLowercaseExpandedTerms()) {
+            termText = termText.toLowerCase(this.context.getLocale());
+        }
+        Term term = new Term(field, termText);
+        return this.newFuzzyQuery(term, minimumSimilarity, this.context.getFuzzyPrefixLength());
     }
 
     /**
@@ -807,10 +832,10 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link FuzzyQuery} instance
      */
     protected Query newFuzzyQuery(Term term, float minimumSimilarity, int prefixLength) {
-	// FuzzyQuery doesn't yet allow constant score rewrite
-	String text = term.text();
-	int numberOfEditions = FuzzyQuery.floatToEdits(minimumSimilarity, text.codePointCount(0, text.length()));
-	return new FuzzyQuery(term, numberOfEditions, prefixLength);
+        // FuzzyQuery doesn't yet allow constant score rewrite
+        String text = term.text();
+        int numberOfEditions = FuzzyQuery.floatToEdits(minimumSimilarity, text.codePointCount(0, text.length()));
+        return new FuzzyQuery(term, numberOfEditions, prefixLength);
     }
 
     /**
@@ -818,7 +843,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link MatchAllDocsQuery} instance.
      */
     protected Query newMatchAllDocsQuery() {
-	return new MatchAllDocsQuery();
+        return new MatchAllDocsQuery();
     }
 
     /**
@@ -827,41 +852,40 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      * @return new {@link WildcardQuery} instance.
      */
     protected Query newWildcardQuery(Term wildcard) {
-	WildcardQuery query = new WildcardQuery(wildcard);
-	query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
-	return query;
+        WildcardQuery query = new WildcardQuery(wildcard);
+        query.setRewriteMethod(this.context.getMultiTermRewriteMethod());
+        return query;
     }
 
     /**
      * Returns {@code WildcardQuery} in accordance to the assigned configuration.
      * Can be overridden by extending classes, to provide custom handling for
      * wildcard queries, which may be necessary due to missing analyzer calls.
-     *
      * @param  field the currently handling field..
      * @param  termText term that contains one or more wild card characters (? or *), but is not simple prefix term.
      * @return new {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
     protected Query getWildcardQuery(String field, String termText) throws ParseException {
-	Context.Wildcard fieldWildcard = Context.Wildcard.find(file);
-	Context.Wildcard termWildcard = Context.Wildcard.find(termText);
+        Context.Wildcard fieldWildcard = Context.Wildcard.find(file);
+        Context.Wildcard termWildcard = Context.Wildcard.find(termText);
 
-	if (fieldWildcard == Context.Wildcard.ANY_STRING && termWildcard == Context.Wildcard.ANY_STRING)) {
-	    return this.newMatchAllDocsQuery();
-	}
+        if (fieldWildcard == Context.Wildcard.ANY_STRING && termWildcard == Context.Wildcard.ANY_STRING)) {
+            return this.newMatchAllDocsQuery();
+        }
 
-        if (!allowLeadingWildcard
-	    && (termText.startsWith(Context.Wildcard.ANY_STRING.toString())
-		|| termText.startsWith(Context.Wildcard.ANY_CHARACTER.toString()))) {
-	    throw new ParseException("'*' or '?' not allowed as first character in WildcardQuery");
-	}
+        if (!this.context.getAllowLeadingWildcard()
+            && (termText.startsWith(Context.Wildcard.ANY_STRING.toString())
+                || termText.startsWith(Context.Wildcard.ANY_CHARACTER.toString()))) {
+            throw new ParseException("'*' or '?' not allowed as first character in WildcardQuery");
+        }
 
         if (this.context.getLowercaseExpandedTerms()) {
-	    termText = termText.toLowerCase(this.context.getLocale());
-	}
+            termText = termText.toLowerCase(this.context.getLocale());
+        }
 
-	Term term = new Term(field, termText);
-	return this.newWildcardQuery(term);
+        Term term = new Term(field, termText);
+        return this.newWildcardQuery(term);
     }
 
     /**
@@ -923,15 +947,15 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
             this.buffer.reset();
         }
 
-	// Delegates {@code TokenStream}'s method.
-	public void resetTokenStream() throws IOException {
-	    this.tokenStream.reset();
-	}
+        // Delegates {@code TokenStream}'s method.
+        public void resetTokenStream() throws IOException {
+            this.tokenStream.reset();
+        }
 
-	// Delegates {@code TokenStream}'s method.
-	public void endTokenStream() throws IOException {
-	    this.tokenStream.end();
-	}
+        // Delegates {@code TokenStream}'s method.
+        public void endTokenStream() throws IOException {
+            this.tokenStream.end();
+        }
 
         // Delegates {@code CachingTokenFilter}'s method.
         public boolean incrementToken() throws IOException {
@@ -973,23 +997,23 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler {
      */
     protected BytesRef analyzeAzSingleMultiTerm(String field, String queryPart, Analyzer analyzer) {
         if (analyzer == null) {
-	    analyzer = this.getAnalyzer();
-	}
+            analyzer = this.getAnalyzer();
+        }
         TokenStream source = null;
-	TokenStreamHandler handler = null;
+        TokenStreamHandler handler = null;
 
         try {
             source = analyzer.tokenStream(field, queryPart);
-	    handler = new TokenStreamHandler(source);
+            handler = new TokenStreamHandler(source);
             BytesRef bytes = handler.getBytesRef();
 
             if (!handler.incrementToken()) {
                 throw new IllegalArgumentException("analyzer returned no terms for multiTerm term: " + queryPart);
-	    }
+            }
             handler.fillBytesRef();
             if (handler.incrementToken()) {
                 throw new IllegalArgumentException("analyzer returned too many terms for multiTerm term: " + queryPart);
-	    }
+            }
             handler.endTokenStream();
             return BytesRef.deepCopyOf(bytes);
         } catch (IOException cause) {
