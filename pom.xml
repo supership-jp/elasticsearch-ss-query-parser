@@ -87,6 +87,9 @@
 	<groupId>org.antlr</groupId>
 	<artifactId>antlr4-maven-plugin</artifactId>
 	<version>${antlr.version}</version>
+	<configuration>
+	  <arguments>-no-listener -visitor</arguments>
+	</configuration>
 	<executions>
 	  <execution>
 	    <id>antlr4</id>
