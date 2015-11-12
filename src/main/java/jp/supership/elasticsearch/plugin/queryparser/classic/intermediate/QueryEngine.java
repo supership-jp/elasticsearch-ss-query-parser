@@ -90,8 +90,8 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @param field    the default field for query terms.
      * @param analyzer the analyzer which is applied for the given query..
      */
-    public void init(Version version, String field, Analyzer analyzer) {
-        this.init(field, analyzer);
+    public void initialize(Version version, String field, Analyzer analyzer) {
+        this.initialize(field, analyzer);
         if (version.onOrAfter(Version.LUCENE_3_1) == false) {
             this.setPhraseQueryAutoGeneration(true);
         }
@@ -102,7 +102,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @param field    the default field for query terms.
      * @param analyzer the analyzer which is applied for the given query..
      */
-    public void init(String field, Analyzer analyzer) {
+    public void initialize(String field, Analyzer analyzer) {
         this.setAnalyzer(analyzer);
         this.setDefaultField(field);
         this.setPhraseQueryAutoGeneration(false);
@@ -113,7 +113,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @param  queryText the query string to be parsed.
      * @throws ParseException if the parsing fails.
      */
-    public Query eval(String queryText) throws ParseException {
+    public Query evaluate(String queryText) throws ParseException {
         //this.fetch(new FastCharStream(new StringReader(queryText)));
         try {
             Query instanciated = this.handle(this.getDefaultField());

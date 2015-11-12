@@ -4,14 +4,11 @@
 package jp.supership.elasticsearch.plugin.queryparser.classic;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.io.InputStream;
+import org.apache.lucene.analysis.Token;
 import org.apache.lucene.search.Query;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryBaseVisitor;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryEngine;
@@ -22,7 +19,10 @@ import jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryE
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class DSQHandler extends QueryBaseVisitor<Query> {
+public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler {
+    /** Holds query engine which is reponsible for parsing raw query strings. */
+    private QueryEngine engine;
+
     /**
      * {@inheritDoc}
      */
@@ -69,5 +69,29 @@ public class DSQHandler extends QueryBaseVisitor<Query> {
     @Override
     public Query visitSubQueryTerm(QueryParser.SubQueryTermContext context) {
 	return this.visitChildren(context);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query handle(String defaultField) throws HandleException {
+	return this.engine.handle(defaultField);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query dispatch(String field, Token term, Token fuzzySlop, QueryHandler.Context context) throws HandleException {
+	return this.engine.dispatch(field, term, fuzzySlop, context);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void fetch(InputStream input) {
+	this.engine.fetch(input);
     }
 }
