@@ -20,7 +20,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for Supership, inc.
  *
  * @author Shingo OKAWA
- * @since  08/11/2015
+ * @since  1.0
  */
 public class DefaultQueryParserContext implements QueryParserContext {
     /** Holds default analyzer. */

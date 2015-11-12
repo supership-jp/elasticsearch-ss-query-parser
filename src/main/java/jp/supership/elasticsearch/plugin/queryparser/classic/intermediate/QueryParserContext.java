@@ -11,7 +11,7 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
  * Lucene's {@code CommonQueryParserConfiguration} API and some additional context.
  *
  * @author Shingo OKAWA
- * @since  08/11/2015
+ * @since  1.0
  */
 public interface QueryParserContext extends CommonQueryParserConfiguration {
     /**

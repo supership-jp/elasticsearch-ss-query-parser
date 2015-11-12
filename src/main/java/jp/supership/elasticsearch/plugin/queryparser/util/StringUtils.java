@@ -9,7 +9,7 @@ import java.util.IllegalFormatCodePointException;
  * A collection of operations that relates to {@code String} instances.
  *
  * @author Shingo OKAWA
- * @since  09/11/2015
+ * @since  1.0
  */
 public final class StringUtils {
     /** Holds unicode START OF HEADING code point. */

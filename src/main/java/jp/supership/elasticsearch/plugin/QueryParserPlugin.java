@@ -11,7 +11,7 @@ import jp.supership.elasticsearch.plugin.queryparser.DSQParser;
  * A general-purpose query parser implementation for Supership alianses.
  *
  * @author Shingo OKAWA
- * @since  04/11/2015
+ * @since  1.0
  */
 public class QueryParserPlugin extends AbstractPlugin {
     /**

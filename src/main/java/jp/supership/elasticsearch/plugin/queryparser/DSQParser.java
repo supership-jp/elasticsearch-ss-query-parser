@@ -9,7 +9,7 @@ import org.elasticsearch.index.query.QueryParser;
  * A general-purpose query parser implementation for Supership alianses.
  *
  * @author Shingo OKAWA
- * @since  10/11/2015
+ * @since  1.0
  */
 public interface DSQParser extends QueryParser {
 //public class DSQParser implements QueryParser {

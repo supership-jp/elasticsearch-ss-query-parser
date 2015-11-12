@@ -42,6 +42,8 @@ import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Operator;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Modifier;
@@ -54,7 +56,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * constructed in accordance to the given ANTLR grammar.
  *
  * @author Shingo OKAWA
- * @since  08/11/2015
+ * @since  1.0
  */
 public abstract class AbstractQueryParser extends QueryBuilder implements QueryHandler, QueryParserContext {
     /**
@@ -69,7 +71,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     /**
      * Constructor.
      */
-    protected QueryParser() {
+    protected AbstractQueryParser() {
         super(null);
         this.context = new DefaultQueryParserContext();
     }
@@ -77,7 +79,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     /**
      * Constructor.
      */
-    protected QueryParser(QueryParserContext context) {
+    protected AbstractQueryParser(QueryParserContext context) {
         super(null);
         this.context = context;
     }
@@ -111,7 +113,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
      * @param  queryText the query string to be parsed.
      * @throws ParseException if the parsing fails.
      */
-    public Query parse(String queryText) throws ParseException {
+    public Query parse(String queryText) throws ParseException, HandleException {
         //this.fetch(new FastCharStream(new StringReader(queryText)));
         try {
             Query instanciated = this.handle(this.getDefaultField());
