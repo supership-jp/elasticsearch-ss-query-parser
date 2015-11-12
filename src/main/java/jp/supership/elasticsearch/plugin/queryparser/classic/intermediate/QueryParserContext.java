@@ -43,7 +43,7 @@ public interface QueryParserContext extends CommonQueryParserConfiguration {
             return Operator.NONE;
         }
 
-        /** @inheritDoc */
+        /** {@inheritDoc} */
         @Override
         public String toString() {
             return this.expression;
@@ -79,7 +79,7 @@ public interface QueryParserContext extends CommonQueryParserConfiguration {
             return Modifier.NONE;
         }
 
-        /** @inheritDoc */
+        /** {@inheritDoc} */
         @Override
         public String toString() {
             return this.expression;
@@ -115,7 +115,7 @@ public interface QueryParserContext extends CommonQueryParserConfiguration {
             return Conjunction.NONE;
         }
 
-        /** @inheritDoc */
+        /** {@inheritDoc} */
         @Override
         public String toString() {
             return this.expression;
@@ -151,7 +151,7 @@ public interface QueryParserContext extends CommonQueryParserConfiguration {
             return Wildcard.NONE;
         }
 
-        /** @inheritDoc */
+        /** {@inheritDoc} */
         @Override
         public String toString() {
             return this.expression;

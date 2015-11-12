@@ -76,7 +76,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     protected TimeZone timeZone = TimeZone.getDefault();
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public Analyzer getAnalyzer() {
@@ -84,7 +84,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDefaultField(String defaultField) {
@@ -92,7 +92,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public String getDefaultField() {
@@ -100,7 +100,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDefaultOperator(Operator defaultOperator) {
@@ -108,7 +108,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public Operator getDefaultOperator() {
@@ -116,7 +116,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
@@ -124,7 +124,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getPhraseQueryAutoGeneration() {
@@ -132,7 +132,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setEnablePositionIncrements(boolean positionIncrements) {
@@ -140,7 +140,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getEnablePositionIncrements() {
@@ -148,7 +148,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setFuzzyMinSim(float fuzzyMinSim) {
@@ -156,7 +156,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public float getFuzzyMinSim() {
@@ -164,7 +164,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
@@ -172,7 +172,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public int getFuzzyPrefixLength() {
@@ -180,7 +180,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setPhraseSlop(int phraseSlop) {
@@ -188,7 +188,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public int getPhraseSlop() {
@@ -196,7 +196,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
@@ -204,7 +204,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getAllowLeadingWildcard() {
@@ -212,7 +212,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
@@ -220,7 +220,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getLowercaseExpandedTerms() {
@@ -228,7 +228,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
@@ -236,7 +236,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
@@ -244,7 +244,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setLocale(Locale locale) {
@@ -252,7 +252,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public Locale getLocale() {
@@ -260,7 +260,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setTimeZone(TimeZone timeZone) {
@@ -268,7 +268,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public TimeZone getTimeZone() {
@@ -276,7 +276,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDateResolution(DateTools.Resolution dateResolution) {
@@ -284,7 +284,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDateResolution(String field, DateTools.Resolution resolution) {
@@ -298,7 +298,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public DateTools.Resolution getDateResolution(String field) {
@@ -316,7 +316,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setRangeTermAnalysis(boolean value) {
@@ -324,7 +324,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getRangeTermAnalysis() {
@@ -332,7 +332,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setMaxDeterminizedStates(int max) {
@@ -340,7 +340,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public int getMaxDeterminizedStates() {

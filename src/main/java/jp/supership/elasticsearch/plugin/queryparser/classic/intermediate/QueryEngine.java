@@ -58,7 +58,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class AbstractQueryParser extends QueryBuilder implements QueryHandler, QueryParserContext {
+public abstract class QueryEngine extends QueryBuilder implements QueryHandler, QueryParserContext {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
@@ -71,7 +71,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     /**
      * Constructor.
      */
-    protected AbstractQueryParser() {
+    protected QueryEngine() {
         super(null);
         this.context = new DefaultQueryParserContext();
     }
@@ -79,7 +79,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     /**
      * Constructor.
      */
-    protected AbstractQueryParser(QueryParserContext context) {
+    protected QueryEngine(QueryParserContext context) {
         super(null);
         this.context = context;
     }
@@ -113,7 +113,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
      * @param  queryText the query string to be parsed.
      * @throws ParseException if the parsing fails.
      */
-    public Query parse(String queryText) throws ParseException {
+    public Query eval(String queryText) throws ParseException {
         //this.fetch(new FastCharStream(new StringReader(queryText)));
         try {
             Query instanciated = this.handle(this.getDefaultField());
@@ -847,7 +847,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public Analyzer getAnalyzer() {
@@ -855,7 +855,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDefaultField(String defaultField) {
@@ -863,7 +863,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public String getDefaultField() {
@@ -871,7 +871,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDefaultOperator(Operator defaultOperator) {
@@ -879,7 +879,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public Operator getDefaultOperator() {
@@ -887,7 +887,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
@@ -895,7 +895,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getPhraseQueryAutoGeneration() {
@@ -903,7 +903,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setEnablePositionIncrements(boolean positionIncrements) {
@@ -911,7 +911,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getEnablePositionIncrements() {
@@ -919,7 +919,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setFuzzyMinSim(float fuzzyMinSim) {
@@ -927,7 +927,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public float getFuzzyMinSim() {
@@ -935,7 +935,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
@@ -943,7 +943,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public int getFuzzyPrefixLength() {
@@ -951,7 +951,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setPhraseSlop(int phraseSlop) {
@@ -959,7 +959,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public int getPhraseSlop() {
@@ -967,7 +967,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
@@ -975,7 +975,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getAllowLeadingWildcard() {
@@ -983,7 +983,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
@@ -991,7 +991,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getLowercaseExpandedTerms() {
@@ -999,7 +999,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
@@ -1007,7 +1007,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
@@ -1015,7 +1015,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setLocale(Locale locale) {
@@ -1023,7 +1023,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public Locale getLocale() {
@@ -1031,7 +1031,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setTimeZone(TimeZone timeZone) {
@@ -1039,7 +1039,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public TimeZone getTimeZone() {
@@ -1047,7 +1047,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDateResolution(DateTools.Resolution dateResolution) {
@@ -1055,7 +1055,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setDateResolution(String field, DateTools.Resolution resolution) {
@@ -1063,7 +1063,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public DateTools.Resolution getDateResolution(String field) {
@@ -1071,7 +1071,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setRangeTermAnalysis(boolean value) {
@@ -1079,7 +1079,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public boolean getRangeTermAnalysis() {
@@ -1087,7 +1087,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public void setMaxDeterminizedStates(int max) {
@@ -1095,7 +1095,7 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public int getMaxDeterminizedStates() {
