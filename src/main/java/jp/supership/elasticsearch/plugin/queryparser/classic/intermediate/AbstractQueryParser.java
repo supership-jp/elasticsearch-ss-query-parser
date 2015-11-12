@@ -56,7 +56,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate
  * @author Shingo OKAWA
  * @since  08/11/2015
  */
-public abstract class QueryParser extends QueryBuilder implements QueryHandler, ContextizedQueryParser {
+public abstract class AbstractQueryParser extends QueryBuilder implements QueryHandler, QueryParserContext {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
@@ -202,12 +202,42 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler, 
     }
 
     /**
+     * Returns {@code FieldQuery} in accordance to the assigned configuration.
+     * @param  field the currently handling field.
+     * @param  queryText the currently handling raw query string.
+     * @param  quoted this value must be ser true if the handling query is considered to be quoted.
+     * @return the resulting {@code Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    protected Query getFieldQuery(String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
+        return this.newFieldQuery(this.getAnalyzer(), field, queryText, quoted, useDisMax);
+    }
+
+    /**
      * Base implementation delegates to {@link #getFieldQuery(String, String, boolean)}.
      * This method may be overridden, for example, to return a SpanNearQuery instead of a PhraseQuery.
      * @exception org.apache.lucene.queryparser.classic.ParseException throw in overridden method to disallow
      */
     protected Query getFieldQuery(String field, String queryText, int phraseSlop) throws ParseException {
         Query query = this.getFieldQuery(field, queryText, true);
+
+        if (query instanceof PhraseQuery) {
+            ((PhraseQuery) query).setSlop(phraseSlop);
+        }
+        if (query instanceof MultiPhraseQuery) {
+            ((MultiPhraseQuery) query).setSlop(phraseSlop);
+        }
+
+        return query;
+    }
+
+    /**
+     * Base implementation delegates to {@link #getFieldQuery(String, String, boolean)}.
+     * This method may be overridden, for example, to return a SpanNearQuery instead of a PhraseQuery.
+     * @exception org.apache.lucene.queryparser.classic.ParseException throw in overridden method to disallow
+     */
+    protected Query getFieldQuery(String field, String queryText, int phraseSlop, boolean useDisMax) throws ParseException {
+        Query query = this.getFieldQuery(field, queryText, true, useDisMax);
 
         if (query instanceof PhraseQuery) {
             ((PhraseQuery) query).setSlop(phraseSlop);
@@ -229,6 +259,20 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler, 
      * @throws ParseException if the parsing fails.
      */
     protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
+        return this.newFieldQuery(analyzer, field, queryText, quoted, true);
+    }
+
+    /**
+     * Returns {@code FieldQuery} in accordance to the assigned configuration.
+     * @param  analyzer the analyzer instance which is responsible for the raw query analysis.
+     * @param  field the currently handling field.
+     * @param  queryText the currently handling raw query string.
+     * @param  quoted this value must be ser true if the handling query is considered to be quoted.
+     * @param  useDisMax true if the yet-another disjunction-max-conjugation query construction is used..
+     * @return the resulting {@code Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
         BooleanClause.Occur occurence = this.getDefaultOperator() == Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
 
         String analyzerName = null;
@@ -257,7 +301,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler, 
             quoted = quoted || this.getPhraseQueryAutoGeneration();
         }
 
-        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.getPhraseSlop(), true);
+        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.getPhraseSlop(), useDisMax);
     }
 
     // TODO: FIX THIS MECHANISM TO BE APPROPRIATE FOR THE ANTLR-BASED IMPLEMENTATION.
@@ -269,12 +313,12 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler, 
      * @param queryText the text to be passed to the analysis chain.
      * @param quoted true if phrases should be generated when terms occur at more than one position.
      * @param phraseSlop slop factor for phrase/multiphrase queries.
-     * @param yetAnother true if the yet-another implementation is used.
+     * @param useDisMax true if the yet-another disjunction-max-conjugation query construction is used.
      */
-    protected Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop, boolean yetAnother) {
-	if (!yetAnother) {
-	    return this.createFieldQuery(analyzer, operator, field, queryText, quoted, phraseSlop);
-	}
+    protected Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop, boolean useDisMax) {
+        if (!useDisMax) {
+            return this.createFieldQuery(analyzer, operator, field, queryText, quoted, phraseSlop);
+        }
 
         assert operator == BooleanClause.Occur.SHOULD || operator == BooleanClause.Occur.MUST;
         TokenStream source = null;
@@ -805,7 +849,7 @@ public abstract class QueryParser extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public Analyzer getAnalyzer() {
-	return this.context.getAnalyzer();
+        return this.context.getAnalyzer();
     }
 
     /**
