@@ -20,11 +20,11 @@ public interface QueryHandler {
      */
     public class Context {
 	/** Holds currently handling field name. */
-	public String field = null;
+	public String field = "";
 	/** Holds currently handling term token. */
-	public String term = null;
+	public String term = "";
 	/** Holds currently handling fuzzy slop term token. */
-	public String fuzzySlop = null;
+	public String fuzzySlop = "";
 	/** true if the process must be done as handling prefix query. */
 	public boolean prefix = false;
 	/** true if the process must be done as handling wildcard query. */
