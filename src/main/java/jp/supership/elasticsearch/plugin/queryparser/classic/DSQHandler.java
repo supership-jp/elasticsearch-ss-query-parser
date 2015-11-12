@@ -5,11 +5,15 @@ package jp.supership.elasticsearch.plugin.queryparser.classic;
 
 import java.io.IOException;
 import java.io.InputStream;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import jp.supership.elasticsearch.plugin.queryparser.antlr4.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr4.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryBaseVisitor;
+import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryEngine;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
@@ -24,16 +28,10 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific
      * Query.
-     *
-     * @author Shingo OKAWA
-     * @since  1.0
      */
     private class Engine extends QueryEngine {
 	/** Holds query engine which is reponsible for parsing raw query strings. */
 	private QueryHandler handler;
-
-	/** Holds query engine which is reponsible for parsing raw query strings. */
-	private InputStream input;
 
 	/**
 	 * {@inheritDoc}
@@ -96,12 +94,15 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
 	 */
 	@Override
 	public void fetch(InputStream input) {
-	    this.input = input;
+	    this.handler.fetch(input);
 	}
     }
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
     private QueryEngine engine;
+
+    /** Holds query engine which is reponsible for parsing raw query strings. */
+    private InputStream input;
 
     /**
      * {@inheritDoc}
@@ -156,7 +157,16 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query handle(String defaultField) throws HandleException {
-	return this.visitQuery(null);
+	try {
+	    ANTLRInputStream input = new ANTLRInputStream(this.input);
+	    QueryLexer lexer = new QueryLexer(input);
+	    CommonTokenStream tokens = new CommonTokenStream(lexer);
+	    QueryParser parser = new QueryParser(tokens);
+	    ParseTree tree = parser.query();
+	    return this.visit(tree);
+	} catch (Exception cause) {
+	    throw new HandleException(cause);
+	}
     }
 
     /**
@@ -172,6 +182,6 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public void fetch(InputStream input) {
-	this.engine.fetch(input);
+	this.input = input;
     }
 }
