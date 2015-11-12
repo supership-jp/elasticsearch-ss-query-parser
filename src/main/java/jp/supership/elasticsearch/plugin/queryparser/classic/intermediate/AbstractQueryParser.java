@@ -113,12 +113,12 @@ public abstract class AbstractQueryParser extends QueryBuilder implements QueryH
      * @param  queryText the query string to be parsed.
      * @throws ParseException if the parsing fails.
      */
-    public Query parse(String queryText) throws ParseException, HandleException {
+    public Query parse(String queryText) throws ParseException {
         //this.fetch(new FastCharStream(new StringReader(queryText)));
         try {
             Query instanciated = this.handle(this.getDefaultField());
             return instanciated != null ? instanciated : this.newBooleanQuery(false);
-        } catch (ParseException cause) {
+        } catch (HandleException cause) {
             ParseException exception = new ParseException("could not parse '" + queryText + "': " + cause.getMessage());
             exception.initCause(cause);
             throw exception;

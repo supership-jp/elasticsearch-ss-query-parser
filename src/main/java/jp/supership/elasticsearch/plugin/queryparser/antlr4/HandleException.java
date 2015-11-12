@@ -14,7 +14,7 @@ public final class HandleException extends RuntimeException {
      * Constructs a new handler exception with the specified message.
      * @param message the exception detail message.
      */
-    public HandlerException(String message) {
+    public HandleException(String message) {
 	super(message);
     }
 
@@ -22,7 +22,7 @@ public final class HandleException extends RuntimeException {
      * Constructs a new handler exception with the specified cause.
      * @param cause the causial exception to be passed.
      */
-    public HandlerException(Throwable cause) {
+    public HandleException(Throwable cause) {
 	super(cause);
     }
 
@@ -31,7 +31,7 @@ public final class HandleException extends RuntimeException {
      * @param message the exception detail message.
      * @param cause the causial exception to be passde.
      */
-    public HandlerException(String message, Throwable cause) {
+    public HandleException(String message, Throwable cause) {
 	super(message, cause);
     }
 }
