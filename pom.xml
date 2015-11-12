@@ -87,9 +87,6 @@
 	<groupId>org.antlr</groupId>
 	<artifactId>antlr4-maven-plugin</artifactId>
 	<version>${antlr.version}</version>
-	<configuration>
-	  <arguments>-no-listener -visitor</arguments>
-	</configuration>
 	<executions>
 	  <execution>
 	    <id>antlr4</id>
@@ -98,6 +95,10 @@
 	    </goals>
 	    <phase>generate-sources</phase>
 	    <configuration>
+	      <arguments>
+		<argument>-no-listener</argument>
+		<argument>-visitor</argument>
+	      </arguments>
               <outputDirectory>${basedir}/src/main/java</outputDirectory>
 	      <libDirectory>${basedir}/src/main/antlr4/jp/supership/elasticsearch/plugin/queryparser/dsl</libDirectory>
             </configuration>
