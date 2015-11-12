@@ -4,7 +4,6 @@
 package jp.supership.elasticsearch.plugin.queryparser.antlr4;
 
 import java.io.InputStream;
-import org.apache.lucene.analysis.Token;
 import org.apache.lucene.search.Query;
 
 /**
@@ -20,10 +19,19 @@ public interface QueryHandler {
      * {@code Query} will be instanciated.
      */
     public class Context {
-	public boolean fuzzySlop = false;
+	/** Holds currently handling field name. */
+	public String field = null;
+	/** Holds currently handling term token. */
+	public String term = null;
+	/** Holds currently handling fuzzy slop term token. */
+	public String fuzzySlop = null;
+	/** true if the process must be done as handling prefix query. */
 	public boolean prefix = false;
+	/** true if the process must be done as handling wildcard query. */
 	public boolean wildcard = false;
+	/** true if the process must be done as handling fuzzy query. */
 	public boolean fuzzy = false;
+	/** true if the process must be done as handling regexp query. */
 	public boolean regexp = false;
     }
 
@@ -36,13 +44,10 @@ public interface QueryHandler {
 
     /**
      * Dispatches appropriate query-builder in accordance to the given context.
-     * @param  field the default field for query terms
-     * @param  term the currently handling term token.
-     * @param  fuzzySlop the currently handling fuzzy slop term token.
      * @param  context the currently handling context.
      * @throws HandleException if the handling fails.
      */
-    public Query dispatch(String field, Token term, Token fuzzySlop, QueryHandler.Context context) throws HandleException;
+    public Query dispatch(QueryHandler.Context context) throws HandleException;
 
     /**
      * Fetches the given {@link java.io.InputStream} to this handler.

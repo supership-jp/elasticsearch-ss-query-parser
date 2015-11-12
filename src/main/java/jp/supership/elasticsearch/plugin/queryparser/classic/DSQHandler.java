@@ -83,8 +83,8 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      * {@inheritDoc}
      */
     @Override
-    public Query dispatch(String field, Token term, Token fuzzySlop, QueryHandler.Context context) throws HandleException {
-	return this.engine.dispatch(field, term, fuzzySlop, context);
+    public Query dispatch(QueryHandler.Context context) throws HandleException {
+	return this.engine.dispatch(context);
     }
 
     /**
