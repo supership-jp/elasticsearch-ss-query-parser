@@ -26,76 +26,79 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  */
 public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler {
     /**
-     * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific
-     * Query.
+     * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
     private class Engine extends QueryEngine {
-	/** Holds query engine which is reponsible for parsing raw query strings. */
-	private QueryHandler handler;
+        /** Holds query engine which is reponsible for parsing raw query strings. */
+        private QueryHandler handler;
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Query handle(String defaultField) throws HandleException {
-	    return this.handler.handle(defaultField);
-	}
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Query handle(String defaultField) throws HandleException {
+            return this.handler.handle(defaultField);
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Query dispatch(QueryHandler.Context context) throws HandleException {
-	    Query query;
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public Query dispatch(QueryHandler.Context context) throws HandleException {
+            Query query;
 
-	    try {
-		if (context.wildcard) {
-		    query = this.getWildcardQuery(context.field, context.term);
-		} else if (context.prefix) {
-		    query = this.getPrefixQuery(context.field, StringUtils.discardEscapeChar(context.term.substring(0, context.term.length() - 1)));
-		} else if (context.regexp) {
-		    query = this.getRegexpQuery(context.field, context.term.substring(1, context.term.length() - 1));
-		} else if (context.fuzzy) {
-		    query = this.dispatchFuzzyQuery(context.field, context.fuzzySlop, context.term);
-		} else {
-		    query = this.getFieldQuery(context.field, context.term, false);
-		}
-	    } catch (ParseException cause) {
-		throw new HandleException(cause);
-	    }
+            try {
+                if (context.wildcard) {
+                    query = this.getWildcardQuery(context.field, context.term);
+                } else if (context.prefix) {
+                    query = this.getPrefixQuery(context.field, StringUtils.discardEscapeChar(context.term.substring(0, context.term.length() - 1)));
+                } else if (context.regexp) {
+                    query = this.getRegexpQuery(context.field, context.term.substring(1, context.term.length() - 1));
+                } else if (context.fuzzy) {
+                    query = this.dispatchFuzzyQuery(context.field, context.fuzzySlop, context.term);
+                } else {
+                    query = this.getFieldQuery(context.field, context.term, false);
+                }
+            } catch (ParseException cause) {
+                throw new HandleException(cause);
+            }
 
-	    return query;
-	}
+            return query;
+        }
 
-	/**
-	 *
-	 */
-	protected Query dispatchFuzzyQuery(String field, String fuzzySlop, String term) throws ParseException {
-	    float fuzzyMinSim = this.getFuzzyMinSim();
+        /**
+         * Dispatches 
+	 * @param  field the currently handling field.
+	 * @param  fuzzySlop the currently handling fuzzly slop term.
+	 * @param  term  the currently handling term.
+	 * @throws ParseException if the parsing fails.
+         */
+        protected Query dispatchFuzzyQuery(String field, String fuzzySlop, String term) throws ParseException {
+            float fuzzyMinSim = this.getFuzzyMinSim();
 
-	    try {
-		// TODO: bit legacy code, so depends on the JRE version, fix this code.
-		fuzzyMinSim = Float.valueOf(fuzzySlop.substring(1)).floatValue();
-	    } catch (Exception ignorance) {
-		// DO NOTHING, the value has its default, so this is safe.
-	    }
+            try {
+                // TODO: bit legacy code, so depends on the JRE version, fix this code.
+                fuzzyMinSim = Float.valueOf(fuzzySlop.substring(1)).floatValue();
+            } catch (Exception ignorance) {
+                // DO NOTHING, the value has its default, so this is safe.
+            }
 
-	    if (fuzzyMinSim < 0.0f) {
-		throw new ParseException("minimum similarity for a FuzzyQuery must be between 0.0f and 1.0f.");
-	    } else if (fuzzyMinSim >= 1.0f && fuzzyMinSim != (int) fuzzyMinSim) {
-		throw new ParseException("fractional edit distances are not allowed.");
-	    }
+            if (fuzzyMinSim < 0.0f) {
+                throw new ParseException("minimum similarity for a FuzzyQuery must be between 0.0f and 1.0f.");
+            } else if (fuzzyMinSim >= 1.0f && fuzzyMinSim != (int) fuzzyMinSim) {
+                throw new ParseException("fractional edit distances are not allowed.");
+            }
 
-	    return this.getFuzzyQuery(field, term, fuzzyMinSim);
-	}
+            return this.getFuzzyQuery(field, term, fuzzyMinSim);
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void fetch(InputStream input) {
-	    this.handler.fetch(input);
-	}
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void fetch(InputStream input) {
+            this.handler.fetch(input);
+        }
     }
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
@@ -109,7 +112,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitQuery(QueryParser.QueryContext context) {
-	return this.visitChildren(context);
+        return this.visitChildren(context);
     }
 
     /**
@@ -117,7 +120,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitClause(QueryParser.ClauseContext context) {
-	return this.visitChildren(context);
+        return this.visitChildren(context);
     }
 
     /**
@@ -125,7 +128,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitExpression(QueryParser.ExpressionContext context) {
-	return this.visitChildren(context);
+        return this.visitChildren(context);
     }
 
     /**
@@ -133,7 +136,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitStringTerm(QueryParser.StringTermContext context) {
-	return this.visitChildren(context);
+        return this.visitChildren(context);
     }
 
     /**
@@ -141,7 +144,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitNumberTerm(QueryParser.NumberTermContext context) {
-	return this.visitChildren(context);
+        return this.visitChildren(context);
     }
 
     /**
@@ -149,7 +152,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitSubQueryTerm(QueryParser.SubQueryTermContext context) {
-	return this.visitChildren(context);
+        return this.visitChildren(context);
     }
 
     /**
@@ -157,16 +160,16 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query handle(String defaultField) throws HandleException {
-	try {
-	    ANTLRInputStream input = new ANTLRInputStream(this.input);
-	    QueryLexer lexer = new QueryLexer(input);
-	    CommonTokenStream tokens = new CommonTokenStream(lexer);
-	    QueryParser parser = new QueryParser(tokens);
-	    ParseTree tree = parser.query();
-	    return this.visit(tree);
-	} catch (Exception cause) {
-	    throw new HandleException(cause);
-	}
+        try {
+            ANTLRInputStream input = new ANTLRInputStream(this.input);
+            QueryLexer lexer = new QueryLexer(input);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            QueryParser parser = new QueryParser(tokens);
+            ParseTree tree = parser.query();
+            return this.visit(tree);
+        } catch (Exception cause) {
+            throw new HandleException(cause);
+        }
     }
 
     /**
@@ -174,7 +177,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query dispatch(QueryHandler.Context context) throws HandleException {
-	return this.engine.dispatch(context);
+        return this.engine.dispatch(context);
     }
 
     /**
@@ -182,6 +185,6 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public void fetch(InputStream input) {
-	this.input = input;
+        this.input = input;
     }
 }
