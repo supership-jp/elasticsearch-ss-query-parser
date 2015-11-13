@@ -275,21 +275,21 @@ public class QueryParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class StringTermContext extends TermContext {
-		public TerminalNode STRING() { return getToken(QueryParser.STRING, 0); }
-		public StringTermContext(TermContext ctx) { copyFrom(ctx); }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof QueryVisitor ) return ((QueryVisitor<? extends T>)visitor).visitStringTerm(this);
-			else return visitor.visitChildren(this);
-		}
-	}
 	public static class NumberTermContext extends TermContext {
 		public TerminalNode NUMBER() { return getToken(QueryParser.NUMBER, 0); }
 		public NumberTermContext(TermContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
 			if ( visitor instanceof QueryVisitor ) return ((QueryVisitor<? extends T>)visitor).visitNumberTerm(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class StringTermContext extends TermContext {
+		public TerminalNode STRING() { return getToken(QueryParser.STRING, 0); }
+		public StringTermContext(TermContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof QueryVisitor ) return ((QueryVisitor<? extends T>)visitor).visitStringTerm(this);
 			else return visitor.visitChildren(this);
 		}
 	}

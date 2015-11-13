@@ -5,13 +5,16 @@ package jp.supership.elasticsearch.plugin.queryparser.classic;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryBaseVisitor;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryParser;
@@ -28,6 +31,18 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @since  1.0
  */
 public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler {
+    /**
+     * Represents domain specific query context, besides holding the query constructing settings
+     * this class is also responsible to maintain the currently constructing {@code Query} instance
+     * which will be handled with the {@code DSQHandler.Engine}.
+     */
+    private class Context extends QueryHandler.Context {
+	/** Holds currently constructing query. */
+	public Query query = null;
+	/** Holds constructing clauses. */
+	public List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+    }
+
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
@@ -104,6 +119,9 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
         }
     }
 
+    /** Holds this handler's context. */
+    private DSQHandler.Context context;
+
     /** Holds query engine which is reponsible for parsing raw query strings. */
     private QueryEngine engine;
 
@@ -115,7 +133,18 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitQuery(QueryParser.QueryContext context) {
-        return this.visitChildren(context);
+	while (context.clause() != null) {
+	    //	    visit(context.clause());
+	}
+	if (this.context.clauses.size() == 1 /*&& do something on the first query here*/) {
+	    return this.context.query; // must be the first query.
+	} else {
+	    try {
+		return this.engine.getBooleanQuery(this.context.clauses);
+	    } catch (Exception e) {
+		return null;
+	    }
+	}
     }
 
     /**

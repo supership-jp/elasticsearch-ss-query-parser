@@ -42,8 +42,8 @@ import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Operator;
 import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Modifier;
@@ -71,7 +71,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
     /**
      * Constructor.
      */
-    protected QueryEngine() {
+    public QueryEngine() {
         super(null);
         this.context = new DefaultQueryParserContext();
     }
@@ -79,7 +79,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
     /**
      * Constructor.
      */
-    protected QueryEngine(QueryParserContext context) {
+    public QueryEngine(QueryParserContext context) {
         super(null);
         this.context = context;
     }
@@ -140,7 +140,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @param midifier    the preceeding modifier which midifies the handling clause.
      * @param query       the currently handling query.
      */
-    protected void conjugate(List<BooleanClause> clauses, Conjunction conjunction, Modifier modifier, Query query) {
+    public void conjugate(List<BooleanClause> clauses, Conjunction conjunction, Modifier modifier, Query query) {
         boolean required;
         boolean prohibited;
 
@@ -199,7 +199,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return the resulting {@code Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
+    public Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
         return this.newFieldQuery(this.getAnalyzer(), field, queryText, quoted);
     }
 
@@ -211,7 +211,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return the resulting {@code Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getFieldQuery(String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
+    public Query getFieldQuery(String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
         return this.newFieldQuery(this.getAnalyzer(), field, queryText, quoted, useDisMax);
     }
 
@@ -220,7 +220,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * This method may be overridden, for example, to return a SpanNearQuery instead of a PhraseQuery.
      * @exception org.apache.lucene.queryparser.classic.ParseException throw in overridden method to disallow
      */
-    protected Query getFieldQuery(String field, String queryText, int phraseSlop) throws ParseException {
+    public Query getFieldQuery(String field, String queryText, int phraseSlop) throws ParseException {
         Query query = this.getFieldQuery(field, queryText, true);
 
         if (query instanceof PhraseQuery) {
@@ -238,7 +238,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * This method may be overridden, for example, to return a SpanNearQuery instead of a PhraseQuery.
      * @exception org.apache.lucene.queryparser.classic.ParseException throw in overridden method to disallow
      */
-    protected Query getFieldQuery(String field, String queryText, int phraseSlop, boolean useDisMax) throws ParseException {
+    public Query getFieldQuery(String field, String queryText, int phraseSlop, boolean useDisMax) throws ParseException {
         Query query = this.getFieldQuery(field, queryText, true, useDisMax);
 
         if (query instanceof PhraseQuery) {
@@ -472,7 +472,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return new {@link TermRangeQuery} instance
      * @throws ParseException if the parsing fails.
      */
-    protected Query getRangeQuery(String field, String infinimum, String supremum, boolean leftInclusive, boolean rightInclusive) throws ParseException {
+    public Query getRangeQuery(String field, String infinimum, String supremum, boolean leftInclusive, boolean rightInclusive) throws ParseException {
         if (this.getLowercaseExpandedTerms()) {
             infinimum = infinimum == null ? null : infinimum.toLowerCase(this.getLocale());
             supremum = supremum == null ? null : supremum.toLowerCase(this.getLocale());
@@ -547,7 +547,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return the Resulting {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException {
+    public Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException {
         return this.getBooleanQuery(clauses, false);
     }
 
@@ -559,7 +559,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return the Resulting {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getBooleanQuery(List<BooleanClause> clauses, boolean disableCoord) throws ParseException {
+    public Query getBooleanQuery(List<BooleanClause> clauses, boolean disableCoord) throws ParseException {
         if (clauses.size() == 0) {
             // all clause words were filtered away by the analyzer.
             return null;
@@ -591,7 +591,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return new {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getPrefixQuery(String field, String termText) throws ParseException {
+    public Query getPrefixQuery(String field, String termText) throws ParseException {
         if (!this.getAllowLeadingWildcard() && termText.startsWith(Wildcard.ANY_STRING.toString()))
             throw new ParseException("'*' not allowed as first character in PrefixQuery");
         if (this.getLowercaseExpandedTerms()) {
@@ -621,7 +621,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return new {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getRegexpQuery(String field, String termText) throws ParseException {
+    public Query getRegexpQuery(String field, String termText) throws ParseException {
         if (this.getLowercaseExpandedTerms()) {
             termText = termText.toLowerCase(this.getLocale());
         }
@@ -649,7 +649,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return new {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getFuzzyQuery(String field, String termText, float minimumSimilarity) throws ParseException {
+    public Query getFuzzyQuery(String field, String termText, float minimumSimilarity) throws ParseException {
         if (this.getLowercaseExpandedTerms()) {
             termText = termText.toLowerCase(this.getLocale());
         }
@@ -699,7 +699,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @return new {@link Query} instance.
      * @throws ParseException if the parsing fails.
      */
-    protected Query getWildcardQuery(String field, String termText) throws ParseException {
+    public Query getWildcardQuery(String field, String termText) throws ParseException {
         Wildcard fieldWildcard = Wildcard.find(field);
         Wildcard termWildcard = Wildcard.find(termText);
 
