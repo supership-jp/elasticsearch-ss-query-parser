@@ -15,7 +15,7 @@ import jp.supership.elasticsearch.plugin.queryparser.DSQParser;
  */
 public class QueryParserPlugin extends AbstractPlugin {
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     @Override
     public String name() {  
@@ -23,7 +23,7 @@ public class QueryParserPlugin extends AbstractPlugin {
     }  
 
     /**
-     * @inheritdoc
+     * {@inheritDoc}
      */
     @Override
     public String description() {
