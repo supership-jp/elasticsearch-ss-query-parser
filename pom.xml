@@ -100,7 +100,7 @@
 		<argument>-visitor</argument>
 	      </arguments>
               <outputDirectory>${basedir}/src/main/java</outputDirectory>
-	      <libDirectory>${basedir}/src/main/antlr4/jp/supership/elasticsearch/plugin/queryparser/dsl</libDirectory>
+	      <libDirectory>${basedir}/src/main/antlr4/jp/supership/elasticsearch/plugin/queryparser/antlr/v4/dsl</libDirectory>
             </configuration>
 	  </execution>
 	</executions>

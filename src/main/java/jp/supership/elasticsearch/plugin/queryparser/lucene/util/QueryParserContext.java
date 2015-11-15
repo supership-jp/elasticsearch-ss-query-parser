@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;

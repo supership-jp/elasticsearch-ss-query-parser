@@ -1,5 +1,5 @@
-// Generated from jp/supership/elasticsearch/plugin/queryparser/dsl/Query.g4 by ANTLR 4.5
-package jp.supership.elasticsearch.plugin.queryparser.dsl;
+// Generated from jp/supership/elasticsearch/plugin/queryparser/antlr/v4/dsl/Query.g4 by ANTLR 4.5
+package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;

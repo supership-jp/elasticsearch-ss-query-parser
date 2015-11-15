@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -14,7 +14,7 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZED_STATES;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Operator;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Operator;
 
 /**
  * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for Supership, inc.

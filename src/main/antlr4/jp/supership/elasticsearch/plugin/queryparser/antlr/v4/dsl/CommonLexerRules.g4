@@ -3,30 +3,18 @@
  */
 lexer grammar CommonLexerRules;
 
-fragment DICIMAL
+fragment DIGIT
     : [0-9]
     ;
 
-fragment QUATERNARY
-    : [0-3]
-    ;
-
-fragment OCTAL
-    : [0-7]
-    ;
-
-fragment HEXADECIMAL
-    : [0-9a-fA-F]
-    ;
-
 fragment UNICODE_LITERAL
-    : '\\' 'u' HEXADECIMAL HEXADECIMAL HEXADECIMAL HEXADECIMAL
+    : '\\' 'u' [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
     ;
 
 fragment OCTAL_LITERAL
-    : '\\' QUATERNARY OCTAL OCTAL
-    | '\\' OCTAL OCTAL
-    | '\\' OCTAL
+    : '\\' [0-3] [0-7] [0-7]
+    | '\\' [0-7] [0-7]
+    | '\\' [0-7]
     ;
 
 fragment ESCAPED_CHARACTER
@@ -61,5 +49,5 @@ LPAREN : '('                              ;
 RPAREN : ')'                              ;
 COLON  : ':'                              ;
 STRING : '\"' (QUATABLE_CHARACTER)* '\"'  ;
-NUMBER : (DICIMAL)+                       ;
+NUMBER : (DIGIT)+                         ;
 FIELD  : FIELD_INITIAL (FIELD_CHARACTER)* ;

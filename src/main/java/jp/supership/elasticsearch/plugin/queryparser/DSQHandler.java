@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.classic;
+package jp.supership.elasticsearch.plugin.queryparser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,12 +13,12 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryBaseVisitor;
-import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryLexer;
-import jp.supership.elasticsearch.plugin.queryparser.dsl.QueryParser;
-import jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryEngine;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryBaseVisitor;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryLexer;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
 /**

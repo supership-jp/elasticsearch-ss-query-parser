@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.antlr4.handler;
+package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util;
 
 /**
  * The exception thrown when an error occures while analyzing query.

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.classic.intermediate;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -42,13 +42,13 @@ import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr4.handler.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Operator;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Modifier;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Conjunction;
-import static jp.supership.elasticsearch.plugin.queryparser.classic.intermediate.QueryParserContext.Wildcard;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Operator;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Modifier;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Conjunction;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Wildcard;
 
 /**
  * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
