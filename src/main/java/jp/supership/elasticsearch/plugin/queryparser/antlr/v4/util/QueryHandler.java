@@ -3,11 +3,11 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util;
 
-import java.io.InputStream;
+import java.io.Reader;
 import org.apache.lucene.search.Query;
 
 /**
- * This interface specifies the implementing class can handle the given {@code java.io.InputStream}
+ * This interface specifies the implementing class can handle the given {@code java.io.Reader}
  * as raw query string and instanciates {@code org.apache.lucene.search.Query}.
  *
  * @author Shingo OKAWA
@@ -57,9 +57,9 @@ public interface QueryHandler {
     public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException;
 
     /**
-     * Fetches the given {@link java.io.InputStream} to this handler.
+     * Fetches the given {@link java.io.Reader} to this handler.
      * @param  input the default field for query terms.
      * @throws
      */
-    public void fetch(InputStream input);
+    public void fetch(Reader input);
 }

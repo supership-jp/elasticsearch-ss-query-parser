@@ -4,6 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -111,7 +112,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @throws ParseException if the parsing fails.
      */
     public Query evaluate(String queryText) throws ParseException {
-        //this.fetch(new FastCharStream(new StringReader(queryText)));
+        this.fetch(new StringReader(queryText));
         try {
             Query instanciated = this.handle(this.getDefaultField());
             return instanciated != null ? instanciated : this.newBooleanQuery(false);

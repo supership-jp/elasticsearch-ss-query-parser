@@ -4,7 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -12,8 +12,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.Version;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryBaseVisitor;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
@@ -56,6 +58,13 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
     private class Engine extends QueryEngine {
         /** Holds query engine which is reponsible for parsing raw query strings. */
         private QueryHandler handler;
+
+	/**
+	 * Constructor.
+	 */
+	public Engine(QueryHandler handler) {
+	    this.handler = handler;
+	}
 
         /**
          * {@inheritDoc}
@@ -138,7 +147,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
          * {@inheritDoc}
          */
         @Override
-        public void fetch(InputStream input) {
+        public void fetch(Reader input) {
             this.handler.fetch(input);
         }
     }
@@ -150,7 +159,31 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
     private QueryEngine engine;
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
-    private InputStream input;
+    private Reader input;
+
+    /**
+     * Constructor.
+     */
+    public DSQHandler() {
+	this.engine = new Engine(this);
+	this.context = new DSQHandler.Context();
+    }
+
+    /**
+     * Constructor.
+     */
+    public DSQHandler(String field, Analyzer analyzer) {
+	this();
+	this.engine.initialize(field, analyzer);
+    }
+
+    /**
+     * Constructor.
+     */
+    public DSQHandler(Version version, String field, Analyzer analyzer) {
+	this();
+	this.engine.initialize(version, field, analyzer);
+    }
 
     /**
      * {@inheritDoc}
@@ -232,7 +265,11 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitSubQueryTerm(QueryParser.SubQueryTermContext context) {
-        return this.visitChildren(context);
+	try {
+	    return visit(context.query());
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
     }
 
     /**
@@ -273,7 +310,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      * {@inheritDoc}
      */
     @Override
-    public void fetch(InputStream input) {
+    public void fetch(Reader input) {
         this.input = input;
     }
 }
