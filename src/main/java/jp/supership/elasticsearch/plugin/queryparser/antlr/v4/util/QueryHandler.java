@@ -20,11 +20,11 @@ public interface QueryHandler {
      */
     public class Context {
 	/** Holds currently handling field name. */
-	public String field = "";
+	public String field = null;
 	/** Holds currently handling term token. */
-	public String term = "";
+	public String term = null;
 	/** Holds currently handling fuzzy slop term token. */
-	public String fuzzySlop = "";
+	public String fuzzySlop = null;
 	/** true if the process must be done as handling prefix query. */
 	public boolean prefix = false;
 	/** true if the process must be done as handling wildcard query. */
@@ -47,7 +47,14 @@ public interface QueryHandler {
      * @param  context the currently handling context.
      * @throws HandleException if the handling fails.
      */
-    public Query dispatch(QueryHandler.Context context) throws HandleException;
+    public Query dispatchBareToken(QueryHandler.Context context) throws HandleException;
+
+    /**
+     * Dispatches appropriate query-builder in accordance to the given context.
+     * @param  context the currently handling context.
+     * @throws HandleException if the handling fails.
+     */
+    public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException;
 
     /**
      * Fetches the given {@link java.io.InputStream} to this handler.

@@ -38,6 +38,13 @@ public interface QueryVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNumberTerm(QueryParser.NumberTermContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code FieldTerm}
+	 * labeled alternative in {@link QueryParser#term}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFieldTerm(QueryParser.FieldTermContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code SubQueryTerm}
 	 * labeled alternative in {@link QueryParser#term}.
 	 * @param ctx the parse tree

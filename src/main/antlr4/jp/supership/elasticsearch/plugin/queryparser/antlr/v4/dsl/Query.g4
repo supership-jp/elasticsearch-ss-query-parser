@@ -10,7 +10,8 @@ query      : expression (conjunction=(CONJUNCTION_AND | CONJUNCTION_OR)? express
 expression : modifier=(MODIFIER_NEGATE | MODIFIER_REQUIERD)? FIELD ':' term
            ;
 
-term       : STRING                                                     # StringTerm
-           | NUMBER                                                     # NumberTerm
-           | '(' query ')'                                              # SubQueryTerm
+term       : TERM_STRING   # StringTerm
+           | TERM_NUMBER   # NumberTerm
+           | TERM_FIELD    # FieldTerm
+           | '(' query ')' # SubQueryTerm
            ;

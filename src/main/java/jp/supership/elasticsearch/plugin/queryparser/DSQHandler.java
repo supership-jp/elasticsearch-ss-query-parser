@@ -48,8 +48,6 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
 	public int conjunction = -1;
 	/** Holds previously detected modifier. */
 	public int modifier = -1;
-	/** Holds currently handling field. */
-	public String field = null;
     }
 
     /**
@@ -71,7 +69,7 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
          * {@inheritDoc}
          */
         @Override
-        public Query dispatch(QueryHandler.Context context) throws HandleException {
+        public Query dispatchBareToken(QueryHandler.Context context) throws HandleException {
             Query query;
 
             try {
@@ -117,6 +115,23 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
             }
 
             return this.getFuzzyQuery(field, term, fuzzyMinSim);
+        }
+
+	/**
+         * {@inheritDoc}
+         */
+        @Override
+        public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException {
+	    int phraseSlop = this.getPhraseSlop();
+	    if (context.fuzzySlop != null) {
+		try {
+		    phraseSlop = Float.valueOf(context.fuzzySlop.substring(1)).intValue();
+		}
+		catch (Exception ignored) {
+		    // DO NOTHING, the value has its default, so this is safe.
+		}
+	    }
+	    return this.getFieldQuery(context.field, StringUtils.discardEscapeChar(context.term.substring(1, context.term.length() - 1)), phraseSlop);
         }
 
         /**
@@ -178,7 +193,12 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitStringTerm(QueryParser.StringTermContext context) {
-        return this.visitChildren(context);
+	try {
+	    this.context.term = context.TERM_STRING().getText();
+	    return this.dispatchQuotedToken(this.context);
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
     }
 
     /**
@@ -186,7 +206,25 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      */
     @Override
     public Query visitNumberTerm(QueryParser.NumberTermContext context) {
-        return this.visitChildren(context);
+	try {
+	    this.context.term = context.TERM_NUMBER().getText();
+	    return this.dispatchBareToken(this.context);
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query visitFieldTerm(QueryParser.FieldTermContext context) {
+	try {
+	    this.context.term = context.TERM_FIELD().getText();
+	    return this.dispatchBareToken(this.context);
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
     }
 
     /**
@@ -219,8 +257,16 @@ public class DSQHandler extends QueryBaseVisitor<Query> implements QueryHandler 
      * {@inheritDoc}
      */
     @Override
-    public Query dispatch(QueryHandler.Context context) throws HandleException {
-        return this.engine.dispatch(context);
+    public Query dispatchBareToken(QueryHandler.Context context) throws HandleException {
+        return this.engine.dispatchBareToken(context);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException {
+        return this.engine.dispatchQuotedToken(context);
     }
 
     /**
