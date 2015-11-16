@@ -13,8 +13,8 @@ import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZED_STATES;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Operator;
 
 /**
  * This class represents parsing contex, i.e., parser settings for the Elasticsearch query DSL tailered for Supership, inc.
@@ -31,7 +31,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
     protected String defaultField = "";
 
     /** Holds the default operator parsers use to combine query terms. */
-    protected Operator defaultOperator = Operator.OR;
+    protected int defaultOperator = QueryParser.CONJUNCTION_OR;
 
     /** Holds phrase-query-auto-genertion functionality setting. */
     protected boolean phraseQueryAutoGeneration = false;
@@ -103,7 +103,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
      * {@inheritDoc}
      */
     @Override
-    public void setDefaultOperator(Operator defaultOperator) {
+    public void setDefaultOperator(int defaultOperator) {
         this.defaultOperator = defaultOperator;
     }
 
@@ -111,7 +111,7 @@ public class DefaultQueryParserContext implements QueryParserContext {
      * {@inheritDoc}
      */
     @Override
-    public Operator getDefaultOperator() {
+    public int getDefaultOperator() {
         return this.defaultOperator;
     }
 

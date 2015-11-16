@@ -18,12 +18,6 @@ public interface QueryVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitQuery(QueryParser.QueryContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link QueryParser#clause}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitClause(QueryParser.ClauseContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link QueryParser#expression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

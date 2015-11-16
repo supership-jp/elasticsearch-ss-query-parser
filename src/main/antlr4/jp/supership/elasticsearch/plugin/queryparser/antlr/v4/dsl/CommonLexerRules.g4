@@ -44,10 +44,15 @@ fragment QUATABLE_CHARACTER
     : (~['\"', '\\'] | ESCAPED_CHARACTER)
     ;
 
-MINUS  : '-'                              ;
-LPAREN : '('                              ;
-RPAREN : ')'                              ;
-COLON  : ':'                              ;
-STRING : '\"' (QUATABLE_CHARACTER)* '\"'  ;
-NUMBER : (DIGIT)+                         ;
-FIELD  : FIELD_INITIAL (FIELD_CHARACTER)* ;
+LPAREN           : '('                              ;
+RPAREN           : ')'                              ;
+COLON            : ':'                              ;
+ASTERISC         : '*'                              ;
+QUESTION         : '?'                              ;
+CONJUNCTION_AND  : [aA][nN][dD]                     ;
+CONJUNCTION_OR   : [oO][rR]                         ;
+MODIFIER_NEGATE  : '-'                              ;
+MODIFIER_REQUIRE : '_'                              ;
+TERM_STRING      : '\"' (QUATABLE_CHARACTER)* '\"'  ;
+TERM_NUMBER      : (DIGIT)+                         ;
+TERM_FIELD       : FIELD_INITIAL (FIELD_CHARACTER)* ;

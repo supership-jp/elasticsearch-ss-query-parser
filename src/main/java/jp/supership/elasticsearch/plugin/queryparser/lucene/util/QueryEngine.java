@@ -33,7 +33,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.util.BytesRef;
@@ -42,12 +41,10 @@ import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Operator;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Modifier;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Conjunction;
 import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Wildcard;
 
 /**
@@ -140,23 +137,23 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @param midifier    the preceeding modifier which midifies the handling clause.
      * @param query       the currently handling query.
      */
-    public void conjugate(List<BooleanClause> clauses, Conjunction conjunction, Modifier modifier, Query query) {
+    public void conjugate(List<BooleanClause> clauses, int conjunction, int modifier, Query query) {
         boolean required;
         boolean prohibited;
 
         // If this term is introduced by AND, make the preceding term required, unless it is already prohibited.
-        if (clauses.size() > 0 && conjunction == Conjunction.AND) {
-            BooleanClause clause = clauses.get(clauses.size() - 1);
-            if (!clause.isProhibited()) {
-                clause.setOccur(BooleanClause.Occur.SHOULD);
+        if (clauses.size() > 0 && conjunction == QueryParser.CONJUNCTION_AND) {
+            BooleanClause previous = clauses.get(clauses.size() - 1);
+            if (!previous.isProhibited()) {
+                previous.setOccur(BooleanClause.Occur.SHOULD);
             }
         }
 
         // If this term is introduced by OR, make the preceeding term optional, unless it is prohibited.
-        if (clauses.size() > 0 && this.context.getDefaultOperator() == Operator.AND && conjunction == Conjunction.OR) {
-            BooleanClause clause = clauses.get(clauses.size() - 1);
-            if (!clause.isProhibited()) {
-                clause.setOccur(BooleanClause.Occur.SHOULD);
+        if (clauses.size() > 0 && this.context.getDefaultOperator() == QueryParser.CONJUNCTION_AND && conjunction == QueryParser.CONJUNCTION_OR) {
+            BooleanClause previous = clauses.get(clauses.size() - 1);
+            if (!previous.isProhibited()) {
+                previous.setOccur(BooleanClause.Occur.SHOULD);
             }
         }
 
@@ -165,19 +162,19 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
             return;
         }
 
-        // The term is set to be REQUIRED if the term is introduced by AND or +;
+	// The term is set to be REQUIRED if the term is introduced by AND or +;
         // otherwise, REQUIRED if not PROHIBITED and not introduced by OR.
-        if (this.getDefaultOperator() == Operator.OR) {
-            prohibited = (modifier == Modifier.NOT);
-            required = (modifier == Modifier.REQUIRED);
-            if (conjunction == Conjunction.AND && !prohibited) {
+        if (this.getDefaultOperator() == QueryParser.CONJUNCTION_OR) {
+            prohibited = (modifier == QueryParser.MODIFIER_NEGATE);
+            required = (modifier == QueryParser.MODIFIER_REQUIRE);
+            if (conjunction == QueryParser.CONJUNCTION_AND && !prohibited) {
                 required = true;
             }
         // The term is set ti be PROHIBITED if the term is introduced by NOT;
         // otherwise, REQIURED if not PROHIBITED and not introduce by OR.
         } else {
-            prohibited = (modifier == Modifier.NOT);
-            required = (!prohibited && conjunction != Conjunction.OR);
+            prohibited = (modifier == QueryParser.MODIFIER_NEGATE);
+            required = (!prohibited && conjunction != QueryParser.CONJUNCTION_OR);
         }
 
         if (required && !prohibited) {
@@ -275,7 +272,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @throws ParseException if the parsing fails.
      */
     protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
-        BooleanClause.Occur occurence = this.getDefaultOperator() == Operator.AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
+        BooleanClause.Occur occurence = this.getDefaultOperator() == QueryParser.CONJUNCTION_AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
 
         String analyzerName = null;
         if (analyzer instanceof NamedAnalyzer) {
@@ -592,7 +589,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * @throws ParseException if the parsing fails.
      */
     public Query getPrefixQuery(String field, String termText) throws ParseException {
-        if (!this.getAllowLeadingWildcard() && termText.startsWith(Wildcard.ANY_STRING.toString()))
+        if (!this.getAllowLeadingWildcard() && termText.startsWith(Wildcard.STRING.toString()))
             throw new ParseException("'*' not allowed as first character in PrefixQuery");
         if (this.getLowercaseExpandedTerms()) {
             termText = termText.toLowerCase(this.getLocale());
@@ -703,13 +700,13 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
         Wildcard fieldWildcard = Wildcard.find(field);
         Wildcard termWildcard = Wildcard.find(termText);
 
-        if (fieldWildcard == Wildcard.ANY_STRING && termWildcard == Wildcard.ANY_STRING) {
+        if (fieldWildcard == Wildcard.STRING && termWildcard == Wildcard.STRING) {
             return this.newMatchAllDocsQuery();
         }
 
         if (!this.getAllowLeadingWildcard()
-            && (termText.startsWith(Wildcard.ANY_STRING.toString())
-                || termText.startsWith(Wildcard.ANY_CHARACTER.toString()))) {
+            && (termText.startsWith(Wildcard.STRING.toString())
+                || termText.startsWith(Wildcard.CHARACTER.toString()))) {
             throw new ParseException("'*' or '?' not allowed as first character in WildcardQuery");
         }
 
@@ -874,7 +871,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * {@inheritDoc}
      */
     @Override
-    public void setDefaultOperator(Operator defaultOperator) {
+    public void setDefaultOperator(int defaultOperator) {
         this.context.setDefaultOperator(defaultOperator);
     }
 
@@ -882,7 +879,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      * {@inheritDoc}
      */
     @Override
-    public Operator getDefaultOperator() {
+    public int getDefaultOperator() {
         return this.context.getDefaultOperator();
     }
 

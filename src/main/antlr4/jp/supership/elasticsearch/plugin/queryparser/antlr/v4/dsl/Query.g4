@@ -4,16 +4,13 @@
 grammar Query;
 import CommonLexerRules;
 
-query      : (clause)*
+query      : expression (conjunction=(CONJUNCTION_AND | CONJUNCTION_OR)? expression)*
            ;
 
-clause     : expression (conjunction=('AND' | 'OR' | '|')? expression)*
+expression : modifier=(MODIFIER_NEGATE | MODIFIER_REQUIERD)? FIELD ':' term
            ;
 
-expression : modifier=('-' | '_')? FIELD ':' term
-           ;
-
-term       : STRING                                          # StringTerm
-           | NUMBER                                          # NumberTerm
-           | '(' query ')'                                   # SubQueryTerm
+term       : STRING                                                     # StringTerm
+           | NUMBER                                                     # NumberTerm
+           | '(' query ')'                                              # SubQueryTerm
            ;

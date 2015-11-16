@@ -15,147 +15,36 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
  */
 public interface QueryParserContext extends CommonQueryParserConfiguration {
     /**
-     * Holds pre-defined operators.
-     */
-    public static enum Operator {
-        NONE("", 0),
-        AND("AND", 1),
-        OR("OR", 1);
-
-        // Holds actual string expression.
-        private String expression;
-        // Holds actual string expression.
-        private int precedence;
-
-        // Constructor.
-        private Operator(String expression, int precedence) {
-            this.expression = expression;
-            this.precedence = precedence;
-        }
-
-        // Returns corresponding enum instance from the given expression.
-        public static Operator find(String expression) {
-            for (Operator operator : Operator.values()) {
-                if (expression.equals(operator.expression)) {
-                    return operator;
-                }
-            }
-            return Operator.NONE;
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public String toString() {
-            return this.expression;
-        }
-    }
-
-    /**
-     * Holds pre-defined modifiers.
-     */
-    public static enum Modifier {
-        NONE("", 0),
-        NOT("-", 1),
-        REQUIRED("_", 1);
-
-        // Holds actual string expression.
-        private String expression;
-        // Holds actual string expression.
-        private int precedence;
-
-        // Constructor.
-        private Modifier(String expression, int precedence) {
-            this.expression = expression;
-            this.precedence = precedence;
-        }
-
-        // Returns corresponding enum instance from the given expression.
-        public static Modifier find(String expression) {
-            for (Modifier modifier : Modifier.values()) {
-                if (expression.equals(modifier.expression)) {
-                    return modifier;
-                }
-            }
-            return Modifier.NONE;
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public String toString() {
-            return this.expression;
-        }
-    }
-
-    /**
-     * Holds pre-defined conjuinctions.
-     */
-    public static enum Conjunction {
-        NONE("", 0),
-        AND("AND", 1),
-        OR("OR", 1);
-
-        // Holds actual string expression.
-        private String expression;
-        // Holds actual string expression.
-        private int precedence;
-
-        // Constructor.
-        private Conjunction(String expression, int precedence) {
-            this.expression = expression;
-            this.precedence = precedence;
-        }
-
-        // Returns corresponding enum instance from the given expression.
-        public static Conjunction find(String expression) {
-            for (Conjunction conjunction : Conjunction.values()) {
-                if (expression.equals(conjunction.expression)) {
-                    return conjunction;
-                }
-            }
-            return Conjunction.NONE;
-        }
-
-        /** {@inheritDoc} */
-        @Override
-        public String toString() {
-            return this.expression;
-        }
-    }
-
-    /**
      * Holds pre-defined wildcards.
      */
     public static enum Wildcard {
-        NONE("", 0),
-        ANY_STRING("*", 1),
-        ANY_CHARACTER("?", 1);
+	NONE(""),
+	STRING("*"),
+	CHARACTER("?");
 
-        // Holds actual string expression.
-        private String expression;
-        // Holds actual string expression.
-        private int precedence;
+	// Holds actual string expression.
+	private String expression;
 
-        // Constructor.
-        private Wildcard(String expression, int precedence) {
-            this.expression = expression;
-            this.precedence = precedence;
-        }
+	// Constructor.
+	private Wildcard(String expression) {
+	    this.expression = expression;
+	}
 
-        // Returns corresponding enum instance from the given expression.
-        public static Wildcard find(String expression) {
-            for (Wildcard wildcard : Wildcard.values()) {
-                if (expression.equals(wildcard.expression)) {
-                    return wildcard;
-                }
-            }
-            return Wildcard.NONE;
-        }
+	// Returns corresponding enum instance from the given expression.
+	public static Wildcard find(String expression) {
+	    for (Wildcard wildcard : Wildcard.values()) {
+		if (expression.equals(wildcard.expression)) {
+		    return wildcard;
+		}
+	    }
+	    return Wildcard.NONE;
+	}
 
-        /** {@inheritDoc} */
-        @Override
-        public String toString() {
-            return this.expression;
-        }
+	/** {@inheritDoc} */
+	@Override
+	public String toString() {
+	    return this.expression;
+	}
     }
 
     /**
@@ -176,13 +65,13 @@ public interface QueryParserContext extends CommonQueryParserConfiguration {
      * for example <code>capital of Hungary</code> is equal to <code>capital OR of OR Hungary</code>.<br/>
      * @param defaultOperator the boolean operator to be set.
      */
-    public void setDefaultOperator(Operator defaultOperator);
+    public void setDefaultOperator(int defaultOperator);
 
     /**
      * Returns the default boolean operator, which will be either <code>Operators.AND</code> or <code>Operators.OR</code>.
      * @return the assigned default boolean operator.
      */
-    public Operator getDefaultOperator();
+    public int getDefaultOperator();
 
     /**
      * {@link PhraseQuery}s will be automatically generated when the analyzer returns more than one term
