@@ -7,7 +7,7 @@ import CommonLexerRules;
 query      : expression (conjunction=(CONJUNCTION_AND | CONJUNCTION_OR)? expression)*
            ;
 
-expression : modifier=(MODIFIER_NEGATE | MODIFIER_REQUIERD)? FIELD ':' term
+expression : modifier=(MODIFIER_NEGATE | MODIFIER_REQUIRE)? FIELD ':' term
            ;
 
 term       : TERM_STRING   # StringTerm
