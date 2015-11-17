@@ -44,7 +44,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserContext.Wildcard;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserConfigurable.Wildcard;
 
 /**
  * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
@@ -54,7 +54,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryPar
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class QueryEngine extends QueryBuilder implements QueryHandler, QueryParserContext {
+public abstract class QueryEngine extends QueryBuilder implements QueryHandler, QueryParserConfigurable {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
@@ -62,22 +62,22 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
     public static class DeprecatedMethodCall extends Throwable {}
 
     /** Holds query-parsing-contect. */
-    protected QueryParserContext context;
+    protected QueryParserConfigurable configuration;
 
     /**
      * Constructor.
      */
     public QueryEngine() {
         super(null);
-        this.context = new DefaultQueryParserContext();
+        this.configuration = new DefaultQueryParserConfiguration();
     }
 
     /**
      * Constructor.
      */
-    public QueryEngine(QueryParserContext context) {
+    public QueryEngine(QueryParserConfigurable configuration) {
         super(null);
-        this.context = context;
+        this.configuration = configuration;
     }
 
     /**
@@ -149,7 +149,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
         }
 
         // If this term is introduced by OR, make the preceeding term optional, unless it is prohibited.
-        if (clauses.size() > 0 && this.context.getDefaultOperator() == QueryParser.CONJUNCTION_AND && conjunction == QueryParser.CONJUNCTION_OR) {
+        if (clauses.size() > 0 && this.configuration.getDefaultOperator() == QueryParser.CONJUNCTION_AND && conjunction == QueryParser.CONJUNCTION_OR) {
             BooleanClause previous = clauses.get(clauses.size() - 1);
             if (!previous.isProhibited()) {
                 previous.setOccur(BooleanClause.Occur.SHOULD);
@@ -847,7 +847,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public Analyzer getAnalyzer() {
-        return this.context.getAnalyzer();
+        return this.configuration.getAnalyzer();
     }
 
     /**
@@ -855,7 +855,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setDefaultField(String defaultField) {
-        this.context.setDefaultField(defaultField);
+        this.configuration.setDefaultField(defaultField);
     }
 
     /**
@@ -863,7 +863,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public String getDefaultField() {
-        return this.context.getDefaultField();
+        return this.configuration.getDefaultField();
     }
 
     /**
@@ -871,7 +871,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setDefaultOperator(int defaultOperator) {
-        this.context.setDefaultOperator(defaultOperator);
+        this.configuration.setDefaultOperator(defaultOperator);
     }
 
     /**
@@ -879,7 +879,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public int getDefaultOperator() {
-        return this.context.getDefaultOperator();
+        return this.configuration.getDefaultOperator();
     }
 
     /**
@@ -887,7 +887,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
-        this.context.setPhraseQueryAutoGeneration(phraseQueryAutoGeneration);
+        this.configuration.setPhraseQueryAutoGeneration(phraseQueryAutoGeneration);
     }
 
     /**
@@ -895,7 +895,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public boolean getPhraseQueryAutoGeneration() {
-        return this.context.getPhraseQueryAutoGeneration();
+        return this.configuration.getPhraseQueryAutoGeneration();
     }
 
     /**
@@ -903,7 +903,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setEnablePositionIncrements(boolean positionIncrements) {
-        this.context.setEnablePositionIncrements(positionIncrements);
+        this.configuration.setEnablePositionIncrements(positionIncrements);
     }
 
     /**
@@ -911,7 +911,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public boolean getEnablePositionIncrements() {
-        return this.context.getEnablePositionIncrements();
+        return this.configuration.getEnablePositionIncrements();
     }
 
     /**
@@ -919,7 +919,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setFuzzyMinSim(float fuzzyMinSim) {
-        this.context.setFuzzyMinSim(fuzzyMinSim);
+        this.configuration.setFuzzyMinSim(fuzzyMinSim);
     }
 
     /**
@@ -927,7 +927,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public float getFuzzyMinSim() {
-        return this.context.getFuzzyMinSim();
+        return this.configuration.getFuzzyMinSim();
     }
 
     /**
@@ -935,7 +935,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
-        this.context.setFuzzyPrefixLength(fuzzyPrefixLength);
+        this.configuration.setFuzzyPrefixLength(fuzzyPrefixLength);
     }
 
     /**
@@ -943,7 +943,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public int getFuzzyPrefixLength() {
-        return this.context.getFuzzyPrefixLength();
+        return this.configuration.getFuzzyPrefixLength();
     }
 
     /**
@@ -951,7 +951,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setPhraseSlop(int phraseSlop) {
-        this.context.setPhraseSlop(phraseSlop);
+        this.configuration.setPhraseSlop(phraseSlop);
     }
 
     /**
@@ -959,7 +959,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public int getPhraseSlop() {
-        return this.context.getPhraseSlop();
+        return this.configuration.getPhraseSlop();
     }
 
     /**
@@ -967,7 +967,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
-        this.context.setAllowLeadingWildcard(allowLeadingWildcard);
+        this.configuration.setAllowLeadingWildcard(allowLeadingWildcard);
     }
 
     /**
@@ -975,7 +975,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public boolean getAllowLeadingWildcard() {
-        return this.context.getAllowLeadingWildcard();
+        return this.configuration.getAllowLeadingWildcard();
     }
 
     /**
@@ -983,7 +983,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
-        this.context.setLowercaseExpandedTerms(lowercaseExpandedTerms);
+        this.configuration.setLowercaseExpandedTerms(lowercaseExpandedTerms);
     }
 
     /**
@@ -991,7 +991,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public boolean getLowercaseExpandedTerms() {
-        return this.context.getLowercaseExpandedTerms();
+        return this.configuration.getLowercaseExpandedTerms();
     }
 
     /**
@@ -999,7 +999,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
-        this.context.setMultiTermRewriteMethod(multiTermRewriteMethod);
+        this.configuration.setMultiTermRewriteMethod(multiTermRewriteMethod);
     }
 
     /**
@@ -1007,7 +1007,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
-        return this.context.getMultiTermRewriteMethod();
+        return this.configuration.getMultiTermRewriteMethod();
     }
 
     /**
@@ -1015,7 +1015,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setLocale(Locale locale) {
-        this.context.setLocale(locale);
+        this.configuration.setLocale(locale);
     }
 
     /**
@@ -1023,7 +1023,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public Locale getLocale() {
-        return this.context.getLocale();
+        return this.configuration.getLocale();
     }
 
     /**
@@ -1031,7 +1031,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setTimeZone(TimeZone timeZone) {
-        this.context.setTimeZone(timeZone);
+        this.configuration.setTimeZone(timeZone);
     }
 
     /**
@@ -1039,7 +1039,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public TimeZone getTimeZone() {
-        return this.context.getTimeZone();
+        return this.configuration.getTimeZone();
     }
 
     /**
@@ -1047,7 +1047,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setDateResolution(DateTools.Resolution dateResolution) {
-        this.context.setDateResolution(dateResolution);
+        this.configuration.setDateResolution(dateResolution);
     }
 
     /**
@@ -1055,7 +1055,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setDateResolution(String field, DateTools.Resolution resolution) {
-        this.context.setDateResolution(field, resolution);
+        this.configuration.setDateResolution(field, resolution);
     }
 
     /**
@@ -1063,7 +1063,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public DateTools.Resolution getDateResolution(String field) {
-        return this.context.getDateResolution(field);
+        return this.configuration.getDateResolution(field);
     }
 
     /**
@@ -1071,7 +1071,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setRangeTermAnalysis(boolean value) {
-        this.context.setRangeTermAnalysis(value);
+        this.configuration.setRangeTermAnalysis(value);
     }
 
     /**
@@ -1079,7 +1079,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public boolean getRangeTermAnalysis() {
-        return this.context.getRangeTermAnalysis();
+        return this.configuration.getRangeTermAnalysis();
     }
 
     /**
@@ -1087,7 +1087,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public void setMaxDeterminizedStates(int max) {
-        this.context.setMaxDeterminizedStates(max);
+        this.configuration.setMaxDeterminizedStates(max);
     }
 
     /**
@@ -1095,6 +1095,6 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
      */
     @Override
     public int getMaxDeterminizedStates() {
-        return this.context.getMaxDeterminizedStates();
+        return this.configuration.getMaxDeterminizedStates();
     }
 }

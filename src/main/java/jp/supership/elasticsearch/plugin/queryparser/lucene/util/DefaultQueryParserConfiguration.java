@@ -22,7 +22,7 @@ import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZ
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class DefaultQueryParserContext implements QueryParserContext {
+public class DefaultQueryParserConfiguration implements QueryParserConfigurable {
     /** Holds default analyzer. */
     protected Analyzer analyzer = null;
 
@@ -34,10 +34,10 @@ public class DefaultQueryParserContext implements QueryParserContext {
     protected int defaultOperator = QueryParser.CONJUNCTION_OR;
 
     /** Holds phrase-query-auto-genertion functionality setting. */
-    protected boolean phraseQueryAutoGeneration = false;
+    protected boolean phraseQueryAutoGeneration = DEFAULT_PHRASE_QUERY_AUTO_GENERATION;
 
     /** Holds position-incremention functionality setting. */
-    protected boolean positionIncrements = true;
+    protected boolean positionIncrements = DEFAULT_POSITION_INCREMENTS;
 
     /** Holds default date resolution. */
     protected DateTools.Resolution dateResolution = null;
@@ -58,13 +58,13 @@ public class DefaultQueryParserContext implements QueryParserContext {
     protected int fuzzyPrefixLength = FuzzyQuery.defaultPrefixLength;
 
     /** Holds slop width for the phrase query. */
-    protected int phraseSlop = 0;
+    protected int phraseSlop = DEFAULT_PHRASE_SLOP;
 
     /** Holds leading-wildcard-allowance functionality setting. */
-    protected boolean allowLeadingWildcard = false;
+    protected boolean allowLeadingWildcard = DEFAULT_ALLOW_LEADING_WILDCARD;
 
     /** Holds auto-lowercase-expansion functionality setting. */
-    protected boolean lowercaseExpandedTerms = true;
+    protected boolean lowercaseExpandedTerms = DEFAULT_LOWERCASE_TERM_EXPANSION;
 
     /** Holds multi-term-query-rewrite-method functionality setting. */
     protected MultiTermQuery.RewriteMethod multiTermRewriteMethod = MultiTermQuery.CONSTANT_SCORE_AUTO_REWRITE_DEFAULT;

@@ -13,7 +13,40 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface QueryParserContext extends CommonQueryParserConfiguration {
+public interface QueryParserConfigurable extends CommonQueryParserConfiguration {
+    /** Holds default leading-wildcard functionality setting. */
+    public static final boolean DEFAULT_ALLOW_LEADING_WILDCARD = true;
+
+    /** Holds default phrase-query-generation functionality setting. */
+    public static final boolean DEFAULT_PHRASE_QUERY_AUTO_GENERATION = false;
+
+    /** Holds default lowercase-term-expansion functionality setting. */
+    public static final boolean DEFAULT_LOWERCASE_TERM_EXPANSION = true;
+
+    /** Holds default position-increments functionality setting. */
+    public static final boolean DEFAULT_POSITION_INCREMENTS = true;
+
+    /** Holds default analyzing-wildcard functionalit setting. */
+    public static final boolean DEFAULT_WILDCARD_ANALYSIS = false;
+
+    /** Holds default escape functionalit setting. */
+    public static final boolean DEFAULT_ESCAPE = false;
+
+    /** Holds default field refinement functionality setting. */
+    public static final boolean DEFAULT_FIELD_REFINEMENT = true;
+
+    /** Holds default queyr negation functionality setting. */
+    public static final boolean DEFAULT_QUERY_NEGATION = false;
+
+    /** Holds default disjunction-max-query generation functionality setting. */
+    public static final boolean DEFAULT_USE_DISJUNCTION_MAX = true;
+
+    /** Holds default analyuzing-wildcard functionalit setting. */
+    public static final int DEFAULT_PHRASE_SLOP = 0;
+
+    /** Holds default tie-break value. */
+    public static final float DEFAULT_TIE_BREAKER = 0.0f;
+
     /**
      * Holds pre-defined wildcards.
      */

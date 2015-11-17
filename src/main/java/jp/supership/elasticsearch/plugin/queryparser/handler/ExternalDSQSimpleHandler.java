@@ -22,7 +22,7 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class ExternalSimpleDSQHandler extends ExternalDSQBaseHandler {
+public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
@@ -126,7 +126,7 @@ public class ExternalSimpleDSQHandler extends ExternalDSQBaseHandler {
     /**
      * Constructor.
      */
-    public ExternalSimpleDSQHandler() {
+    public ExternalDSQSimpleHandler() {
 	this.engine = new Engine(this);
 	this.context = new ExternalDSQBaseHandler.Context();
     }
@@ -134,7 +134,7 @@ public class ExternalSimpleDSQHandler extends ExternalDSQBaseHandler {
     /**
      * Constructor.
      */
-    public ExternalSimpleDSQHandler(String field, Analyzer analyzer) {
+    public ExternalDSQSimpleHandler(String field, Analyzer analyzer) {
 	this();
 	this.engine.initialize(field, analyzer);
     }
@@ -142,7 +142,7 @@ public class ExternalSimpleDSQHandler extends ExternalDSQBaseHandler {
     /**
      * Constructor.
      */
-    public ExternalSimpleDSQHandler(Version version, String field, Analyzer analyzer) {
+    public ExternalDSQSimpleHandler(Version version, String field, Analyzer analyzer) {
 	this();
 	this.engine.initialize(version, field, analyzer);
     }
