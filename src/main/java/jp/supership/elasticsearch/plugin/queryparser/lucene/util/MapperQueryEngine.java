@@ -95,7 +95,7 @@ public abstract class MapperQueryEngine extends QueryEngine implements QueryEngi
      * Constructor.
      */
     public MapperQueryEngine(QueryParseContext context, QueryEngineDSLConfiguration configuration) {
-	//        super(configuration.getDefaultField(), configuration.getDefaultAnalyzer());
+	//super(configuration.getDefaultField(), configuration.getDefaultAnalyzer());
         this.context = context;
 	this.configure(configuration);
     }
