@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.config;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -22,13 +22,13 @@ import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZ
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class DefaultQueryParserConfiguration implements QueryParserConfigurable {
+public class QueryEngineSettings implements QueryEngineConfiguration {
     /** Holds default analyzer. */
     protected Analyzer analyzer = null;
 
     // TODO: FIX THIS DEFAULT VALUE TO BE APPROPRIATE ONE.
     /** Holds default field for query terms. */
-    protected String defaultField = "";
+    protected String defaultField = null;
 
     /** Holds the default operator parsers use to combine query terms. */
     protected int defaultOperator = QueryParser.CONJUNCTION_OR;

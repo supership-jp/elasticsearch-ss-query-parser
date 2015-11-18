@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.config;
 
 import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
@@ -13,7 +13,7 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface QueryParserConfigurable extends CommonQueryParserConfiguration {
+public interface QueryEngineConfiguration extends CommonQueryParserConfiguration {
     /** Holds default leading-wildcard functionality setting. */
     public static final boolean DEFAULT_ALLOW_LEADING_WILDCARD = true;
 

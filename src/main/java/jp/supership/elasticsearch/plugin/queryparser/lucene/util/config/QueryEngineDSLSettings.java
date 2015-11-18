@@ -1,11 +1,10 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.config;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
@@ -19,7 +18,7 @@ import org.joda.time.DateTimeZone;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class MapperQueryParserConfiguration extends DefaultQueryParserConfiguration {
+public class QueryEngineDSLSettings extends QueryEngineSettings implements QueryEngineDSLConfiguration {
     /** Holds default boosting coefficient. */
     public static final float DEFAULT_BOOST = 1.0f;
 
@@ -45,13 +44,13 @@ public class MapperQueryParserConfiguration extends DefaultQueryParserConfigurat
     private Analyzer defaultAnalyzer = null;
 
     /** Holds default quoted analyzer. */
-    private Analyzer defaultQuotedAnalyzer = null;
+    private Analyzer defaultQuoteAnalyzer = null;
 
     /** Holds enforced analyzer. */
     private Analyzer forcedAnalyzer = null;
 
     /** Holds enforced quoted analyzer. */
-    private Analyzer forcedQuotedAnalyzer = null;
+    private Analyzer forcedQuoteAnalyzer = null;
 
     /** Holds quote-field-suffix. */
     private String quoteFieldSuffix = null;
@@ -87,346 +86,346 @@ public class MapperQueryParserConfiguration extends DefaultQueryParserConfigurat
     boolean useDisMax = DEFAULT_USE_DISJUNCTION_MAX;
 
     /**
-     * Returns the cachability of the current query.
-     * @return true if the currently handling query is supposed to be cachable.
+     * {@inheritDoc}
      */
+    @Override
     public boolean isCacheable() {
         // a hack for now :) to determine if a query string is cacheable
         return !queryString.contains("now");
     }
 
     /**
-     * Returns the query string.
-     * @return the assigned query string.
+     * {@inheritDoc}
      */
+    @Override
     public String getQueryString() {
         return this.queryString;
     }
 
     /**
-     * Sets the currently handling query string.
-     * @param queryString the query string to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setQueryString(String queryString) {
         this.queryString = queryString;
     }
 
     /**
-     * Returns the assigned boosting coeeficient.
-     * @return the assigned boost value.
+     * {@inheritDoc}
      */
+    @Override
     public float getBoost() {
         return this.boost;
     }
 
     /**
-     * Sets the boosting coefficent.
-     * @param boost the boosting coefficient to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setBoost(float boost) {
         this.boost = boost;
     }
 
     /**
-     * Returns the maximum fuzzy query expansion number.
-     * @return the assigned maximum fuzzy query expansion number.
+     * {@inheritDoc}
      */
+    @Override
     public int getFuzzyMaxExpansions() {
         return this.fuzzyMaxExpansions;
     }
 
     /**
-     * Sets the maximum fuzzy query expansion number.
-     * @param fuzzyMaxExpansions the maximum fuzzy query expansion number to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setFuzzyMaxExpansions(int fuzzyMaxExpansions) {
         this.fuzzyMaxExpansions = fuzzyMaxExpansions;
     }
 
     /**
-     * Returns the fuzzy query rewrite method.
-     * @return the assigned fuzzy query rewrite method.
+     * {@inheritDoc}
      */
+    @Override
     public MultiTermQuery.RewriteMethod getFuzzyRewriteMethod() {
         return this.fuzzyRewriteMethod;
     }
 
     /**
-     * Sets the fuzzy query rewrite method.
-     * @param fuzzyRewriteMethod the fuzzy query rewirte method to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setFuzzyRewriteMethod(MultiTermQuery.RewriteMethod fuzzyRewriteMethod) {
         this.fuzzyRewriteMethod = fuzzyRewriteMethod;
     }
 
     /**
-     * Returns the wildcard-analysis functionality setting.
-     * @return the assigned wildcard-analysis functionality setting.
+     * {@inheritDoc}
      */
+    @Override
     public boolean getWildcardAnalysis() {
         return this.wildcardAnalysis;
     }
 
     /**
-     * Sets the wildcard-analysis functionality setting.
-     * @param wildcardAnalysis the wildcard-analysis functionality setting to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setWildcardAnalysis(boolean wildcardAnalysis) {
         this.wildcardAnalysis = wildcardAnalysis;
     }
 
     /**
-     * Returns the escape functionality setting.
-     * @return the assigned escape functionality setting.
+     * {@inheritDoc}
      */
+    @Override
     public boolean getEscape() {
         return this.escape;
     }
 
     /**
-     * Sets the escape functionality setting.
-     * @param escape the escape functionality setting to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setEscape(boolean escape) {
         this.escape = escape;
     }
 
     /**
-     * Returns the assigned default analyzer.
-     * @return the assigned default analyzer.
+     * {@inheritDoc}
      */
+    @Override
     public Analyzer getDefaultAnalyzer() {
         return this.defaultAnalyzer;
     }
 
     /**
-     * Sets the default analyzer.
-     * @param defaultAnalyzer the default analyzer to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setDefaultAnalyzer(Analyzer defaultAnalyzer) {
         this.defaultAnalyzer = defaultAnalyzer;
     }
 
     /**
-     * Returns the assigned default quoted analyzer.
-     * @return the assigned default quoted analyzer.
+     * {@inheritDoc}
      */
-    public Analyzer getDefaultQuotedAnalyzer() {
-        return this.defaultQuotedAnalyzer;
+    @Override
+    public Analyzer getDefaultQuoteAnalyzer() {
+        return this.defaultQuoteAnalyzer;
     }
 
     /**
-     * Sets the default quoted analyzer.
-     * @param defaultQuotedAnalyzer the default quoted analyzer to be set.
+     * {@inheritDoc}
      */
-    public void setDefaultQuotedAnalyzer(Analyzer defaultQuotedAnalyzer) {
-        this.defaultQuotedAnalyzer = defaultQuotedAnalyzer;
+    @Override
+    public void setDefaultQuoteAnalyzer(Analyzer defaultQuoteAnalyzer) {
+        this.defaultQuoteAnalyzer = defaultQuoteAnalyzer;
     }
 
     /**
-     * Returns the assigned enforced analyzer.
-     * @return the assigned enforced analyzer.
+     * {@inheritDoc}
      */
+    @Override
     public Analyzer getForcedAnalyzer() {
         return this.forcedAnalyzer;
     }
 
     /**
-     * Sets the forced analyzer.
-     * @param forcedAnalyzer the forced analyzer to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setForcedAnalyzer(Analyzer forcedAnalyzer) {
         this.forcedAnalyzer = forcedAnalyzer;
     }
 
     /**
-     * Returns the assigned enforced quoted analyzer.
-     * @return the assigned enforced analyzer.
+     * {@inheritDoc}
      */
-    public Analyzer getForcedQuotedAnalyzer() {
-        return this.forcedQuotedAnalyzer;
+    @Override
+    public Analyzer getForcedQuoteAnalyzer() {
+        return this.forcedQuoteAnalyzer;
     }
 
     /**
-     * Sets the forced quoted analyzer.
-     * @param forcedQuotedAnalyzer the forced quoted analyzer to be set.
+     * {@inheritDoc}
      */
-    public void setForcedQuotedAnalyzer(Analyzer forcedQuotedAnalyzer) {
-        this.forcedQuotedAnalyzer = forcedQuotedAnalyzer;
+    @Override
+    public void setForcedQuoteAnalyzer(Analyzer forcedQuoteAnalyzer) {
+        this.forcedQuoteAnalyzer = forcedQuoteAnalyzer;
     }
 
     /**
-     * Returns the assigned quote field suffix.
-     * @return the assigned quote field suffix.
+     * {@inheritDoc}
      */
+    @Override
     public String getQuoteFieldSuffix() {
         return this.quoteFieldSuffix;
     }
 
     /**
-     * Sets the quote field suffix.
-     * @param quoteFieldSuffix the quote field suffix to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setQuoteFieldSuffix(String quoteFieldSuffix) {
         this.quoteFieldSuffix = quoteFieldSuffix;
     }
 
     /**
-     * Returns the rewrite method.
-     * @return the assigned rewrite method.
+     * {@inheritDoc}
      */
+    @Override
     public MultiTermQuery.RewriteMethod getRewriteMethod() {
         return this.rewriteMethod;
     }
 
     /**
-     * Sets the rewrite method.
-     * @param rewriteMethod the rewrite method to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setRewriteMethod(MultiTermQuery.RewriteMethod rewriteMethod) {
         this.rewriteMethod = rewriteMethod;
     }
 
     /**
-     * Returns the string to be used in should-match clause.
-     * @return the assigned string to be used in should-match clause.
+     * {@inheritDoc}
      */
+    @Override
     public String getMinimumShouldMatch() {
         return this.minimumShouldMatch;
     }
 
     /**
-     * Sets the string to be used in should-match clause.
-     * @param minimumShouldMatch the string to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setMinimumShouldMatch(String minimumShouldMatch) {
         this.minimumShouldMatch = minimumShouldMatch;
     }
 
     /**
-     * Returns the lenienet setting.
-     * @return the assigned lenient setting.
+     * {@inheritDoc}
      */
+    @Override
     public boolean getLenient() {
         return this.lenient;
     }
 
     /**
-     * Sets the lenient setting.
-     * @param lenient the lenient setting to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setLenient(boolean lenient) {
         this.lenient = lenient;
     }
 
     /**
-     * Returns the field refinement setting.
-     * @return the assigned field refinement setting.
+     * {@inheritDoc}
      */
+    @Override
     public boolean getFieldRefinement() {
         return this.fieldRefinement;
     }
 
     /**
-     * Sets the field refinement setting.
-     * @param fieldRefinement the field refinement setting to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setFieldRefinement(boolean fieldRefinement) {
         this.fieldRefinement = fieldRefinement;
     }
 
     /**
-     * Returns the query negation setting.
-     * @return the assigned query negation setting.
+     * {@inheritDoc}
      */
+    @Override
     public boolean getQueryNegation() {
 	return this.queryNegation;
     }
 
     /**
-     * Sets the query negation setting.
-     * @param queryNegation the query negation setting to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setQueryNegation(boolean queryNegation) {
 	this.queryNegation = queryNegation;
     }
 
     /**
-     * Returns the whole handling fields.
-     * @return the assigned whole handling fields.
+     * {@inheritDoc}
      */
+    @Override
     public List<String> getFields() {
         return this.fields;
     }
 
     /**
-     * Sets the whole handling fields.
-     * @param fields the whole handling fields to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setFields(List<String> fields) {
         this.fields = fields;
     }
 
     /**
-     * Returns the currently handling query types.
-     * @return the assigned currently handling query types.
+     * {@inheritDoc}
      */
+    @Override
     public Collection<String> getQueryTypes() {
         return this.queryTypes;
     }
 
     /**
-     * Sets the currently handling query types.
-     * @param queryTypes the currently handling query types to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setQueryTypes(Collection<String> queryTypes) {
         this.queryTypes = queryTypes;
     }
 
     /**
-     * Returns the currently handling boosting coefficients.
-     * @return the assigned currently handling boosting coefficients.
+     * {@inheritDoc}
      */
+    @Override
     public ObjectFloatOpenHashMap<String> getBoosts() {
         return this.boosts;
     }
 
     /**
-     * Sets the currently handling boosting coefficients.
-     * @param boosts the currently handling boosting coefficients.
+     * {@inheritDoc}
      */
+    @Override
     public void setBoosts(ObjectFloatOpenHashMap<String> boosts) {
         this.boosts = boosts;
     }
 
     /**
-     * Returns the tie-break value.
-     * @return the assigned tie-break value.
+     * {@inheritDoc}
      */
+    @Override
     public float getTieBreaker() {
         return this.tieBreaker;
     }
 
     /**
-     * Sets the tie-break value.
-     * @param tieBreaker the tie-break value to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void setTieBreaker(float tieBreaker) {
         this.tieBreaker = tieBreaker;
     }
 
     /**
-     * Returns the disjunction-max-query generation functionality setting.
-     * @return the assigned disjunction-max-query generation functionality setting.
+     * {@inheritDoc}
      */
+    @Override
     public boolean getUseDisMax() {
         return this.useDisMax;
     }
 
     /**
-     * Sets the disjunction-max-query generation functionality setting.
-     * @param useDisMax the disjunction-max-query generation functionality setting to be set.
+     * {@inheritDoc}
      */
+    @Override
     public void useDisMax(boolean useDisMax) {
         this.useDisMax = useDisMax;
     }

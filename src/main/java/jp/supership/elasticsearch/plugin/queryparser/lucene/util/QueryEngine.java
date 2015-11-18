@@ -32,8 +32,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.queryparser.classic.TokenMgrError;
-import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.QueryBuilder;
@@ -43,8 +41,10 @@ import org.elasticsearch.index.analysis.NamedAnalyzer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineSettings;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryParserConfigurable.Wildcard;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration.Wildcard;
 
 /**
  * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
@@ -54,7 +54,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryPar
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class QueryEngine extends QueryBuilder implements QueryHandler, QueryParserConfigurable {
+public abstract class QueryEngine extends QueryBuilder implements QueryHandler, QueryEngineConfiguration {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
@@ -62,20 +62,20 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
     public static class DeprecatedMethodCall extends Throwable {}
 
     /** Holds query-parsing-contect. */
-    protected QueryParserConfigurable configuration;
+    protected QueryEngineConfiguration configuration;
 
     /**
      * Constructor.
      */
     public QueryEngine() {
         super(null);
-        this.configuration = new DefaultQueryParserConfiguration();
+        this.configuration = new QueryEngineSettings();
     }
 
     /**
      * Constructor.
      */
-    public QueryEngine(QueryParserConfigurable configuration) {
+    public QueryEngine(QueryEngineConfiguration configuration) {
         super(null);
         this.configuration = configuration;
     }
@@ -115,10 +115,6 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
             Query instanciated = this.handle(this.getDefaultField());
             return instanciated != null ? instanciated : this.newBooleanQuery(false);
         } catch (HandleException cause) {
-            ParseException exception = new ParseException("could not parse '" + queryText + "': " + cause.getMessage());
-            exception.initCause(cause);
-            throw exception;
-        } catch (TokenMgrError cause) {
             ParseException exception = new ParseException("could not parse '" + queryText + "': " + cause.getMessage());
             exception.initCause(cause);
             throw exception;
@@ -842,13 +838,13 @@ public abstract class QueryEngine extends QueryBuilder implements QueryHandler, 
         }
     }
 
-    /**
+    // TODO: Resolve redundancy between QueryBuilder's APIs and Configuration's APIs.
+    /*
      * {@inheritDoc}
-     */
     @Override
     public Analyzer getAnalyzer() {
         return this.configuration.getAnalyzer();
-    }
+    }*/
 
     /**
      * {@inheritDoc}

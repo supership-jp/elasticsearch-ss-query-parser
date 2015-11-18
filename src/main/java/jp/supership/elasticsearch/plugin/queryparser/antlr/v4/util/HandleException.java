@@ -4,7 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util;
 
 /**
- * The exception thrown when an error occures while analyzing query.
+ * The exception thrown when an error occures while handling query.
  *
  * @author Shingo OKAWA
  * @since  1.0

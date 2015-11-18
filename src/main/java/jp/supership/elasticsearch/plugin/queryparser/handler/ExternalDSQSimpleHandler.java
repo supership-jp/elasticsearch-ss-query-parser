@@ -126,7 +126,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
     /**
      * Constructor.
      */
-    public ExternalDSQSimpleHandler() {
+    private ExternalDSQSimpleHandler() {
 	this.engine = new Engine(this);
 	this.context = new ExternalDSQBaseHandler.Context();
     }
