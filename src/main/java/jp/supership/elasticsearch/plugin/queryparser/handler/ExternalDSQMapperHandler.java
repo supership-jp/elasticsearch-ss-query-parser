@@ -12,6 +12,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleExcepti
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.MapperQueryEngine;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
 /**
@@ -24,6 +25,9 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @since  1.0
  */
 public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
+    /** Holds handler's name. */
+    public static final String NAME = "external_mapper";
+
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
@@ -36,6 +40,14 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
 	 */
 	public Engine(QueryHandler handler, QueryParseContext context) {
 	    super(context);
+	    this.handler = handler;
+	}
+
+	/**
+	 * Constructor.
+	 */
+	public Engine(QueryHandler handler, QueryParseContext context, QueryEngineDSLConfiguration configuration) {
+	    super(context, configuration);
 	    this.handler = handler;
 	}
 
@@ -126,10 +138,26 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName() {
+	return NAME;
+    }
+
+    /**
      * Constructor.
      */
     private ExternalDSQMapperHandler(QueryParseContext context) {
 	this.engine = new Engine(this, context);
+	this.context = new ExternalDSQBaseHandler.Context();
+    }
+
+    /**
+     * Constructor.
+     */
+    private ExternalDSQMapperHandler(QueryParseContext context, QueryEngineDSLConfiguration configuration) {
+	this.engine = new Engine(this, context, configuration);
 	this.context = new ExternalDSQBaseHandler.Context();
     }
 
@@ -146,6 +174,22 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
      */
     public ExternalDSQMapperHandler(Version version, String field, Analyzer analyzer, QueryParseContext context) {
 	this(context);
+	this.engine.initialize(version, field, analyzer);
+    }
+
+    /**
+     * Constructor.
+     */
+    public ExternalDSQMapperHandler(String field, Analyzer analyzer, QueryParseContext context, QueryEngineDSLConfiguration configuration) {
+	this(context, configuration);
+	this.engine.initialize(field, analyzer);
+    }
+
+    /**
+     * Constructor.
+     */
+    public ExternalDSQMapperHandler(Version version, String field, Analyzer analyzer, QueryParseContext context, QueryEngineDSLConfiguration configuration) {
+	this(context, configuration);
 	this.engine.initialize(version, field, analyzer);
     }
 }

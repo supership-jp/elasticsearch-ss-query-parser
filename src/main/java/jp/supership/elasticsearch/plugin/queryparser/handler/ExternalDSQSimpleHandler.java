@@ -23,6 +23,9 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @since  1.0
  */
 public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
+    /** Holds handler's name. */
+    public static final String NAME = "external_simple";
+
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
@@ -120,6 +123,14 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
         public void fetch(Reader input) {
             this.handler.fetch(input);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getName() {
+	return NAME;
     }
 
     /**
