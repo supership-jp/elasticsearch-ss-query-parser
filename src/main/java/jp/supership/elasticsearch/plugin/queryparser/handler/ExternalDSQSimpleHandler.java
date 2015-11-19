@@ -138,7 +138,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
      */
     private ExternalDSQSimpleHandler() {
 	this.engine = new Engine(this);
-	this.context = new ExternalDSQBaseHandler.Context();
+	this.metadata = new ExternalDSQBaseHandler.Metadata();
     }
 
     /**

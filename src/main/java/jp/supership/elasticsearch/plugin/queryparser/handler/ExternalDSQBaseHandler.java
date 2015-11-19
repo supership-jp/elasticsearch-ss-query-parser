@@ -36,7 +36,7 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
      * this class is also responsible to maintain the currently constructing {@code Query} instance
      * which will be handled with the {@code Engine}.
      */
-    protected class Context extends QueryHandler.Context {
+    protected class Metadata extends QueryHandler.Context {
 	/** Holds currently constructing query. */
 	public Query query = null;
 	/** Holds constructing clauses. */
@@ -48,7 +48,7 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
     }
 
     /** Holds this handler's context. */
-    protected ExternalDSQBaseHandler.Context context;
+    protected ExternalDSQBaseHandler.Metadata metadata = new ExternalDSQHandler.Metadata();
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
     protected QueryEngine engine;
@@ -63,29 +63,29 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
     public Query visitQuery(QueryParser.QueryContext context) {
 	try {
 	    for (QueryParser.ExpressionContext expression : context.expression()) {
-		this.context.conjunction = context.conjunction == null ? QueryParser.CONJUNCTION_AND : context.conjunction.getType();
-		this.context.query = visit(expression);
-		this.engine.conjugate(this.context.clauses, this.context.conjunction, this.context.modifier, this.context.query);
+		this.metadata.conjunction = context.conjunction == null ? QueryParser.CONJUNCTION_AND : context.conjunction.getType();
+		this.metadata.query = visit(expression);
+		this.engine.conjugate(this.metadata.clauses, this.metadata.conjunction, this.metadata.modifier, this.metadata.query);
 	    }
 
-	    if (this.context.clauses.size() == 1 && this.context.query != null) {
-		return this.context.query;
+	    if (this.metadata.clauses.size() == 1 && this.metadata.query != null) {
+		return this.metadata.query;
 	    } else {
-		return this.engine.getBooleanQuery(this.context.clauses);
+		return this.engine.getBooleanQuery(this.metadata.clauses);
 	    }
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
     }
 
-    /**b
+    /**
      * {@inheritDoc}
      */
     @Override
     public Query visitExpression(QueryParser.ExpressionContext context) {
 	try {
-	    this.context.modifier = context.modifier == null ? QueryParser.MODIFIER_REQUIRE : context.modifier.getType();
-	    this.context.field = context.FIELD().getText();
+	    this.metadata.modifier = context.modifier == null ? QueryParser.MODIFIER_REQUIRE : context.modifier.getType();
+	    this.metadata.field = context.FIELD().getText();
 	    return visit(context.term());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -98,8 +98,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
     @Override
     public Query visitStringTerm(QueryParser.StringTermContext context) {
 	try {
-	    this.context.term = context.TERM_STRING().getText();
-	    return this.dispatchQuotedToken(this.context);
+	    this.metadata.term = context.TERM_STRING().getText();
+	    return this.dispatchQuotedToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -111,8 +111,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
     @Override
     public Query visitNumberTerm(QueryParser.NumberTermContext context) {
 	try {
-	    this.context.term = context.TERM_NUMBER().getText();
-	    return this.dispatchBareToken(this.context);
+	    this.metadata.term = context.TERM_NUMBER().getText();
+	    return this.dispatchBareToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -124,8 +124,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
     @Override
     public Query visitFieldTerm(QueryParser.FieldTermContext context) {
 	try {
-	    this.context.term = context.TERM_FIELD().getText();
-	    return this.dispatchBareToken(this.context);
+	    this.metadata.term = context.TERM_FIELD().getText();
+	    return this.dispatchBareToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
