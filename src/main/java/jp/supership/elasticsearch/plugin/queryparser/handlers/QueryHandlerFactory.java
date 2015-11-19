@@ -3,6 +3,9 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.handlers;
 
+import org.apache.lucene.util.Version;
+import org.elasticsearch.index.analysis.Analyzer;
+import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
 
@@ -21,10 +24,26 @@ public interface QueryHandlerFactory<K> {
     }
 
     /**
-     * Registers {@code QueryHandler} which is wrapped within {@code DelegatingQueryHandler}.
-     * @param handler the registering delegating query handler.
+     * This class specifies {@code QueryHandler} instanciation arguments.
      */
-    public void register(DelegatingQueryHandler<K> handler);
+    public static class Arguments {
+	// Holds responsible Luecne's version.
+	public Version version;
+	// Holds assigned default field.
+	public String field;
+	// Holds assigned analyzer.
+	public Analyzer analyzer;
+	// Holds currently handling context.
+	public QueryParseContext context;
+	// Holds assigned configuration.
+	QueryEngineConfiguration configuration
+    }
+
+    /**
+     * Registers {@code QueryHandler} which is wrapped within {@code QueryHandlerDelegator}.
+     * @param delegator the registering query handle delegator.
+     */
+    public void register(QueryHandleDelegator<K> delegator);
 
     /**
      * Returns wrapped {@code QueryHandler} instance.
@@ -32,5 +51,5 @@ public interface QueryHandlerFactory<K> {
      * @param  configuration the configuration which will be used for instanciating {@code QueryHandler}.
      * @return the wrapped {@code QueryHandler} instance.
      */
-    public QueryHandler create(K key, QueryEngineConfiguration configuration);
+    public QueryHandler create(K key, Arguments arguments);
 }

@@ -17,7 +17,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryBaseVisit
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.NamedQueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
 
@@ -30,13 +30,13 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
  * @author Shingo OKAWA
  * @since  1.0
  */
-abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
+abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements QueryHandler {
     /**
      * Represents domain specific query context, besides holding the query constructing settings
      * this class is also responsible to maintain the currently constructing {@code Query} instance
      * which will be handled with the {@code Engine}.
      */
-    protected class Metadata extends QueryHandler.Context {
+    protected class State extends QueryHandler.Context {
 	/** Holds currently constructing query. */
 	public Query query = null;
 	/** Holds constructing clauses. */
@@ -48,7 +48,7 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     }
 
     /** Holds this handler's context. */
-    protected ExternalDSQBaseHandler.Metadata metadata = new ExternalDSQHandler.Metadata();
+    protected ExternalDSQBaseHandler.State state = new ExternalDSQHandler.State();
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
     protected QueryEngine engine;
@@ -63,15 +63,15 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     public Query visitQuery(QueryParser.QueryContext context) {
 	try {
 	    for (QueryParser.ExpressionContext expression : context.expression()) {
-		this.metadata.conjunction = context.conjunction == null ? QueryParser.CONJUNCTION_AND : context.conjunction.getType();
-		this.metadata.query = visit(expression);
-		this.engine.conjugate(this.metadata.clauses, this.metadata.conjunction, this.metadata.modifier, this.metadata.query);
+		this.state.conjunction = context.conjunction == null ? QueryParser.CONJUNCTION_AND : context.conjunction.getType();
+		this.state.query = visit(expression);
+		this.engine.conjugate(this.state.clauses, this.state.conjunction, this.state.modifier, this.state.query);
 	    }
 
-	    if (this.metadata.clauses.size() == 1 && this.metadata.query != null) {
-		return this.metadata.query;
+	    if (this.state.clauses.size() == 1 && this.state.query != null) {
+		return this.state.query;
 	    } else {
-		return this.engine.getBooleanQuery(this.metadata.clauses);
+		return this.engine.getBooleanQuery(this.state.clauses);
 	    }
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -84,8 +84,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     @Override
     public Query visitExpression(QueryParser.ExpressionContext context) {
 	try {
-	    this.metadata.modifier = context.modifier == null ? QueryParser.MODIFIER_REQUIRE : context.modifier.getType();
-	    this.metadata.field = context.FIELD().getText();
+	    this.state.modifier = context.modifier == null ? QueryParser.MODIFIER_REQUIRE : context.modifier.getType();
+	    this.state.field = context.FIELD().getText();
 	    return visit(context.term());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -98,8 +98,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     @Override
     public Query visitStringTerm(QueryParser.StringTermContext context) {
 	try {
-	    this.metadata.term = context.TERM_STRING().getText();
-	    return this.dispatchQuotedToken(this.metadata);
+	    this.state.term = context.TERM_STRING().getText();
+	    return this.dispatchQuotedToken(this.state);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -111,8 +111,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     @Override
     public Query visitNumberTerm(QueryParser.NumberTermContext context) {
 	try {
-	    this.metadata.term = context.TERM_NUMBER().getText();
-	    return this.dispatchBareToken(this.metadata);
+	    this.state.term = context.TERM_NUMBER().getText();
+	    return this.dispatchBareToken(this.state);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -124,8 +124,8 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     @Override
     public Query visitFieldTerm(QueryParser.FieldTermContext context) {
 	try {
-	    this.metadata.term = context.TERM_FIELD().getText();
-	    return this.dispatchBareToken(this.metadata);
+	    this.state.term = context.TERM_FIELD().getText();
+	    return this.dispatchBareToken(this.state);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}

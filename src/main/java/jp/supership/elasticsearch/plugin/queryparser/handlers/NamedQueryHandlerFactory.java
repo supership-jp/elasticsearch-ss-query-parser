@@ -16,29 +16,28 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEng
  */
 public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
     /** Holds default delegating handler instance. */
-    private static final DelegatingQueryHandler<String> DEFAULT_DELEGATING_HANDLER;
+    private final QueryHandleDelegator<String> defaultDelegator = new ExternalDSQMapperHandleDelegator();
 
     /** Holds map between {@code String} keys and {@code QueryHandler} insatnces. */
-    private Map<String, DelegatingQueryhandler<String>> queryHandlers new HashMap<String, DelegatingQueryHandler<String>>();
+    private final Map<String, QueryHandleDelegator<String>> delegators = new HashMap<String, QueryHandleDelegator<String>>();
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void register(DelegatingQueryHandler<String> handler) {
-	this.queryHandlers.put(handler.getKey(), handler);
+    public void register(QueryHandleDelegator<String> delegator) {
+	this.delegators.put(delegator.getKey(), delegator);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public QueryHandler create(String key, QueryEngineConfiguration configuration) {
-	DelegatingQueryHandler<String> delegatingHandler = this.queryHandlers.get(key);
-	if (delegatingHandler == null) {
-	    return DEFAULT_DELEGATING_HANDLER.getDelegate(this);
-	} else {
-	    reuturn delegatingHandler.getDelegate(this);
+    public QueryHandler create(String key, QueryHandlerFactory.Arguments arguments) {
+	QueryHandleDelegator<String> delegator = this.delegators.get(key);
+	if (delegator == null) {
+	    delegator = this.defaultDelegator;
 	}
+	reuturn delegator.getDelegate(arguments);
     }
 }

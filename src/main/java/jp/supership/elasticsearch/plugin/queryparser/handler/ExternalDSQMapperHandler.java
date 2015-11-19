@@ -25,9 +25,6 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @since  1.0
  */
 public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
-    /** Holds handler's name. */
-    public static final String NAME = "external_mapper";
-
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
