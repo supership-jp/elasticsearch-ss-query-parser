@@ -426,7 +426,7 @@ public class QueryEngineDSLSettings extends QueryEngineSettings implements Query
      * {@inheritDoc}
      */
     @Override
-    public void useDisMax(boolean useDisMax) {
+    public void setUseDisMax(boolean useDisMax) {
         this.useDisMax = useDisMax;
     }
 }

@@ -30,6 +30,6 @@ public class ExternalDSQSimpleHandleDelegator implements QueryHandleDelegator<St
      */
     @Override
     public QueryHandler getDelegate(QueryHandlerFactory.Arguments arguments) {
-	return new ExternlDSQSimpleHandler(arguments.field, arguments.analyzer);
+	return new ExternalDSQSimpleHandler(arguments.field, arguments.analyzer);
     }
 }

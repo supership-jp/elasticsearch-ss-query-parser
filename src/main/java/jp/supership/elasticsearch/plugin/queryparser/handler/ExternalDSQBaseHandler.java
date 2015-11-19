@@ -48,7 +48,7 @@ abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements
     }
 
     /** Holds this handler's context. */
-    protected ExternalDSQBaseHandler.State state = new ExternalDSQHandler.State();
+    protected ExternalDSQBaseHandler.State state = new ExternalDSQBaseHandler.State();
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
     protected QueryEngine engine;

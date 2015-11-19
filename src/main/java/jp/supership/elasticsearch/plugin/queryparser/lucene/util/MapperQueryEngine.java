@@ -1223,7 +1223,7 @@ public abstract class MapperQueryEngine extends QueryEngine implements QueryEngi
      * {@inheritDoc}
      */
     @Override
-    public void useDisMax(boolean useDisMax) {
-	this.configuration.useDisMax(useDisMax);
+    public void setUseDisMax(boolean useDisMax) {
+	this.configuration.setUseDisMax(useDisMax);
     }
 }

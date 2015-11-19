@@ -4,6 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.handlers;
 
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.handler.ExternalDSQMapperHandler;
 
 /**
@@ -30,6 +31,7 @@ public class ExternalDSQMapperHandleDelegator implements QueryHandleDelegator<St
      */
     @Override
     public QueryHandler getDelegate(QueryHandlerFactory.Arguments arguments) {
-	return new ExternalDSQMapperHandler(arguments.version, arguments.field, arguments.analyzer, arguments.context, arguments.configuration) {
+	// TODO: insanceof
+	return new ExternalDSQMapperHandler(arguments.version, arguments.field, arguments.analyzer, arguments.context, (QueryEngineDSLConfiguration) arguments.configuration);
     }
 }

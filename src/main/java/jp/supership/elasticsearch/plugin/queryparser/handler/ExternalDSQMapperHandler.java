@@ -139,7 +139,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
      */
     private ExternalDSQMapperHandler(QueryParseContext context) {
 	this.engine = new Engine(this, context);
-	this.context = new ExternalDSQBaseHandler.Context();
+	this.state = new ExternalDSQBaseHandler.State();
     }
 
     /**
@@ -147,7 +147,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
      */
     private ExternalDSQMapperHandler(QueryParseContext context, QueryEngineDSLConfiguration configuration) {
 	this.engine = new Engine(this, context, configuration);
-	this.context = new ExternalDSQBaseHandler.Context();
+	this.state = new ExternalDSQBaseHandler.State();
     }
 
     /**

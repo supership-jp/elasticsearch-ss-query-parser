@@ -38,6 +38,6 @@ public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
 	if (delegator == null) {
 	    delegator = this.defaultDelegator;
 	}
-	reuturn delegator.getDelegate(arguments);
+	return delegator.getDelegate(arguments);
     }
 }

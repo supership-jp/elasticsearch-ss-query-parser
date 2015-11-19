@@ -4,7 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.handlers;
 
 import org.apache.lucene.util.Version;
-import org.elasticsearch.index.analysis.Analyzer;
+import org.apache.lucene.analysis.Analyzer;
 import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
@@ -36,7 +36,7 @@ public interface QueryHandlerFactory<K> {
 	// Holds currently handling context.
 	public QueryParseContext context;
 	// Holds assigned configuration.
-	QueryEngineConfiguration configuration
+	public QueryEngineConfiguration configuration;
     }
 
     /**

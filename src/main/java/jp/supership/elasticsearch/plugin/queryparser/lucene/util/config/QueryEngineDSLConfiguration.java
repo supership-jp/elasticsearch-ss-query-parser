@@ -273,5 +273,5 @@ public interface QueryEngineDSLConfiguration extends QueryEngineConfiguration {
      * Sets the disjunction-max-query generation functionality setting.
      * @param useDisMax the disjunction-max-query generation functionality setting to be set.
      */
-    public void useDisMax(boolean useDisMax);
+    public void setUseDisMax(boolean useDisMax);
 }
