@@ -30,7 +30,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
  * @author Shingo OKAWA
  * @since  1.0
  */
-abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements NamedQueryHandler {
+abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> {
     /**
      * Represents domain specific query context, besides holding the query constructing settings
      * this class is also responsible to maintain the currently constructing {@code Query} instance

@@ -3,8 +3,10 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.handlers;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.handler.ExternalDSQSimpleHandler;
 
 /**
  * This interface specifies that the implementing class has ability to handle {@code QueryHandlerFactory}'s
@@ -13,27 +15,29 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface DelegatingQueryHandler<K> {
+public class ExternalDSQSimpleHandler implements DelegatingQueryHandler<String> {
+    /** Holds handler's name. */
+    private static final String NAME = "external_simple";
+
+    /** */
+    private static Constructor<ExternalDSQSimpleHandler> CONSTRUCTOR;
+    
     /**
-     * This class is just a placeholder for now. [18/11/2015]
+     * {@inheritDoc}
      */
-    public static class ReuseStrategy {
-	// PLACEHOLDER
+    @Override
+    public String getKey() {
+	return NAME;
     }
 
     /**
-     * Returns wrapped {@code QueryHandler}'s key which will be used {@code QueryHandlerFactory}.
-     * @return the wrapped {@code QueryHandler}'s key.
+     * {@inheritDoc}
      */
-    public K getKey();
-
-    /**
-     * Returns wrapped {@code QueryHandler} instance.
-     * @return the wrapped {@code QueryHandler} instance.
-     */
+    @Override
     public QueryHandler getDelegate(QueryHandlerFactory factory)
 	throws InstanciationException,
 	       IllegalAccessException,
 	       IllegalArgumentException,
-	       InvocationTargetException;
+	       InvocationTargetException {
+    }
 }

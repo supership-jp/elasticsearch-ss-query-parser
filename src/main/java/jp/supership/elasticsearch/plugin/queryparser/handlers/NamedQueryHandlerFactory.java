@@ -17,6 +17,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEng
 public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
     /** Holds default delegating handler instance. */
     private static final DelegatingQueryHandler<String> DEFAULT_DELEGATING_HANDLER;
+
     /** Holds map between {@code String} keys and {@code QueryHandler} insatnces. */
     private Map<String, DelegatingQueryhandler<String>> queryHandlers new HashMap<String, DelegatingQueryHandler<String>>();
 

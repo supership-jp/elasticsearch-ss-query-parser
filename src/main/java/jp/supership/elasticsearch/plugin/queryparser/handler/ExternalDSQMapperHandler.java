@@ -138,14 +138,6 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String getName() {
-	return NAME;
-    }
-
-    /**
      * Constructor.
      */
     private ExternalDSQMapperHandler(QueryParseContext context) {
