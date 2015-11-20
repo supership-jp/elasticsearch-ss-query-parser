@@ -6,6 +6,8 @@ package jp.supership.elasticsearch.plugin.queryparser;
 import java.io.IOException;
 import java.text.Normalizer;
 import java.util.Locale;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.util.Version;
 import com.google.common.collect.Lists;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.Strings;
@@ -68,169 +70,134 @@ public class DSQParser implements QueryParser {
     }
 
     /**
+     * Represents metadata for constructing Lucene queries.
+     */
+    private class Metadata extends QueryEngineDSLSettings {
+	// Holds true if this metadata was resolved with QueryParseContext.
+	private boolean isResolved = false;
+	// Holds currently handling field name.
+	private String currentFieldName = null;
+	// Holds objective handler's name.
+	private String handlerName = null;
+	// Holds QueryHandlerFactory's arguments.
+	QueryHandlerFactory.Arguments arguments = new QueryHandlerFactory.Arguments();
+
+	// Sets the currently handling field name.
+	public void setCurrentFieldName(String currentFieldName) {
+	    this.currentFieldName = currentFieldName;
+	}
+
+	// Returns the currently handling field name.
+	public String getCurrentFieldName() {
+	    return this.currentFieldName;
+	}
+
+	// Sets the objective handler's name.
+	public void setHandlerName(String currentFieldName) {
+	    this.handlerName = handlerName;
+	}
+
+	// Setd the objective handler's name.
+	public String getHandlerName() {
+	    return this.handlerName;
+	}
+
+	// Sets the internal Lucene version.
+	private void setVersionArgument(Version version) {
+	    this.arguments.version = version;
+	}
+
+	// Sets the field name to be passed to the handler.
+	private void setFieldArgument(String field) {
+	    this.arguments.field = field;
+	}
+
+	// Sets the analyzer to be passed to the handler.
+	private void setAnalyzerArgument(Analyzer analyzer) {
+	    this.arguments.analyzer = analyzer;
+	}
+
+	// Sets the query parse context to be passed to the handler.
+	private void setQueryParseContextArgument(QueryParseContext context) {
+	    this.arguments.context = context;
+	}
+
+	// Resolves dependency with the assigend context.
+	public void resolve(QueryParseContext context) {
+	    this.setFieldArgument(this.getDefaultField());
+	    this.setAnalyzerArgument(this.getDefaultAnalyzer());
+	    this.setQueryParseContextArgument(context);
+	    this.arguments.configuration = this;
+	    this.isResolved = true;
+	}
+
+	public void reset() {
+	    this.isResolved = false;
+	}
+
+	// Setd the objective handler's name.
+	public QueryHandlerFactory.Arguments getArguments(QueryParseContext context) {
+	    if (!this.isResolved) {
+		this.resolve(context);
+	    }
+	    return this.arguments;
+	}
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public Query parse(QueryParseContext context) throws IOException, QueryParsingException {
         XContentParser parser = context.parser();
-	String currentFieldName = null;
-	String queryKind = null;
-        QueryEngineDSLSettings settings = new QueryEngineDSLSettings();
-	QueryHandlerFactory.Arguments arguments = new QueryHandlerFactory.Arguments();
-        settings.setDefaultField(context.defaultField());
-        settings.setLenient(context.queryStringLenient());
-        settings.setLocale(Locale.ROOT);
-        settings.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_AND);
+	Metadata metadata = new Metadata();
+
+        metadata.setDefaultField(context.defaultField());
+        metadata.setLenient(context.queryStringLenient());
+        metadata.setLocale(Locale.ROOT);
+        metadata.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_AND);
 
         XContentParser.Token token;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
             if (token == XContentParser.Token.FIELD_NAME) {
-                currentFieldName = parser.currentName();
+                metadata.setCurrentFieldName(parser.currentName());
             } else if (token == XContentParser.Token.START_ARRAY) {
-                if ("fields".equals(currentFieldName)) {
-                    while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
-                        String field = null;
-                        float boost = -1;
-                        char[] text = parser.textCharacters();
-                        int end = parser.textOffset() + parser.textLength();
-                        for (int i = parser.textOffset(); i < end; i++) {
-                            if (text[i] == '^') {
-                                int offset = i - parser.textOffset();
-                                field = new String(text, parser.textOffset(), offset);
-                                boost = Float.parseFloat(new String(text, i + 1, parser.textLength() - offset - 1));
-                                break;
-                            }
-                        }
-                        if (field == null) {
-                            field = parser.text();
-                        }
-                        if (settings.getFields() == null) {
-                            settings.setFields(Lists.<String>newArrayList());
-                        }
-                        if (Regex.isSimpleMatchPattern(field)) {
-                            for (String index : context.mapperService().simpleMatchToIndexNames(field)) {
-                                settings.getFields().add(index);
-                                if (boost != -1) {
-                                    if (settings.getBoosts() == null) {
-                                        settings.setBoosts(new ObjectFloatOpenHashMap<String>());
-                                    }
-                                    settings.getBoosts().put(index, boost);
-                                }
-                            }
-                        } else {
-                            settings.getFields().add(field);
-                            if (boost != -1) {
-                                if (settings.getBoosts() == null) {
-                                    settings.setBoosts(new ObjectFloatOpenHashMap<String>());
-                                }
-                                settings.getBoosts().put(field, boost);
-                            }
-                        }
-                    }
-                } else {
-                    throw new QueryParsingException(context.index(), "[ss_query_parser] query does not support [" + currentFieldName + "]");
-                }
+		this.parseArray(context, parser, metadata, token);
             } else if (token.isValue()) {
-                if ("query".equals(currentFieldName)) {
-                    settings.setQueryString(parser.text());
-                } else if ("default_field".equals(currentFieldName) || "defaultField".equals(currentFieldName)) {
-                    settings.setDefaultField(parser.text());
-                } else if ("default_operator".equals(currentFieldName) || "defaultOperator".equals(currentFieldName)) {
-                    String operator = parser.text();
-                    if ("or".equalsIgnoreCase(operator)) {
-                        settings.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_OR);
-                    } else if ("and".equalsIgnoreCase(operator)) {
-                        settings.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_AND);
-                    } else {
-                        throw new QueryParsingException(context.index(), "[ss_query_parser] query default operator [" + operator + "] is not allowed");
-                    }
-                } else if ("analyzer".equals(currentFieldName)) {
-                    NamedAnalyzer analyzer = context.analysisService().analyzer(parser.text());
-                    if (analyzer == null) {
-                        throw new QueryParsingException(context.index(), "[ss_query_parser] analyzer [" + parser.text() + "] not found");
-                    }
-                    settings.setForcedAnalyzer(analyzer);
-                } else if ("quote_analyzer".equals(currentFieldName) || "quoteAnalyzer".equals(currentFieldName)) {
-                    NamedAnalyzer analyzer = context.analysisService().analyzer(parser.text());
-                    if (analyzer == null) {
-                        throw new QueryParsingException(context.index(), "[ss_query_parser] quote_analyzer [" + parser.text() + "] not found");
-                    }
-                    settings.setForcedQuoteAnalyzer(analyzer);
-                } else if ("auto_generate_phrase_queries".equals(currentFieldName) || "autoGeneratePhraseQueries".equals(currentFieldName)) {
-                    settings.setPhraseQueryAutoGeneration(parser.booleanValue());
-                } else if ("max_determinized_states".equals(currentFieldName) || "maxDeterminizedStates".equals(currentFieldName)) {
-                    settings.setMaxDeterminizedStates(parser.intValue());
-                } else if ("lowercase_expanded_terms".equals(currentFieldName) || "lowercaseExpandedTerms".equals(currentFieldName)) {
-                    settings.setLowercaseExpandedTerms(parser.booleanValue());
-                } else if ("enable_position_increments".equals(currentFieldName) || "enablePositionIncrements".equals(currentFieldName)) {
-                    settings.setEnablePositionIncrements(parser.booleanValue());
-                } else if ("escape".equals(currentFieldName)) {
-                    settings.setEscape(parser.booleanValue());
-                } else if ("use_dis_max".equals(currentFieldName) || "useDisMax".equals(currentFieldName)) {
-                    settings.setUseDisMax(parser.booleanValue());
-                } else if ("phrase_slop".equals(currentFieldName) || "phraseSlop".equals(currentFieldName)) {
-                    settings.setPhraseSlop(parser.intValue());
-                } else if ("boost".equals(currentFieldName)) {
-                    settings.setBoost(parser.floatValue());
-                } else if ("tie_breaker".equals(currentFieldName) || "tieBreaker".equals(currentFieldName)) {
-                    settings.setTieBreaker(parser.floatValue());
-                } else if ("rewrite".equals(currentFieldName)) {
-                    settings.setRewriteMethod(QueryParsers.parseRewriteMethod(parser.textOrNull()));
-                } else if ("minimum_should_match".equals(currentFieldName) || "minimumShouldMatch".equals(currentFieldName)) {
-                    settings.setMinimumShouldMatch(parser.textOrNull());
-                } else if ("quote_field_suffix".equals(currentFieldName) || "quoteFieldSuffix".equals(currentFieldName)) {
-                    settings.setQuoteFieldSuffix(parser.textOrNull());
-                } else if ("lenient".equalsIgnoreCase(currentFieldName)) {
-                    settings.setLenient(parser.booleanValue());
-                } else if ("locale".equals(currentFieldName)) {
-                    String locale = parser.text();
-                    settings.setLocale(LocaleUtils.parse(locale));
-                } else if ("enable_negative_query".equals(currentFieldName)) {
-		    settings.setQueryNegation(parser.booleanValue());
-		} else if ("use_field_refine".equals(currentFieldName)) {
-                    settings.setFieldRefinement(parser.booleanValue());
-		} else if ("query_kind".equals(currentFieldName)) {
-                    queryKind = parser.textOrNull();
-                } else {
-                    throw new QueryParsingException(context.index(), "[ss_query_parser] query does not support [" + currentFieldName + "]");
-                }
+		this.parseValue(context, parser, metadata, token);
             }
         }
 
-        if (settings.getQueryString() == null) {
-            throw new QueryParsingException(context.index(), "so_query must be provided with a [query]");
+        if (metadata.getQueryString() == null) {
+            throw new QueryParsingException(context.index(), "ss_query_parser must be provided with a [query]");
         }
 
-	settings.setQueryTypes(context.queryTypes());
-        settings.setDefaultAnalyzer(context.mapperService().searchAnalyzer());
-        settings.setDefaultQuoteAnalyzer(context.mapperService().searchQuoteAnalyzer());
-        if (settings.getEscape()) {
-            settings.setQueryString(StringUtils.escape(settings.getQueryString()));
+	metadata.setQueryTypes(context.queryTypes());
+        metadata.setDefaultAnalyzer(context.mapperService().searchAnalyzer());
+        metadata.setDefaultQuoteAnalyzer(context.mapperService().searchQuoteAnalyzer());
+        if (metadata.getEscape()) {
+            metadata.setQueryString(StringUtils.escape(metadata.getQueryString()));
         }
-
-	arguments.field = settings.getDefaultField();
-	arguments.analyzer = settings.getDefaultAnalyzer();
-	arguments.context = context;
-	arguments.configuration = settings;
 
         try {
 	    Query query = null;
-	    String queryText = settings.getQueryString();
+	    String queryText = metadata.getQueryString();
 	    queryText = Normalizer.normalize(queryText, Normalizer.Form.NFKC);
 	    queryText = queryText.replaceAll("\\s+", " ");
-	    settings.setQueryString(queryText);
+	    metadata.setQueryString(queryText);
 	    boolean retrying = false;
+
             do {
                 try {
 		    if (retrying == true) {
-			queryText = settings.getQueryString();
+			queryText = metadata.getQueryString();
                         queryText = queryText.replace("\"", "");
                         queryText = queryText.replace("OR", "or");
-			settings.setQueryString(queryText);
+			metadata.setQueryString(queryText);
                     }
 		    // TODO: FIX THIS
-		    QueryHandler handler = HANDLER_FACTORY.create(queryKind, arguments);
-                    query = handler.handle(settings.getQueryString());
+		    QueryHandler handler = HANDLER_FACTORY.create(metadata.getHandlerName(), metadata.getArguments(context));
+                    query = handler.handle(metadata.getQueryString());
                     if (query == null) {
                         return null;
                     }
@@ -243,18 +210,137 @@ public class DSQParser implements QueryParser {
                 }
             } while (retrying);
 
-            if (settings.getBoost() != QueryEngineDSLSettings.DEFAULT_BOOST) {
-                query.setBoost(query.getBoost() * settings.getBoost());
+            if (metadata.getBoost() != QueryEngineDSLSettings.DEFAULT_BOOST) {
+                query.setBoost(query.getBoost() * metadata.getBoost());
             }
-	    if (settings.getQueryNegation()) {
+	    if (metadata.getQueryNegation()) {
 		query = fixNegativeQueryIfNeeded(query);
 	    }
             if (query instanceof BooleanQuery) {
-                Queries.applyMinimumShouldMatch((BooleanQuery) query, settings.getMinimumShouldMatch());
+                Queries.applyMinimumShouldMatch((BooleanQuery) query, metadata.getMinimumShouldMatch());
             }
+
             return query;
         } catch (HandleException cause) {
-            throw new QueryParsingException(context.index(), "[ss_query_parser] failed to parse query [" + settings.getQueryString() + "]", cause);
+            throw new QueryParsingException(context.index(), "[ss_query_parser] failed to parse query [" + metadata.getQueryString() + "]", cause);
         }
+    }
+
+    /**
+     *
+     */
+    private void parseArray(QueryParseContext context, XContentParser parser, Metadata metadata, XContentParser.Token token) throws IOException, QueryParsingException {
+	if ("fields".equals(metadata.getCurrentFieldName())) {
+	    while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
+		String field = null;
+		float boost = -1;
+		char[] text = parser.textCharacters();
+		int end = parser.textOffset() + parser.textLength();
+		for (int i = parser.textOffset(); i < end; i++) {
+		    if (text[i] == '^') {
+			int offset = i - parser.textOffset();
+			field = new String(text, parser.textOffset(), offset);
+			boost = Float.parseFloat(new String(text, i + 1, parser.textLength() - offset - 1));
+			break;
+		    }
+		}
+		if (field == null) {
+		    field = parser.text();
+		}
+		if (metadata.getFields() == null) {
+		    metadata.setFields(Lists.<String>newArrayList());
+		}
+		if (Regex.isSimpleMatchPattern(field)) {
+		    for (String index : context.mapperService().simpleMatchToIndexNames(field)) {
+			metadata.getFields().add(index);
+			if (boost != -1) {
+			    if (metadata.getBoosts() == null) {
+				metadata.setBoosts(new ObjectFloatOpenHashMap<String>());
+			    }
+			    metadata.getBoosts().put(index, boost);
+			}
+		    }
+		} else {
+		    metadata.getFields().add(field);
+		    if (boost != -1) {
+			if (metadata.getBoosts() == null) {
+			    metadata.setBoosts(new ObjectFloatOpenHashMap<String>());
+			}
+			metadata.getBoosts().put(field, boost);
+		    }
+		}
+	    }
+	} else {
+	    throw new QueryParsingException(context.index(), "[ss_query_parser] query does not support [" + metadata.getCurrentFieldName() + "]");
+	}
+    }
+
+    /**
+     *
+     */
+    private void parseValue(QueryParseContext context, XContentParser parser, Metadata metadata, XContentParser.Token token) throws IOException, QueryParsingException {
+	if ("query".equals(metadata.getCurrentFieldName())) {
+	    metadata.setQueryString(parser.text());
+	} else if ("default_field".equals(metadata.getCurrentFieldName()) || "defaultField".equals(metadata.getCurrentFieldName())) {
+	    metadata.setDefaultField(parser.text());
+	} else if ("default_operator".equals(metadata.getCurrentFieldName()) || "defaultOperator".equals(metadata.getCurrentFieldName())) {
+	    String operator = parser.text();
+	    if ("or".equalsIgnoreCase(operator)) {
+		metadata.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_OR);
+	    } else if ("and".equalsIgnoreCase(operator)) {
+		metadata.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_AND);
+	    } else {
+		throw new QueryParsingException(context.index(), "[ss_query_parser] query default operator [" + operator + "] is not allowed");
+	    }
+	} else if ("analyzer".equals(metadata.getCurrentFieldName())) {
+	    NamedAnalyzer analyzer = context.analysisService().analyzer(parser.text());
+	    if (analyzer == null) {
+		throw new QueryParsingException(context.index(), "[ss_query_parser] analyzer [" + parser.text() + "] not found");
+	    }
+	    metadata.setForcedAnalyzer(analyzer);
+	} else if ("quote_analyzer".equals(metadata.getCurrentFieldName()) || "quoteAnalyzer".equals(metadata.getCurrentFieldName())) {
+	    NamedAnalyzer analyzer = context.analysisService().analyzer(parser.text());
+	    if (analyzer == null) {
+		throw new QueryParsingException(context.index(), "[ss_query_parser] quote_analyzer [" + parser.text() + "] not found");
+	    }
+	    metadata.setForcedQuoteAnalyzer(analyzer);
+	} else if ("auto_generate_phrase_queries".equals(metadata.getCurrentFieldName()) || "autoGeneratePhraseQueries".equals(metadata.getCurrentFieldName())) {
+	    metadata.setPhraseQueryAutoGeneration(parser.booleanValue());
+	} else if ("max_determinized_states".equals(metadata.getCurrentFieldName()) || "maxDeterminizedStates".equals(metadata.getCurrentFieldName())) {
+	    metadata.setMaxDeterminizedStates(parser.intValue());
+	} else if ("lowercase_expanded_terms".equals(metadata.getCurrentFieldName()) || "lowercaseExpandedTerms".equals(metadata.getCurrentFieldName())) {
+	    metadata.setLowercaseExpandedTerms(parser.booleanValue());
+	} else if ("enable_position_increments".equals(metadata.getCurrentFieldName()) || "enablePositionIncrements".equals(metadata.getCurrentFieldName())) {
+	    metadata.setEnablePositionIncrements(parser.booleanValue());
+	} else if ("escape".equals(metadata.getCurrentFieldName())) {
+	    metadata.setEscape(parser.booleanValue());
+	} else if ("use_dis_max".equals(metadata.getCurrentFieldName()) || "useDisMax".equals(metadata.getCurrentFieldName())) {
+	    metadata.setUseDisMax(parser.booleanValue());
+	} else if ("phrase_slop".equals(metadata.getCurrentFieldName()) || "phraseSlop".equals(metadata.getCurrentFieldName())) {
+	    metadata.setPhraseSlop(parser.intValue());
+	} else if ("boost".equals(metadata.getCurrentFieldName())) {
+	    metadata.setBoost(parser.floatValue());
+	} else if ("tie_breaker".equals(metadata.getCurrentFieldName()) || "tieBreaker".equals(metadata.getCurrentFieldName())) {
+	    metadata.setTieBreaker(parser.floatValue());
+	} else if ("rewrite".equals(metadata.getCurrentFieldName())) {
+	    metadata.setRewriteMethod(QueryParsers.parseRewriteMethod(parser.textOrNull()));
+	} else if ("minimum_should_match".equals(metadata.getCurrentFieldName()) || "minimumShouldMatch".equals(metadata.getCurrentFieldName())) {
+	    metadata.setMinimumShouldMatch(parser.textOrNull());
+	} else if ("quote_field_suffix".equals(metadata.getCurrentFieldName()) || "quoteFieldSuffix".equals(metadata.getCurrentFieldName())) {
+	    metadata.setQuoteFieldSuffix(parser.textOrNull());
+	} else if ("lenient".equalsIgnoreCase(metadata.getCurrentFieldName())) {
+	    metadata.setLenient(parser.booleanValue());
+	} else if ("locale".equals(metadata.getCurrentFieldName())) {
+	    String locale = parser.text();
+	    metadata.setLocale(LocaleUtils.parse(locale));
+	} else if ("enable_negative_query".equals(metadata.getCurrentFieldName())) {
+	    metadata.setQueryNegation(parser.booleanValue());
+	} else if ("use_field_refine".equals(metadata.getCurrentFieldName())) {
+	    metadata.setFieldRefinement(parser.booleanValue());
+	} else if ("handler_name".equals(metadata.getCurrentFieldName())) {
+	    metadata.setHandlerName(parser.textOrNull());
+	} else {
+	    throw new QueryParsingException(context.index(), "[ss_query_parser] query does not support [" + metadata.getCurrentFieldName() + "]");
+	}
     }
 }

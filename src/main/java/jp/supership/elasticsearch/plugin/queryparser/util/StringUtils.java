@@ -4,6 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.util;
 
 import java.util.IllegalFormatCodePointException;
+import org.elasticsearch.common.Strings;
 
 /**
  * A collection of operations that relates to {@code String} instances.
@@ -97,5 +98,15 @@ public final class StringUtils {
 	}
 
 	return new String(buffer, 0, length);
+    }
+
+    /**
+     * Compares two strings in the way of snake-case insensitively.
+     * @param  snakeCase the snake case string of target comparator.
+     * @param  comparatee the string to be checked.
+     * @return true if the given two strings are equal.
+     */
+    public static boolean compareWithSnakeCaseInsensitive(String snakeCase, String comparatee) {
+	return snakeCase.equals(comparatee) || Strings.toCamelCase(snakeCase).equals(comparatee);
     }
 }
