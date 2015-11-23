@@ -63,9 +63,6 @@ public abstract class MapperQueryEngine extends QueryEngine implements QueryEngi
 	FIELD_QUERY_EXTENSIONS = unmodifiableMap(fieldQueryExtensions);
     }
 
-    /** Holds ES query parsing context. */
-    private final QueryParseContext context;
-
     /** Holds this engine's configuration. */
     private QueryEngineDSLConfiguration configuration;
 
@@ -80,6 +77,13 @@ public abstract class MapperQueryEngine extends QueryEngine implements QueryEngi
 
     /** Holds currently handling mapper. */
     private FieldMapper currentMapper;
+
+    /**
+     * Constructor.
+     */
+    public MapperQueryEngine() {
+	super();
+    }
 
     /**
      * Constructor.
@@ -99,9 +103,9 @@ public abstract class MapperQueryEngine extends QueryEngine implements QueryEngi
     }
 
     /**
-     * Configures engine ain according to the given {@code QueryEngineDSLConfiguration}.
-     * @param configuration the assigned configuration to be used.
+     * {@inheritDoc}.
      */
+    @Override
     public void configure(QueryEngineDSLConfiguration configuration) {
         this.configuration = configuration;
   
@@ -594,14 +598,6 @@ public abstract class MapperQueryEngine extends QueryEngine implements QueryEngi
             ((MultiPhraseQuery) query).setSlop(slop);
         }
     }
-
-    // TODO: Resolve redundancy between QueryBuilder's APIs and Configuration's APIs.
-    /*
-     * {@inheritDoc}
-    @Override
-    public Analyzer getAnalyzer() {
-        return this.configuration.getAnalyzer();
-    }*/
 
     /**
      * Returns the analyzer to be used for quoted terms.

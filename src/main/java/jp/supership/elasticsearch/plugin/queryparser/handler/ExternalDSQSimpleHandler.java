@@ -9,8 +9,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
 /**
@@ -35,6 +37,15 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
 	 */
 	public Engine(QueryHandler handler) {
 	    this.handler = handler;
+	}
+
+	/**
+	 * {@inheritDoc}.
+	 */
+	@Override
+	public void configure(QueryEngineDSLConfiguration configuration) {
+	    // DO NOTHING.
+	    // TODO: throws appropriate exception.
 	}
 
         /**
@@ -123,26 +134,18 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void initialize(QueryHandlerFactory.Arguments arguments) {
+	this.engine.initialize(arguments.version, arguments.field, arguments.analyzer);
+    }
+
+    /**
      * Constructor.
      */
-    private ExternalDSQSimpleHandler() {
+    public ExternalDSQSimpleHandler() {
 	this.engine = new Engine(this);
 	this.state = new ExternalDSQBaseHandler.State();
-    }
-
-    /**
-     * Constructor.
-     */
-    public ExternalDSQSimpleHandler(String field, Analyzer analyzer) {
-	this();
-	this.engine.initialize(field, analyzer);
-    }
-
-    /**
-     * Constructor.
-     */
-    public ExternalDSQSimpleHandler(Version version, String field, Analyzer analyzer) {
-	this();
-	this.engine.initialize(version, field, analyzer);
     }
 }

@@ -38,10 +38,12 @@ import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
+import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineSettings;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration.Wildcard;
@@ -61,6 +63,9 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
      */
     public static class DeprecatedMethodCall extends Throwable {}
 
+    /** Holds ES query parsing context. */
+    protected QueryParseContext context;
+
     /** Holds query-parsing-contect. */
     protected QueryEngineConfiguration configuration;
 
@@ -69,7 +74,6 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
      */
     public QueryEngine() {
         super(null);
-        this.configuration = new QueryEngineSettings();
     }
 
     /**
@@ -103,6 +107,12 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         this.setDefaultField(field);
         this.setPhraseQueryAutoGeneration(false);
     }
+
+    /**
+     * Configures engine ain according to the given {@code QueryEngineDSLConfiguration}.
+     * @param configuration the assigned configuration to be used.
+     */
+    public abstract void configure(QueryEngineDSLConfiguration configuration);
 
     /**
      * Parses a query string and instanciates {@link org.apache.lucene.search.Query}.
@@ -792,13 +802,21 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         }
     }
 
-    // TODO: Resolve redundancy between QueryBuilder's APIs and Configuration's APIs.
-    /*
-     * {@inheritDoc}
-    @Override
-    public Analyzer getAnalyzer() {
-        return this.configuration.getAnalyzer();
-    }*/
+    /**
+     * Returns assigned context.
+     * @return the currently assigned context.
+     */
+    public QueryParseContext getContext() {
+        return this.context;
+    }
+
+    /**
+     * Sets currently handling context.
+     * @param context the currently handling context.
+     */
+    public void setContext(QueryParseContext context) {
+        this.context = context;
+    }
 
     /**
      * {@inheritDoc}

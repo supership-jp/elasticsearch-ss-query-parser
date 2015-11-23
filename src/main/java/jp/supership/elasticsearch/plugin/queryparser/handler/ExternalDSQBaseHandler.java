@@ -18,6 +18,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.handlers.Initializable;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
 
@@ -30,7 +31,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
  * @author Shingo OKAWA
  * @since  1.0
  */
-abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements QueryHandler {
+abstract class ExternalDSQBaseHandler extends QueryBaseVisitor<Query> implements QueryHandler, Initializable {
     /**
      * Represents domain specific query context, besides holding the query constructing settings
      * this class is also responsible to maintain the currently constructing {@code Query} instance

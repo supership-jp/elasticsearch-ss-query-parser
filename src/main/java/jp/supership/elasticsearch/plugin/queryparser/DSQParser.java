@@ -29,8 +29,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.handlers.ExternalDSQMapperHandleDelegator;
-import jp.supership.elasticsearch.plugin.queryparser.handlers.ExternalDSQSimpleHandleDelegator;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.NamedQueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLSettings;
@@ -48,12 +46,7 @@ public class DSQParser implements QueryParser {
     public static final String NAME = "ss_query_parser";
 
     /** Holds {@code QueryHandlerFactory}. */
-    private static final QueryHandlerFactory<String> HANDLER_FACTORY = new NamedQueryHandlerFactory();
-
-    static {
-	HANDLER_FACTORY.register(new ExternalDSQMapperHandleDelegator());
-	HANDLER_FACTORY.register(new ExternalDSQSimpleHandleDelegator());
-    }
+    private static final QueryHandlerFactory<String> HANDLERS = new NamedQueryHandlerFactory();
 
     /** For ES injection-hook. */
     @Inject
@@ -196,7 +189,7 @@ public class DSQParser implements QueryParser {
 			metadata.setQueryString(queryText);
                     }
 		    // TODO: FIX THIS
-		    QueryHandler handler = HANDLER_FACTORY.create(metadata.getHandlerName(), metadata.getArguments(context));
+		    QueryHandler handler = HANDLERS.create(metadata.getHandlerName(), metadata.getArguments(context));
                     query = handler.handle(metadata.getQueryString());
                     if (query == null) {
                         return null;
@@ -227,9 +220,13 @@ public class DSQParser implements QueryParser {
     }
 
     /**
-     *
+     * Parses JSON array whithin QueryDSL.
+     * @param context the currently handling context.
+     * @param parser the responsible parser for JSON.
+     * @param metadata the currently rendered metadata of query construction.
+     * @param token the currently handling token.
      */
-    private void parseArray(QueryParseContext context, XContentParser parser, Metadata metadata, XContentParser.Token token) throws IOException, QueryParsingException {
+    protected void parseArray(QueryParseContext context, XContentParser parser, Metadata metadata, XContentParser.Token token) throws IOException, QueryParsingException {
 	if ("fields".equals(metadata.getCurrentFieldName())) {
 	    while ((token = parser.nextToken()) != XContentParser.Token.END_ARRAY) {
 		String field = null;
@@ -276,9 +273,13 @@ public class DSQParser implements QueryParser {
     }
 
     /**
-     *
+     * Parses JSON value whithin QueryDSL.
+     * @param context the currently handling context.
+     * @param parser the responsible parser for JSON.
+     * @param metadata the currently rendered metadata of query construction.
+     * @param token the currently handling token.
      */
-    private void parseValue(QueryParseContext context, XContentParser parser, Metadata metadata, XContentParser.Token token) throws IOException, QueryParsingException {
+    protected void parseValue(QueryParseContext context, XContentParser parser, Metadata metadata, XContentParser.Token token) throws IOException, QueryParsingException {
 	if ("query".equals(metadata.getCurrentFieldName())) {
 	    metadata.setQueryString(parser.text());
 	} else if ("default_field".equals(metadata.getCurrentFieldName()) || "defaultField".equals(metadata.getCurrentFieldName())) {

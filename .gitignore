@@ -6,7 +6,7 @@
 *.ear
 hs_err_pid*
 /target/
-
+/src/main/java/jp/supership/elasticsearch/plugin/queryparser/antlr/v4/dsl/*.java
 /.settings/
 .project
 .classpath

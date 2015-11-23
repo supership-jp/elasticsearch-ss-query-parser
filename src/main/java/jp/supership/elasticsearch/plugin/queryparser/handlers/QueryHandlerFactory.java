@@ -7,7 +7,7 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.analysis.Analyzer;
 import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
 
 /**
  * This interface specifies the implementing class has functionality to instanciate {@code QueryHandler}.
@@ -36,14 +36,8 @@ public interface QueryHandlerFactory<K> {
 	// Holds currently handling context.
 	public QueryParseContext context;
 	// Holds assigned configuration.
-	public QueryEngineConfiguration configuration;
+	public QueryEngineDSLConfiguration configuration;
     }
-
-    /**
-     * Registers {@code QueryHandler} which is wrapped within {@code QueryHandlerDelegator}.
-     * @param delegator the registering query handle delegator.
-     */
-    public void register(QueryHandleDelegator<K> delegator);
 
     /**
      * Returns wrapped {@code QueryHandler} instance.
@@ -51,5 +45,5 @@ public interface QueryHandlerFactory<K> {
      * @param  configuration the configuration which will be used for instanciating {@code QueryHandler}.
      * @return the wrapped {@code QueryHandler} instance.
      */
-    public QueryHandler create(K key, Arguments arguments);
+    public QueryHandler create(K key, Arguments arguments) throws IllegalArgumentException;
 }

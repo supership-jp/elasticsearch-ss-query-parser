@@ -12,6 +12,7 @@
   <properties>
     <elasticsearch.version>1.6.0</elasticsearch.version>
     <google.collections.version>1.0-rc2</google.collections.version>
+    <apache.commons.io.version>2.4</apache.commons.io.version>
     <carrotsearch.hppc.version>0.6.1</carrotsearch.hppc.version>
     <joda.time.version>2.3</joda.time.version>
     <antlr.version>4.5</antlr.version>
@@ -51,6 +52,12 @@
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>
       <version>${antlr.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${apache.commons.io.version}</version>
     </dependency>
 
     <dependency>

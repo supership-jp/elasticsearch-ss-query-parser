@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.HashMap;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.util.ConfigUtils;
+import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
 /**
  * This class is responsible for instanciating named {@code QueryHandler}.
@@ -15,29 +17,68 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEng
  * @since  1.0
  */
 public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
-    /** Holds default delegating handler instance. */
-    private final QueryHandleDelegator<String> defaultDelegator = new ExternalDSQMapperHandleDelegator();
+    /** Holds JSON entry key for settings entity. */
+    public static final String JSON_SETTINGS = "settings";
+
+    /** Holds JSON entry key for class entity. */
+    public static final String JSON_CLASS = "class";
+
+    /** Holds JSON entry key for name entity. */
+    public static final String JSON_NAME = "name";
 
     /** Holds map between {@code String} keys and {@code QueryHandler} insatnces. */
-    private final Map<String, QueryHandleDelegator<String>> delegators = new HashMap<String, QueryHandleDelegator<String>>();
+    private static final Map<String, Object> JSON;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void register(QueryHandleDelegator<String> delegator) {
-	this.delegators.put(delegator.getKey(), delegator);
+    static {
+	try {
+	    JSON = (Map<String, Object>) (ConfigUtils.loadJSONFromClasspath("/NamedQueryHandlerFactory.json"));
+	} catch (Exception cause) {
+	    throw new ExceptionInInitializerError(cause);
+	}
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public QueryHandler create(String key, QueryHandlerFactory.Arguments arguments) {
-	QueryHandleDelegator<String> delegator = this.delegators.get(key);
-	if (delegator == null) {
-	    delegator = this.defaultDelegator;
+    public QueryHandler create(String key, QueryHandlerFactory.Arguments arguments) throws IllegalArgumentException {
+	return this.create(key, JSON, arguments);
+    }
+
+    /**
+     * Returns wrapped {@code QueryHandler} instance.
+     * @param  key the key which is associated with the requesting {@code QueryHandler}.
+     * @param  configuration the configuration which will be used for instanciating {@code QueryHandler}.
+     * @return the wrapped {@code QueryHandler} instance.
+     */
+    private QueryHandler create(String key, Map<String, Object> json, QueryHandlerFactory.Arguments arguments) throws IllegalArgumentException {
+	String name = ConfigUtils.getStringValue(json, JSON_NAME);
+	if (StringUtils.isEmpty(name)) {
+	    throw new IllegalArgumentException("'name' element not defined");
 	}
-	return delegator.getDelegate(arguments);
+
+	String clazz = ConfigUtils.getStringValue(json, JSON_CLASS);
+	if (StringUtils.isEmpty(clazz)) {
+	    throw new IllegalArgumentException("'class' element not defined for handler " + name);
+	}
+
+	Object settings = json.get(JSON_SETTINGS);
+	if (settings != null && !(settings instanceof Map)) {
+	    throw new IllegalArgumentException("'settings' element must be Map for handler " + name);
+	}
+
+	try {
+	    Initializable handler = (Initializable) Class.forName(clazz).newInstance();
+	    handler.initialize(arguments);
+	    return (QueryHandler) handler;
+	} catch (InstantiationException cause) {
+	    throw new IllegalArgumentException(clazz + " creation exception " + cause.getMessage(), cause);
+	} catch (IllegalAccessException cause) {
+	    throw new IllegalArgumentException(clazz + " creation exception " + cause.getMessage(), cause);
+	} catch (ClassNotFoundException cause) {
+	    throw new IllegalArgumentException(clazz + " not found", cause);
+	} catch (ClassCastException cause) {
+	    throw new IllegalArgumentException(clazz + " must implement interface " + QueryHandler.class.getName());
+	}
     }
 }

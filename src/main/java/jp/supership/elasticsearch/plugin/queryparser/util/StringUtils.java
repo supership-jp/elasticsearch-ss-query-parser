@@ -109,4 +109,42 @@ public final class StringUtils {
     public static boolean compareWithSnakeCaseInsensitive(String snakeCase, String comparatee) {
 	return snakeCase.equals(comparatee) || Strings.toCamelCase(snakeCase).equals(comparatee);
     }
+
+    /**
+     * Trim String value, return null if empty after trim.
+     * @param  value the string to be trimmed.
+     * @return trimmed value or null
+     */
+    public static String trimToNull(String value) {
+	if (value == null || value.length() == 0) {
+	    return null;
+	}
+	value = value.trim();
+	if (value.length() == 0) {
+	    return null;
+	}
+	return value;
+    }
+
+    /**
+     * Check if String value is null or empty.
+     * @param  value the string to be checked.
+     * @return true if value is null or empty.
+     */
+    public static boolean isEmpty(String value) {
+	return (value == null || value.length() == 0 || value.trim().length() == 0);
+    }
+
+    /**
+     * Check if String value is null or empty.
+     * @param  value the string to be checked.
+     * @return true if value is null or empty
+     */
+    public static boolean isEmpty(Object value) {
+	if (value instanceof String) {
+	    return isEmpty((String) value);
+	} else {
+	    return value == null;
+	}
+    }
 }
