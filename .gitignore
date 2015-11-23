@@ -7,6 +7,7 @@
 hs_err_pid*
 /target/
 /src/main/java/jp/supership/elasticsearch/plugin/queryparser/antlr/v4/dsl/*.java
+/src/main/java/*.tokens
 /.settings/
 .project
 .classpath
