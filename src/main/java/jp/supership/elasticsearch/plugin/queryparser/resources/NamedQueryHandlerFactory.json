@@ -1,0 +1,6 @@
+{
+    "external_mapper" : {
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.ExternalDSQMapperHandler",
+	"settings" : {}
+    }
+}

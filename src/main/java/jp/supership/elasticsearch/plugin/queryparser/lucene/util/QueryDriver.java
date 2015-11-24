@@ -78,6 +78,15 @@ public interface QueryDriver {
     /**
      * Returns {@code Query} in accordance to the assigned configuration.
      * Can be overridden by extending classes, to modify query being  returned.
+     * @param  disableCoord true if coord scoring should be disabled.
+     * @return the Resulting {@link Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    public Query getBooleanQuery(boolean disableCoord) throws ParseException;
+
+    /**
+     * Returns {@code Query} in accordance to the assigned configuration.
+     * Can be overridden by extending classes, to modify query being  returned.
      * @param  clauses list that contains {@link BooleanClause} instances to join.
      * @return the Resulting {@link Query} instance.
      * @throws ParseException if the parsing fails.

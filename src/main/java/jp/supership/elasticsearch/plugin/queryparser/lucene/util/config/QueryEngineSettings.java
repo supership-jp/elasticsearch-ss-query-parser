@@ -13,7 +13,7 @@ import org.apache.lucene.document.DateTools;
 import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfiguration;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MultiTermQuery;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZED_STATES;
 
 /**
@@ -31,7 +31,7 @@ public class QueryEngineSettings implements QueryEngineConfiguration {
     protected String defaultField = null;
 
     /** Holds the default operator parsers use to combine query terms. */
-    protected int defaultOperator = QueryParser.CONJUNCTION_OR;
+    protected int defaultOperator = ExternalQueryParser.CONJUNCTION_OR;
 
     /** Holds phrase-query-auto-genertion functionality setting. */
     protected boolean phraseQueryAutoGeneration = DEFAULT_PHRASE_QUERY_AUTO_GENERATION;

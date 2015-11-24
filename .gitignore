@@ -5,9 +5,9 @@
 *.war
 *.ear
 hs_err_pid*
-/target/
-/src/main/java/jp/supership/elasticsearch/plugin/queryparser/antlr/v4/dsl/*.java
-/src/main/java/*.tokens
-/.settings/
 .project
 .classpath
+/.settings/
+/target/
+/src/main/java/*.tokens
+/src/main/java/jp/supership/elasticsearch/plugin/queryparser/antlr/v4/dsl/*.java

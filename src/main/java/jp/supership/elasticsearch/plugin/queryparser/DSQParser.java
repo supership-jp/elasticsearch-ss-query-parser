@@ -27,6 +27,7 @@ import org.elasticsearch.index.query.QueryParsingException;
 import org.elasticsearch.index.cache.query.parser.resident.ResidentQueryParserCache;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.NamedQueryHandlerFactory;
@@ -148,7 +149,7 @@ public class DSQParser implements QueryParser {
         metadata.setDefaultField(context.defaultField());
         metadata.setLenient(context.queryStringLenient());
         metadata.setLocale(Locale.ROOT);
-        metadata.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_AND);
+        metadata.setDefaultOperator(ExternalQueryParser.CONJUNCTION_AND);
 
         XContentParser.Token token;
         while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
@@ -287,9 +288,9 @@ public class DSQParser implements QueryParser {
 	} else if ("default_operator".equals(metadata.getCurrentFieldName()) || "defaultOperator".equals(metadata.getCurrentFieldName())) {
 	    String operator = parser.text();
 	    if ("or".equalsIgnoreCase(operator)) {
-		metadata.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_OR);
+		metadata.setDefaultOperator(ExternalQueryParser.CONJUNCTION_OR);
 	    } else if ("and".equalsIgnoreCase(operator)) {
-		metadata.setDefaultOperator(jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser.CONJUNCTION_AND);
+		metadata.setDefaultOperator(ExternalQueryParser.CONJUNCTION_AND);
 	    } else {
 		throw new QueryParsingException(context.index(), "[ss_query_parser] query default operator [" + operator + "] is not allowed");
 	    }

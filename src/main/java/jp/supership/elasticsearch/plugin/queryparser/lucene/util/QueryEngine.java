@@ -4,7 +4,6 @@
 package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -39,7 +38,7 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
 import org.elasticsearch.index.query.QueryParseContext;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.QueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
@@ -86,7 +85,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
 
     /**
      * Initializes a query parser.
-     * @param version  Lucene version to be matched. See <a href="QueryParser.html#version">here</a>.
+     * @param version  Lucene version to be matched. See <a href="ExternalQueryParser.html#version">here</a>.
      * @param field    the default field for query terms.
      * @param analyzer the analyzer which is applied for the given query..
      */
@@ -115,27 +114,6 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
     public abstract void configure(QueryEngineDSLConfiguration configuration);
 
     /**
-     * Parses a query string and instanciates {@link org.apache.lucene.search.Query}.
-     * @param  queryText the query string to be parsed.
-     * @throws ParseException if the parsing fails.
-     */
-    public Query evaluate(String queryText) throws ParseException {
-        this.fetch(new StringReader(queryText));
-        try {
-            Query instanciated = this.handle(this.getDefaultField());
-            return instanciated != null ? instanciated : this.newBooleanQuery(false);
-        } catch (HandleException cause) {
-            ParseException exception = new ParseException("could not parse '" + queryText + "': " + cause.getMessage());
-            exception.initCause(cause);
-            throw exception;
-        } catch (BooleanQuery.TooManyClauses cause) {
-            ParseException exception = new ParseException("could not parse '" + queryText + "': too many boolean clauses");
-            exception.initCause(cause);
-            throw exception;
-        }
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -144,7 +122,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         boolean prohibited;
 
         // If this term is introduced by AND, make the preceding term required, unless it is already prohibited.
-        if (clauses.size() > 0 && conjunction == QueryParser.CONJUNCTION_AND) {
+        if (clauses.size() > 0 && conjunction == ExternalQueryParser.CONJUNCTION_AND) {
             BooleanClause previous = clauses.get(clauses.size() - 1);
             if (!previous.isProhibited()) {
                 previous.setOccur(BooleanClause.Occur.SHOULD);
@@ -152,7 +130,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         }
 
         // If this term is introduced by OR, make the preceeding term optional, unless it is prohibited.
-        if (clauses.size() > 0 && this.configuration.getDefaultOperator() == QueryParser.CONJUNCTION_AND && conjunction == QueryParser.CONJUNCTION_OR) {
+        if (clauses.size() > 0 && this.configuration.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_AND && conjunction == ExternalQueryParser.CONJUNCTION_OR) {
             BooleanClause previous = clauses.get(clauses.size() - 1);
             if (!previous.isProhibited()) {
                 previous.setOccur(BooleanClause.Occur.SHOULD);
@@ -166,17 +144,17 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
 
 	// The term is set to be REQUIRED if the term is introduced by AND or +;
         // otherwise, REQUIRED if not PROHIBITED and not introduced by OR.
-        if (this.getDefaultOperator() == QueryParser.CONJUNCTION_OR) {
-            prohibited = (modifier == QueryParser.MODIFIER_NEGATE);
-            required = (modifier == QueryParser.MODIFIER_REQUIRE);
-            if (conjunction == QueryParser.CONJUNCTION_AND && !prohibited) {
+        if (this.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_OR) {
+            prohibited = (modifier == ExternalQueryParser.MODIFIER_NEGATE);
+            required = (modifier == ExternalQueryParser.MODIFIER_REQUIRE);
+            if (conjunction == ExternalQueryParser.CONJUNCTION_AND && !prohibited) {
                 required = true;
             }
         // The term is set ti be PROHIBITED if the term is introduced by NOT;
         // otherwise, REQIURED if not PROHIBITED and not introduce by OR.
         } else {
-            prohibited = (modifier == QueryParser.MODIFIER_NEGATE);
-            required = (!prohibited && conjunction != QueryParser.CONJUNCTION_OR);
+            prohibited = (modifier == ExternalQueryParser.MODIFIER_NEGATE);
+            required = (!prohibited && conjunction != ExternalQueryParser.CONJUNCTION_OR);
         }
 
         if (required && !prohibited) {
@@ -264,7 +242,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
      * @throws ParseException if the parsing fails.
      */
     protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
-        BooleanClause.Occur occurence = this.getDefaultOperator() == QueryParser.CONJUNCTION_AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
+        BooleanClause.Occur occurence = this.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
 
         String analyzerName = null;
         if (analyzer instanceof NamedAnalyzer) {
@@ -521,6 +499,14 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         final TermRangeQuery query = new TermRangeQuery(field, left, right, leftInclusive, rightInclusive);
         query.setRewriteMethod(this.getMultiTermRewriteMethod());
         return query;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query getBooleanQuery(boolean disableCoord) throws ParseException {
+	return this.newBooleanQuery(disableCoord);
     }
 
     /**

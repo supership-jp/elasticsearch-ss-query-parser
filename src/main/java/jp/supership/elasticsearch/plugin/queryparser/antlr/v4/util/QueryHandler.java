@@ -37,10 +37,10 @@ public interface QueryHandler {
 
     /**
      * Creates {@link org.apache.lucene.search.Query} in accordance with the given raw query string.
-     * @param  field the default field for query terms.
+     * @param  queryText the raw query string to be parsed.
      * @throws HandleException if the handling fails.
      */
-    public Query handle(String defaultField) throws HandleException;
+    public Query handle(String queryText) throws HandleException;
 
     /**
      * Dispatches appropriate query-builder in accordance to the given context.

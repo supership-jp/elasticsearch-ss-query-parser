@@ -31,7 +31,7 @@ public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
 
     static {
 	try {
-	    JSON = (Map<String, Object>) (ConfigUtils.loadJSONFromClasspath("/NamedQueryHandlerFactory.json"));
+	    JSON = (Map<String, Object>) (ConfigUtils.loadJSONFromClasspath("/resources/NamedQueryHandlerFactory.json"));
 	} catch (Exception cause) {
 	    throw new ExceptionInInitializerError(cause);
 	}
@@ -52,19 +52,21 @@ public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
      * @return the wrapped {@code QueryHandler} instance.
      */
     private QueryHandler create(String key, Map<String, Object> json, QueryHandlerFactory.Arguments arguments) throws IllegalArgumentException {
-	String name = ConfigUtils.getStringValue(json, JSON_NAME);
-	if (StringUtils.isEmpty(name)) {
-	    throw new IllegalArgumentException("'name' element not defined");
+	Object entry = json.get(key);
+	if (entry != null && !(entry instanceof Map)) {
+	    throw new IllegalArgumentException("entry must be Map for handler " + key);
 	}
 
-	String clazz = ConfigUtils.getStringValue(json, JSON_CLASS);
+	Map<String, Object> configuration = (Map<String, Object>) entry;
+
+	String clazz = ConfigUtils.getStringValue(configuration, JSON_CLASS);
 	if (StringUtils.isEmpty(clazz)) {
-	    throw new IllegalArgumentException("'class' element not defined for handler " + name);
+	    throw new IllegalArgumentException("'class' element not defined for handler " + key);
 	}
 
-	Object settings = json.get(JSON_SETTINGS);
+	Object settings = configuration.get(JSON_SETTINGS);
 	if (settings != null && !(settings instanceof Map)) {
-	    throw new IllegalArgumentException("'settings' element must be Map for handler " + name);
+	    throw new IllegalArgumentException("'settings' element must be Map for handler " + key);
 	}
 
 	try {

@@ -1,7 +1,7 @@
 /*
  * Supership Elasticsearch Query DSL.
  */
-grammar Query;
+grammar ExternalQuery;
 import CommonLexerRules;
 
 query      : expression (conjunction=(CONJUNCTION_AND | CONJUNCTION_OR)? expression)*
