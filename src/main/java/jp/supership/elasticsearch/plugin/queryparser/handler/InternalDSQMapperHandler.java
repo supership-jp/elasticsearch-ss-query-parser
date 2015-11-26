@@ -25,7 +25,7 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
+public class InternalDSQMapperHandler extends InternalDSQBaseHandler {
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
@@ -171,8 +171,8 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
     /**
      * Constructor.
      */
-    public ExternalDSQMapperHandler() {
+    public InternalDSQMapperHandler() {
 	this.engine = new Engine(this);
-	this.state = new ExternalDSQBaseHandler.State();
+	this.state = new InternalDSQBaseHandler.State();
     }
 }

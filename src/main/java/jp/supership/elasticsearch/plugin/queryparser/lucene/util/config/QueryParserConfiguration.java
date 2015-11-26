@@ -13,7 +13,7 @@ import org.apache.lucene.queryparser.flexible.standard.CommonQueryParserConfigur
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface QueryEngineConfiguration extends CommonQueryParserConfiguration {
+public interface QueryParserConfiguration extends CommonQueryParserConfiguration {
     /** Holds default leading-wildcard functionality setting. */
     public static final boolean DEFAULT_ALLOW_LEADING_WILDCARD = true;
 

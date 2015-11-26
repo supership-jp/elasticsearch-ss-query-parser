@@ -6,7 +6,6 @@ package jp.supership.elasticsearch.plugin.queryparser.handlers;
 import java.util.Map;
 import java.util.HashMap;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.util.ConfigUtils;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
@@ -31,7 +30,7 @@ public class NamedQueryHandlerFactory implements QueryHandlerFactory<String> {
 
     static {
 	try {
-	    JSON = (Map<String, Object>) (ConfigUtils.loadJSONFromClasspath("/resources/NamedQueryHandlerFactory.json"));
+	    JSON = ConfigUtils.loadJSONFromClasspath("/NamedQueryHandlerFactory.json");
 	} catch (Exception cause) {
 	    throw new ExceptionInInitializerError(cause);
 	}

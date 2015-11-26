@@ -7,7 +7,7 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.analysis.Analyzer;
 import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
 
 /**
  * This interface specifies the implementing class has functionality to instanciate {@code QueryHandler}.
@@ -36,7 +36,7 @@ public interface QueryHandlerFactory<K> {
 	// Holds currently handling context.
 	public QueryParseContext context;
 	// Holds assigned configuration.
-	public QueryEngineDSLConfiguration configuration;
+	public DSQParserConfiguration configuration;
     }
 
     /**

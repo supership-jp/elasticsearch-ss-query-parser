@@ -18,7 +18,7 @@ import org.joda.time.DateTimeZone;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class QueryEngineDSLSettings extends QueryEngineSettings implements QueryEngineDSLConfiguration {
+public class DSQParserSettings extends QueryParserSettings implements DSQParserConfiguration {
     /** Holds default boosting coefficient. */
     public static final float DEFAULT_BOOST = 1.0f;
 

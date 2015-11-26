@@ -6,6 +6,7 @@ package jp.supership.elasticsearch.plugin.queryparser;
 import java.io.IOException;
 import java.text.Normalizer;
 import java.util.Locale;
+import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.util.Version;
 import com.google.common.collect.Lists;
@@ -32,7 +33,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleExcepti
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.NamedQueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLSettings;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserSettings;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 import static org.elasticsearch.common.lucene.search.Queries.fixNegativeQueryIfNeeded;
 
@@ -44,7 +45,7 @@ import static org.elasticsearch.common.lucene.search.Queries.fixNegativeQueryIfN
  */
 public class DSQParser implements QueryParser {
     /** Holds plugin's name. */
-    public static final String NAME = "ss_query_parser";
+    public static final String NAME = "hetero_query";
 
     /** Holds {@code QueryHandlerFactory}. */
     private static final QueryHandlerFactory<String> HANDLERS = new NamedQueryHandlerFactory();
@@ -66,7 +67,7 @@ public class DSQParser implements QueryParser {
     /**
      * Represents metadata for constructing Lucene queries.
      */
-    private class Metadata extends QueryEngineDSLSettings {
+    private class Metadata extends DSQParserSettings {
 	// Holds true if this metadata was resolved with QueryParseContext.
 	private boolean isResolved = false;
 	// Holds currently handling field name.
@@ -87,7 +88,7 @@ public class DSQParser implements QueryParser {
 	}
 
 	// Sets the objective handler's name.
-	public void setHandlerName(String currentFieldName) {
+	public void setHandlerName(String handlerName) {
 	    this.handlerName = handlerName;
 	}
 
@@ -204,7 +205,7 @@ public class DSQParser implements QueryParser {
                 }
             } while (retrying);
 
-            if (metadata.getBoost() != QueryEngineDSLSettings.DEFAULT_BOOST) {
+            if (metadata.getBoost() != DSQParserSettings.DEFAULT_BOOST) {
                 query.setBoost(query.getBoost() * metadata.getBoost());
             }
 	    if (metadata.getQueryNegation()) {

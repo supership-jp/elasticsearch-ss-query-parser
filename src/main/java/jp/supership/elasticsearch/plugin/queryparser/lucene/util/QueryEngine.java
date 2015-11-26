@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -36,16 +37,17 @@ import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.util.Version;
 import org.apache.lucene.util.automaton.RegExp;
+import org.elasticsearch.common.hppc.ObjectFloatOpenHashMap;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
 import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineSettings;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserSettings;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
-import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineConfiguration.Wildcard;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryParserConfiguration.Wildcard;
 
 /**
  * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
@@ -55,7 +57,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class QueryEngine extends QueryBuilder implements QueryDriver, QueryHandler, QueryEngineConfiguration {
+public abstract class QueryEngine extends QueryBuilder implements QueryDriver, QueryHandler, DSQParserConfiguration {
     /**
      * DO NOT CATCH THIS EXCEPTION.
      * This exception will be thrown when you are using methods that should not be used any longer.
@@ -66,7 +68,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
     protected QueryParseContext context;
 
     /** Holds query-parsing-contect. */
-    protected QueryEngineConfiguration configuration;
+    protected DSQParserConfiguration configuration;
 
     /**
      * Constructor.
@@ -78,7 +80,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
     /**
      * Constructor.
      */
-    public QueryEngine(QueryEngineConfiguration configuration) {
+    public QueryEngine(DSQParserConfiguration configuration) {
         super(null);
         this.configuration = configuration;
     }
@@ -89,8 +91,8 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
      * @param field    the default field for query terms.
      * @param analyzer the analyzer which is applied for the given query..
      */
-    public void initialize(Version version, String field, Analyzer analyzer) {
-        this.initialize(field, analyzer);
+    public void initialize(Version version, String field, Analyzer analyzer, DSQParserConfiguration configuration) {
+        this.initialize(field, analyzer, configuration);
         if (version.onOrAfter(Version.LUCENE_3_1) == false) {
             this.setPhraseQueryAutoGeneration(true);
         }
@@ -101,17 +103,18 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
      * @param field    the default field for query terms.
      * @param analyzer the analyzer which is applied for the given query..
      */
-    public void initialize(String field, Analyzer analyzer) {
+    public void initialize(String field, Analyzer analyzer, DSQParserConfiguration configuration) {
+	this.configuration = configuration;
         this.setAnalyzer(analyzer);
         this.setDefaultField(field);
         this.setPhraseQueryAutoGeneration(false);
     }
 
     /**
-     * Configures engine ain according to the given {@code QueryEngineDSLConfiguration}.
+     * Configures engine ain according to the given {@code DSQParserConfiguration}.
      * @param configuration the assigned configuration to be used.
      */
-    public abstract void configure(QueryEngineDSLConfiguration configuration);
+    public abstract void configure(DSQParserConfiguration configuration);
 
     /**
      * {@inheritDoc}
@@ -120,6 +123,15 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
     public void conjugate(List<BooleanClause> clauses, int conjunction, int modifier, Query query) {
         boolean required;
         boolean prohibited;
+
+	// If this term is introduced by DIS, treats the previous clauses and the current one as disjunction-max query.
+        if (clauses.size() > 0 && conjunction == InternalQueryParser.CONJUNCTION_DIS) {
+	    DisjunctionMaxQuery disMaxQuery = new DisjunctionMaxQuery(this.getTieBreaker());
+	    disMaxQuery.add(this.getBooleanQuery(clauses));
+	    disMaxQuery.add(query);
+	    query = disMaxQuery;
+	    clauses = new ArrayList<BooleanClause>();
+        }
 
         // If this term is introduced by AND, make the preceding term required, unless it is already prohibited.
         if (clauses.size() > 0 && conjunction == ExternalQueryParser.CONJUNCTION_AND) {
@@ -144,7 +156,8 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
 
 	// The term is set to be REQUIRED if the term is introduced by AND or +;
         // otherwise, REQUIRED if not PROHIBITED and not introduced by OR.
-        if (this.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_OR) {
+        if (this.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_OR
+	    || this.getDefaultOperator() == InternalQueryParser.CONJUNCTION_DIS) {
             prohibited = (modifier == ExternalQueryParser.MODIFIER_NEGATE);
             required = (modifier == ExternalQueryParser.MODIFIER_REQUIRE);
             if (conjunction == ExternalQueryParser.CONJUNCTION_AND && !prohibited) {
@@ -154,7 +167,9 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         // otherwise, REQIURED if not PROHIBITED and not introduce by OR.
         } else {
             prohibited = (modifier == ExternalQueryParser.MODIFIER_NEGATE);
-            required = (!prohibited && conjunction != ExternalQueryParser.CONJUNCTION_OR);
+            required = (!prohibited
+			&& conjunction != ExternalQueryParser.CONJUNCTION_OR
+			&& conjunction != InternalQueryParser.CONJUNCTION_DIS);
         }
 
         if (required && !prohibited) {
@@ -1050,5 +1065,349 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
     @Override
     public int getMaxDeterminizedStates() {
         return this.configuration.getMaxDeterminizedStates();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isCacheable() {
+        return this.configuration.isCacheable();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getQueryString() {
+        return this.configuration.getQueryString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQueryString(String queryString) {
+	this.configuration.setQueryString(queryString);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getBoost() {
+        return this.configuration.getBoost();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBoost(float boost) {
+	this.configuration.setBoost(boost);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getFuzzyMaxExpansions() {
+	return this.configuration.getFuzzyMaxExpansions();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFuzzyMaxExpansions(int fuzzyMaxExpansions) {
+	this.configuration.setFuzzyMaxExpansions(fuzzyMaxExpansions);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getFuzzyRewriteMethod() {
+	return this.configuration.getFuzzyRewriteMethod();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFuzzyRewriteMethod(MultiTermQuery.RewriteMethod fuzzyRewriteMethod) {
+	this.configuration.setFuzzyRewriteMethod(fuzzyRewriteMethod);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getWildcardAnalysis() {
+	return this.configuration.getWildcardAnalysis();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setWildcardAnalysis(boolean wildcardAnalysis) {
+	this.configuration.setWildcardAnalysis(wildcardAnalysis);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getEscape() {
+	return this.configuration.getEscape();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setEscape(boolean escape) {
+	this.configuration.setEscape(escape);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getDefaultAnalyzer() {
+	return this.configuration.getDefaultAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultAnalyzer(Analyzer defaultAnalyzer) {
+	this.configuration.setDefaultAnalyzer(defaultAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getDefaultQuoteAnalyzer() {
+	return this.configuration.getDefaultQuoteAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultQuoteAnalyzer(Analyzer defaultQuoteAnalyzer) {
+	this.configuration.setDefaultQuoteAnalyzer(defaultQuoteAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getForcedAnalyzer() {
+	return this.configuration.getForcedAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setForcedAnalyzer(Analyzer forcedAnalyzer) {
+	this.configuration.setForcedAnalyzer(forcedAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getForcedQuoteAnalyzer() {
+	return this.configuration.getForcedQuoteAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setForcedQuoteAnalyzer(Analyzer forcedQuoteAnalyzer) {
+	this.configuration.setForcedQuoteAnalyzer(forcedQuoteAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getQuoteFieldSuffix() {
+	return this.configuration.getQuoteFieldSuffix();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQuoteFieldSuffix(String quoteFieldSuffix) {
+	this.configuration.setQuoteFieldSuffix(quoteFieldSuffix);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getRewriteMethod() {
+	return this.configuration.getRewriteMethod();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setRewriteMethod(MultiTermQuery.RewriteMethod rewriteMethod) {
+	this.configuration.setRewriteMethod(rewriteMethod);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getMinimumShouldMatch() {
+	return this.configuration.getMinimumShouldMatch();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setMinimumShouldMatch(String minimumShouldMatch) {
+	this.configuration.setMinimumShouldMatch(minimumShouldMatch);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getLenient() {
+	return this.configuration.getLenient();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setLenient(boolean lenient) {
+	this.configuration.setLenient(lenient);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getFieldRefinement() {
+	return this.configuration.getFieldRefinement();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFieldRefinement(boolean fieldRefinement) {
+	this.configuration.setFieldRefinement(fieldRefinement);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getQueryNegation() {
+	return this.configuration.getQueryNegation();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQueryNegation(boolean queryNegation) {
+	this.configuration.setQueryNegation(queryNegation);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> getFields() {
+	return this.configuration.getFields();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFields(List<String> fields) {
+	this.configuration.setFields(fields);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<String> getQueryTypes() {
+	return this.configuration.getQueryTypes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQueryTypes(Collection<String> queryTypes) {
+	this.configuration.setQueryTypes(queryTypes);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ObjectFloatOpenHashMap<String> getBoosts() {
+	return this.configuration.getBoosts();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBoosts(ObjectFloatOpenHashMap<String> boosts) {
+	this.configuration.setBoosts(boosts);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getTieBreaker() {
+	return this.configuration.getTieBreaker();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setTieBreaker(float tieBreaker) {
+	this.configuration.setTieBreaker(tieBreaker);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getUseDisMax() {
+	return this.configuration.getUseDisMax();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setUseDisMax(boolean useDisMax) {
+	this.configuration.setUseDisMax(useDisMax);
     }
 }

@@ -12,7 +12,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryEngineDSLConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
 /**
@@ -43,7 +43,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
 	 * {@inheritDoc}.
 	 */
 	@Override
-	public void configure(QueryEngineDSLConfiguration configuration) {
+	public void configure(DSQParserConfiguration configuration) {
 	    // DO NOTHING.
 	    // TODO: throws appropriate exception.
 	}
@@ -55,6 +55,17 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
         public Query handle(String defaultField) throws HandleException {
             return this.handler.handle(defaultField);
         }
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void dispatch(String field, String term, QueryHandler.Context context) {
+	    // wildcard?
+	    // prefix?
+	    // regexp?
+	    // fuzzy?
+	}
 
         /**
          * {@inheritDoc}
@@ -138,7 +149,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
      */
     @Override
     public void initialize(QueryHandlerFactory.Arguments arguments) {
-	this.engine.initialize(arguments.version, arguments.field, arguments.analyzer);
+	this.engine.initialize(arguments.version, arguments.field, arguments.analyzer, arguments.configuration);
     }
 
     /**

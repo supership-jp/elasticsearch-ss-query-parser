@@ -1,6 +1,18 @@
 {
+    "external_simple" : {
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.ExternalDSQSimpleHandler",
+	"settings" : {}
+    },
     "external_mapper" : {
 	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.ExternalDSQMapperHandler",
+	"settings" : {}
+    },
+    "internal_simple" : {
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.InternalDSQMapperHandler",
+	"settings" : {}
+    },
+    "internal_mapper" : {
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.InternalDSQMapperHandler",
 	"settings" : {}
     }
 }

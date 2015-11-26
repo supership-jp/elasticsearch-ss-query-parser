@@ -44,15 +44,33 @@ fragment QUATABLE_CHARACTER
     : (~['\"', '\\'] | ESCAPED_CHARACTER)
     ;
 
-LPAREN           : '('                              ;
-RPAREN           : ')'                              ;
-COLON            : ':'                              ;
-ASTERISC         : '*'                              ;
-QUESTION         : '?'                              ;
-CONJUNCTION_AND  : [aA][nN][dD]                     ;
-CONJUNCTION_OR   : [oO][rR]                         ;
-MODIFIER_NEGATE  : '-'                              ;
-MODIFIER_REQUIRE : '_'                              ;
-TERM_STRING      : '\"' (QUATABLE_CHARACTER)* '\"'  ;
-TERM_NUMBER      : (DIGIT)+                         ;
-TERM_FIELD       : FIELD_INITIAL (FIELD_CHARACTER)* ;
+fragment INTEGER
+    : (DIGIT)+
+    ;
+
+fragment EXPONENT
+    : [eE] ('+' | '-')? INTEGER
+    ;
+
+fragment FLOAT
+    : ('+' | '-')? (INTEGER)? '.' INTEGER (EXPONENT)?
+    | ('+' | '-')? INTEGER EXPONENT
+    ;
+
+LPAREN           : '('                                          ;
+RPAREN           : ')'                                          ;
+HAT              : '^'                                          ;
+COLON            : ':'                                          ;
+ASTERISC         : '*'                                          ;
+QUESTION         : '?'                                          ;
+CONJUNCTION_AND  : [aA][nN][dD]                                 ;
+CONJUNCTION_OR   : [oO][rR]                                     ;
+CONJUNCTION_DIS  : '|'                                          ;
+MODIFIER_NEGATE  : '-'                                          ;
+MODIFIER_REQUIRE : '+'                                          ;
+QUOTED_TERM      : '\"' (TERM)* '\"'                            ;
+TERM             : (STRING | NUMBER)                            ;
+STRING           : (QUATABLE_CHARACTER)+                        ;
+NUMBER           : (INTEGER | FLOAT)                            ;
+TERM_FIELD       : FIELD_INITIAL (FIELD_CHARACTER)*             ;
+WS               : (' ' | '\t' | '\n' | '\r' | '\f')+ {skip();} ;

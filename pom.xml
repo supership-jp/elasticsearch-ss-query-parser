@@ -20,6 +20,7 @@
     <javac.version>1.7</javac.version>
     <java.version>1.7</java.version>
     <maven.assembly.version>2.3</maven.assembly.version>
+    <maven.jar.version>2.4</maven.jar.version>
   </properties>
 
   <dependencies>
@@ -79,6 +80,19 @@
       </plugin>
 
       <plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-jar-plugin</artifactId>
+	<version>${maven.jar.version}</version>
+	<configuration>
+	  <includes>
+	    <include>**/*.class</include>
+	    <include>**/*.json</include>
+	    <include>**/*.properties</include>
+	  </includes>
+	</configuration>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
         <version>${maven.assembly.version}</version>
         <configuration>
@@ -121,5 +135,20 @@
 	</executions>
       </plugin>
     </plugins>
+
+    <resources>
+      <resource>
+	<directory>${basedir}/src/main/java/jp/supership/elasticsearch/plugin/queryparser/resources</directory>
+	<includes>
+	  <include>**/*.json</include>
+	</includes>
+      </resource>
+      <resource>
+	<directory>${basedir}/src/main/resources</directory>
+	<includes>
+	  <include>**/*.properties</include>
+	</includes>
+      </resource>
+    </resources>
   </build>
 </project>

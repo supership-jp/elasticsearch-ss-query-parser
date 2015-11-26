@@ -16,7 +16,7 @@ import org.elasticsearch.common.hppc.ObjectFloatOpenHashMap;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface QueryEngineDSLConfiguration extends QueryEngineConfiguration {
+public interface DSQParserConfiguration extends QueryParserConfiguration {
         /**
      * Returns the cachability of the current query.
      * @return true if the currently handling query is supposed to be cachable.

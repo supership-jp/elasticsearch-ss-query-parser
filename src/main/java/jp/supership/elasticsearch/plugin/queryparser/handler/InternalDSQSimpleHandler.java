@@ -7,12 +7,11 @@ import java.io.Reader;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.MapperQueryEngine;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 
@@ -25,11 +24,11 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
+public class InternalDSQSimpleHandler extends InternalDSQBaseHandler {
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
-    private class Engine extends MapperQueryEngine {
+    private class Engine extends QueryEngine {
         /** Holds query engine which is reponsible for parsing raw query strings. */
         private QueryHandler handler;
 
@@ -37,24 +36,16 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
 	 * Constructor.
 	 */
 	public Engine(QueryHandler handler) {
-	    super();
 	    this.handler = handler;
 	}
 
 	/**
-	 * Constructor.
+	 * {@inheritDoc}.
 	 */
-	public Engine(QueryHandler handler, QueryParseContext context) {
-	    super(context);
-	    this.handler = handler;
-	}
-
-	/**
-	 * Constructor.
-	 */
-	public Engine(QueryHandler handler, QueryParseContext context, DSQParserConfiguration configuration) {
-	    super(context, configuration);
-	    this.handler = handler;
+	@Override
+	public void configure(DSQParserConfiguration configuration) {
+	    // DO NOTHING.
+	    // TODO: throws appropriate exception.
 	}
 
         /**
@@ -137,8 +128,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
 	    if (context.fuzzySlop != null) {
 		try {
 		    phraseSlop = Float.valueOf(context.fuzzySlop.substring(1)).intValue();
-		}
-		catch (Exception ignored) {
+		} catch (Exception ignored) {
 		    // DO NOTHING, the value has its default, so this is safe.
 		}
 	    }
@@ -159,20 +149,14 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
      */
     @Override
     public void initialize(QueryHandlerFactory.Arguments arguments) {
-	this.engine.setContext(arguments.context);
-	if (arguments.version != null) {
-	    this.engine.initialize(arguments.version, arguments.field, arguments.analyzer, arguments.configuration);
-	} else {
-	    this.engine.initialize(arguments.field, arguments.analyzer, arguments.configuration);
-	}
-	this.engine.configure(arguments.configuration);
+	this.engine.initialize(arguments.version, arguments.field, arguments.analyzer, arguments.configuration);
     }
 
     /**
      * Constructor.
      */
-    public ExternalDSQMapperHandler() {
+    public InternalDSQSimpleHandler() {
 	this.engine = new Engine(this);
-	this.state = new ExternalDSQBaseHandler.State();
+	this.state = new InternalDSQBaseHandler.State();
     }
 }

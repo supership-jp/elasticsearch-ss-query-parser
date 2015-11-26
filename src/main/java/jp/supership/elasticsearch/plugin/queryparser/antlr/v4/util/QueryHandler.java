@@ -44,6 +44,15 @@ public interface QueryHandler {
 
     /**
      * Dispatches appropriate query-builder in accordance to the given context.
+     * @param  field the currently handling field.
+     * @param  term the currently handling term.
+     * @param  context the currently handling context.
+     * @throws HandleException if the handling fails.
+     */
+    public void dispatch(String field, String term, QueryHandler.Context context);
+
+    /**
+     * Dispatches appropriate query-builder in accordance to the given context.
      * @param  context the currently handling context.
      * @throws HandleException if the handling fails.
      */

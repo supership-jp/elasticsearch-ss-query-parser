@@ -22,7 +22,7 @@ import static org.apache.lucene.util.automaton.Operations.DEFAULT_MAX_DETERMINIZ
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class QueryEngineSettings implements QueryEngineConfiguration {
+public class QueryParserSettings implements QueryParserConfiguration {
     /** Holds default analyzer. */
     protected Analyzer analyzer = null;
 

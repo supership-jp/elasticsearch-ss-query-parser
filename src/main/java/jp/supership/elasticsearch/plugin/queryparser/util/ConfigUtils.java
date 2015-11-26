@@ -18,7 +18,6 @@ import org.elasticsearch.common.settings.SettingsException;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentParser;
 import org.elasticsearch.common.xcontent.XContentType;
-import jp.supership.elasticsearch.plugin.queryparser.DSQParser;
 
 /**
  * A collection of operations that relates to configurations, i.e., {@code Map} instances.
@@ -155,7 +154,7 @@ public final class ConfigUtils {
     public static Map<String, Object> loadJSONFromClasspath(String path) throws IOException {
 	XContentParser parser = null;
 	try {
-	    parser = XContentFactory.xContent(XContentType.JSON).createParser(DSQParser.class.getResourceAsStream(path));
+	    parser = XContentFactory.xContent(XContentType.JSON).createParser(ConfigUtils.class.getResourceAsStream(path));
 	    return parser.mapAndClose();
 	} finally {
 	    if (parser != null) {
