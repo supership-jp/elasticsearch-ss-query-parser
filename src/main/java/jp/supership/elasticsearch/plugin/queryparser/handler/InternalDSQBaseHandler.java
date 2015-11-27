@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryBaseVisitor;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
@@ -35,6 +37,9 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @since  1.0
  */
 abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> implements QueryHandler, Initializable {
+    /** Holds ES logger, this instance's life-cycle is identical to this instance. */
+    private static ESLogger logger = Loggers.getLogger(InternalDSQBaseHandler.class);
+
     /**
      * Represents domain specific query context, besides holding the query constructing settings
      * this class is also responsible to maintain the currently constructing {@code Query} instance
@@ -162,6 +167,9 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
         this.fetch(new StringReader(queryText));
         try {
             Query instanciated = this.visit();
+	    if (logger.isDebugEnabled()) {
+		logger.debug(instanciated.toString());
+	    }
             return instanciated != null ? instanciated : this.engine.getBooleanQuery(false);
         } catch (HandleException cause) {
             HandleException exception = new HandleException("could not parse '" + queryText + "': " + cause.getMessage());
