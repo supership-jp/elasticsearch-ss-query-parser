@@ -153,7 +153,7 @@ public abstract class MapperQueryEngine extends QueryEngine {
      */
     @Override
     public Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
-        if (this.getFieldRefinement() == false) {
+        if (this.getFieldRefinement() == false || (this.getFields() != null && this.getFields().size() > 0)) {
             field = null;
         }
 
