@@ -33,7 +33,7 @@ public interface QueryParserConfiguration extends CommonQueryParserConfiguration
     public static final boolean DEFAULT_ESCAPE = false;
 
     /** Holds default field refinement functionality setting. */
-    public static final boolean DEFAULT_FIELD_REFINEMENT = true;
+    public static final boolean DEFAULT_FIELD_REFINEMENT = false;
 
     /** Holds default queyr negation functionality setting. */
     public static final boolean DEFAULT_QUERY_NEGATION = false;
