@@ -7,6 +7,8 @@ import java.io.Reader;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
@@ -25,6 +27,9 @@ import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
  * @since  1.0
  */
 public class InternalDSQSimpleHandler extends InternalDSQBaseHandler {
+    /** Holds ES logger, this instance's life-cycle is identical to this instance. */
+    private ESLogger logger = Loggers.getLogger(InternalDSQSimpleHandler.class);
+
     /**
      * This class is responsible for instanciating Lucene queries from the Supership, inc. Domain Specific Query.
      */
@@ -52,8 +57,10 @@ public class InternalDSQSimpleHandler extends InternalDSQBaseHandler {
          * {@inheritDoc}
          */
         @Override
-        public Query handle(String defaultField) throws HandleException {
-            return this.handler.handle(defaultField);
+        public Query handle(String queryText) throws HandleException {
+	    Query query = this.handler.handle(queryText);
+	    logger.debug(query.toString());
+            return query;
         }
 
 	/**
