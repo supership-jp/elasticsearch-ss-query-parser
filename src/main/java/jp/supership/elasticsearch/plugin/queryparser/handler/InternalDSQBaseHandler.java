@@ -69,7 +69,6 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     public Query visitQuery(InternalQueryParser.QueryContext context) {
 	try {
 	    for (InternalQueryParser.ExpressionContext expression : context.expression()) {
-		this.state.conjunction = context.conjunction == null ? InternalQueryParser.CONJUNCTION_AND : context.conjunction.getType();
 		this.state.query = visit(expression);
 		if (this.state.boost != null) {
 		    this.state.query.setBoost(Float.parseFloat(this.state.boost));
@@ -77,12 +76,7 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
 		}
 		this.engine.conjugate(this.state.clauses, this.state.conjunction, this.state.modifier, this.state.query);
 	    }
-
-	    if (this.state.clauses.size() == 1 && this.state.query != null) {
-		return this.state.query;
-	    } else {
-		return this.engine.getBooleanQuery(this.state.clauses);
-	    }
+	    return this.engine.getBooleanQuery(this.state.clauses);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -94,9 +88,40 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitExpression(InternalQueryParser.ExpressionContext context) {
 	try {
-	    this.state.modifier = context.modifier == null ? InternalQueryParser.MODIFIER_REQUIRE : context.modifier.getType();
-	    this.state.field = context.TERM_FIELD() == null ? this.engine.getDefaultField() : context.TERM_FIELD().getText();
+	    if (context.CONJUNCTION_OR() != null) {
+		this.state.conjunction = InternalQueryParser.CONJUNCTION_OR;
+	    } else if (context.CONJUNCTION_DIS() != null) {
+		this.state.conjunction = InternalQueryParser.CONJUNCTION_DIS;
+	    } else {
+		this.state.conjunction = InternalQueryParser.CONJUNCTION_AND;
+	    }
+	    return visit(context.clause());
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query visitClause(InternalQueryParser.ClauseContext context) {
+	try {
+	    this.state.modifier = context.MODIFIER_NEGATE() != null ? InternalQueryParser.MODIFIER_NEGATE : InternalQueryParser.MODIFIER_REQUIRE;
 	    this.state.boost = context.NUMBER() == null ? null : context.NUMBER().getText();
+	    return visit(context.field());
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query visitField(InternalQueryParser.FieldContext context) {
+	try {
+	    this.state.field = context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText();
 	    return visit(context.terms());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);

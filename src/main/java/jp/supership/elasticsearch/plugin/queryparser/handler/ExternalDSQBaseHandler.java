@@ -67,16 +67,10 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     public Query visitQuery(ExternalQueryParser.QueryContext context) {
 	try {
 	    for (ExternalQueryParser.ExpressionContext expression : context.expression()) {
-		this.state.conjunction = context.conjunction == null ? ExternalQueryParser.CONJUNCTION_AND : context.conjunction.getType();
 		this.state.query = visit(expression);
 		this.engine.conjugate(this.state.clauses, this.state.conjunction, this.state.modifier, this.state.query);
 	    }
-
-	    if (this.state.clauses.size() == 1 && this.state.query != null) {
-		return this.state.query;
-	    } else {
-		return this.engine.getBooleanQuery(this.state.clauses);
-	    }
+	    return this.engine.getBooleanQuery(this.state.clauses);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -88,8 +82,33 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitExpression(ExternalQueryParser.ExpressionContext context) {
 	try {
-	    this.state.modifier = context.modifier == null ? ExternalQueryParser.MODIFIER_REQUIRE : context.modifier.getType();
-	    this.state.field = context.TERM_FIELD() == null ? this.engine.getDefaultField() : context.TERM_FIELD().getText();
+	    this.state.conjunction = context.CONJUNCTION_OR() != null ? ExternalQueryParser.CONJUNCTION_OR : ExternalQueryParser.CONJUNCTION_AND;
+	    return visit(context.clause());
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query visitClause(ExternalQueryParser.ClauseContext context) {
+	try {
+	    this.state.modifier = context.MODIFIER_NEGATE() != null ? ExternalQueryParser.MODIFIER_NEGATE : ExternalQueryParser.MODIFIER_REQUIRE;
+	    return visit(context.field());
+	} catch (Exception cause) {
+	    throw new ParseCancellationException(cause);
+	}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query visitField(ExternalQueryParser.FieldContext context) {
+	try {
+	    this.state.field = context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText();
 	    return visit(context.terms());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);

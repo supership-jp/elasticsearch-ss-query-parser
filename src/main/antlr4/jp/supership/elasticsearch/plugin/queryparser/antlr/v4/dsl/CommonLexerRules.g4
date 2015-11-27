@@ -27,21 +27,16 @@ fragment SPECIAL_CHARACTER
     | OCTAL_LITERAL
     ;
 
-fragment FIELD_INITIAL
-    : ~[' ', '\t', '\n', '\r', '\u3000', '-', '(', ')', ':', '\"', '\\']
-    | ESCAPED_CHARACTER
+fragment TERM_INITIAL
+    : ~(' ' | '\t' | '\n' | '\r' | '-' | '+' | '(' | ')' | ':' | '\"' | '\\' | '\u3000')
     ;
 
-fragment FIELD_CHARACTER
-    : (FIELD_INITIAL | ESCAPED_CHARACTER | '-')
-    ;
-
-fragment WHITE_SPACE
-    : (' ' | '\t' | '\n' | '\r' | '\u3000')
+fragment TERM_CHARACTER
+    : (~('\"' | '\\' | ':' | '^' | ' ' | '\t' | '\n' | '\r' | '\f') | ESCAPED_CHARACTER)
     ;
 
 fragment QUATABLE_CHARACTER
-    : (~['\"', '\\'] | ESCAPED_CHARACTER)
+    : (~('\"' | '\\') | ESCAPED_CHARACTER)
     ;
 
 fragment INTEGER
@@ -57,20 +52,19 @@ fragment FLOAT
     | ('+' | '-')? INTEGER EXPONENT
     ;
 
-LPAREN           : '('                                          ;
-RPAREN           : ')'                                          ;
-HAT              : '^'                                          ;
-COLON            : ':'                                          ;
-ASTERISC         : '*'                                          ;
-QUESTION         : '?'                                          ;
-CONJUNCTION_AND  : [aA][nN][dD]                                 ;
-CONJUNCTION_OR   : [oO][rR]                                     ;
-CONJUNCTION_DIS  : '|'                                          ;
-MODIFIER_NEGATE  : '-'                                          ;
-MODIFIER_REQUIRE : '+'                                          ;
-QUOTED_TERM      : '\"' (TERM)* '\"'                            ;
-TERM             : (STRING | NUMBER)                            ;
-STRING           : (QUATABLE_CHARACTER)+                        ;
-NUMBER           : (INTEGER | FLOAT)                            ;
-TERM_FIELD       : FIELD_INITIAL (FIELD_CHARACTER)*             ;
-WS               : (' ' | '\t' | '\n' | '\r' | '\f')+ {skip();} ;
+WS               : (' ' | '\t' | '\n' | '\r' | '\f')+ {skip();}  ;
+LPAREN           : '('                                           ;
+RPAREN           : ')'                                           ;
+HAT              : '^'                                           ;
+COLON            : ':'                                           ;
+ASTERISC         : '*'                                           ;
+QUESTION         : '?'                                           ;
+CONJUNCTION_AND  : [aA][nN][dD]                                  ;
+CONJUNCTION_OR   : [oO][rR]                                      ;
+CONJUNCTION_DIS  : '|'                                           ;
+MODIFIER_NEGATE  : '-'                                           ;
+MODIFIER_REQUIRE : '+'                                           ;
+QUOTED_TERM      : '\"' (TERM)* '\"'                             ;
+TERM             : (STRING | NUMBER)                             ;
+STRING           : TERM_INITIAL (TERM_CHARACTER)*                ;
+NUMBER           : (INTEGER | FLOAT)                             ;
