@@ -6,8 +6,8 @@ package jp.supership.elasticsearch.plugin.queryparser.handlers;
 import java.util.Map;
 import java.util.HashMap;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
-import jp.supership.elasticsearch.plugin.queryparser.util.ConfigUtils;
-import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
+import jp.supership.elasticsearch.plugin.queryparser.common.util.ConfigUtils;
+import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
 
 /**
  * This class is responsible for instanciating named {@code QueryHandler}.

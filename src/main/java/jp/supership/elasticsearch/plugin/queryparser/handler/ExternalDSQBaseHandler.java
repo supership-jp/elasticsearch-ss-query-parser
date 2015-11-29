@@ -37,8 +37,8 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @since  1.0
  */
 abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> implements QueryHandler, Initializable {
-    /** Holds ES logger, this instance's life-cycle is identical to this instance. */
-    private static ESLogger logger = Loggers.getLogger(ExternalDSQBaseHandler.class);
+    /** Holds ES logger. */
+    private static ESLogger LOGGER = Loggers.getLogger(ExternalDSQBaseHandler.class);
 
     /**
      * Represents domain specific query context, besides holding the query constructing settings
@@ -154,8 +154,8 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
         this.fetch(new StringReader(queryText));
         try {
             Query instanciated = this.visit();
-	    if (logger.isDebugEnabled()) {
-		logger.debug(instanciated.toString());
+	    if (LOGGER.isDebugEnabled()) {
+		LOGGER.debug(instanciated.toString());
 	    }
             return instanciated != null ? instanciated : this.engine.getBooleanQuery(false);
         } catch (HandleException cause) {

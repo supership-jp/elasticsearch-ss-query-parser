@@ -44,9 +44,9 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryP
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserSettings;
-import jp.supership.elasticsearch.plugin.queryparser.util.StringUtils;
 import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryParserConfiguration.Wildcard;
 
 /**
