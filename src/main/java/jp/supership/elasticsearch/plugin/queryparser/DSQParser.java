@@ -48,7 +48,7 @@ public class DSQParser implements QueryParser {
     public static final String NAME = "hetero_query";
 
     /** Holds {@code QueryHandlerFactory}. */
-    private static final QueryHandlerFactory<String> HANDLERS = new NamedQueryHandlerFactory();
+    private static final QueryHandlerFactory<String> HANDLER_FACTORY = new NamedQueryHandlerFactory();
 
     /** For ES injection-hook. */
     @Inject
@@ -191,7 +191,7 @@ public class DSQParser implements QueryParser {
 			metadata.setQueryString(queryText);
                     }
 		    // TODO: FIX THIS
-		    QueryHandler handler = HANDLERS.create(metadata.getHandlerName(), metadata.getArguments(context));
+		    QueryHandler handler = HANDLER_FACTORY.create(metadata.getHandlerName(), metadata.getArguments(context));
                     query = handler.handle(metadata.getQueryString());
                     if (query == null) {
                         return null;

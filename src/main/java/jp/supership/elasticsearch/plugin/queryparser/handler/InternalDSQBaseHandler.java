@@ -45,7 +45,7 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
      * this class is also responsible to maintain the currently constructing {@code Query} instance
      * which will be handled with the {@code Engine}.
      */
-    protected class State extends QueryHandler.Context {
+    protected class Metadata extends QueryHandler.Context {
 	/** Holds currently constructing query. */
 	public Query query = null;
 	/** Holds constructing clauses. */
@@ -56,10 +56,60 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
 	public int modifier = -1;
 	/** Holds previously detected boosting coefficient. */
 	public String boost = null;
+
+	/** Returns the currently handling query. */
+	public Query getQuery() {
+	    return this.query;
+	}
+
+	/** Sets the currently handling query. */
+	public void setQuery(Query query) {
+	    this.query = query;
+	}
+
+	/** Returns the currently handling clauses. */
+	public List<BooleanClause> getClauses() {
+	    return this.clauses;
+	}
+
+	/** Sets the currently handling clauses. */
+	public void setClauses(List<BooleanClause> clauses) {
+	    this.clauses = clauses;
+	}
+
+	/** Returns the assigned conjunction. */
+	public int getConjunction() {
+	    return this.conjunction;
+	}
+
+	/** Sets the conjunction setting. */
+	public void setConjunction(int conjunction) {
+	    this.conjunction = conjunction;
+	}
+
+	/** Returns the assigned modifier. */
+	public int getModifier() {
+	    return this.modifier;
+	}
+
+	/** Sets the modifier setting. */
+	public void setModifier(int modifier) {
+	    this.modifier = modifier;
+	}
+
+	/** Returns the assigned boost value. */
+	public String getBoost() {
+	    return this.boost;
+	}
+
+	/** Sets the boost setting. */
+	public void setBoost(String boost) {
+	    this.boost = boost;
+	}
     }
 
     /** Holds this handler's context. */
-    protected InternalDSQBaseHandler.State state = new InternalDSQBaseHandler.State();
+    protected InternalDSQBaseHandler.Metadata metadata = new InternalDSQBaseHandler.Metadata();
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
     protected QueryEngine engine;
@@ -74,14 +124,14 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     public Query visitQuery(InternalQueryParser.QueryContext context) {
 	try {
 	    for (InternalQueryParser.ExpressionContext expression : context.expression()) {
-		this.state.query = visit(expression);
-		if (this.state.boost != null) {
-		    this.state.query.setBoost(Float.parseFloat(this.state.boost));
-		    this.state.boost = null;
+		this.metadata.setQuery(visit(expression));
+		if (this.metadata.getBoost() != null && this.metadata.getQuery() != null) {
+		    this.metadata.getQuery().setBoost(Float.parseFloat(this.metadata.getBoost()));
+		    this.metadata.setBoost(null);
 		}
-		this.engine.conjugate(this.state.clauses, this.state.conjunction, this.state.modifier, this.state.query);
+		this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), this.metadata.getQuery());
 	    }
-	    return this.engine.getBooleanQuery(this.state.clauses);
+	    return this.engine.getBooleanQuery(this.metadata.getClauses());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -94,11 +144,11 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     public Query visitExpression(InternalQueryParser.ExpressionContext context) {
 	try {
 	    if (context.CONJUNCTION_OR() != null) {
-		this.state.conjunction = InternalQueryParser.CONJUNCTION_OR;
+		this.metadata.setConjunction(InternalQueryParser.CONJUNCTION_OR);
 	    } else if (context.CONJUNCTION_DIS() != null) {
-		this.state.conjunction = InternalQueryParser.CONJUNCTION_DIS;
+		this.metadata.setConjunction(InternalQueryParser.CONJUNCTION_DIS);
 	    } else {
-		this.state.conjunction = InternalQueryParser.CONJUNCTION_AND;
+		this.metadata.setConjunction(InternalQueryParser.CONJUNCTION_AND);
 	    }
 	    return visit(context.clause());
 	} catch (Exception cause) {
@@ -112,8 +162,8 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitClause(InternalQueryParser.ClauseContext context) {
 	try {
-	    this.state.modifier = context.MODIFIER_NEGATE() != null ? InternalQueryParser.MODIFIER_NEGATE : InternalQueryParser.MODIFIER_REQUIRE;
-	    this.state.boost = context.NUMBER() == null ? null : context.NUMBER().getText();
+	    this.metadata.setModifier(context.MODIFIER_NEGATE() != null ? InternalQueryParser.MODIFIER_NEGATE : InternalQueryParser.MODIFIER_REQUIRE);
+	    this.metadata.setBoost(context.NUMBER() == null ? null : context.NUMBER().getText());
 	    return visit(context.field());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -126,7 +176,7 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitField(InternalQueryParser.FieldContext context) {
 	try {
-	    this.state.field = context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText();
+	    this.metadata.setField(context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText());
 	    return visit(context.terms());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -139,8 +189,8 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitQuotedTerm(InternalQueryParser.QuotedTermContext context) {
 	try {
-	    this.state.term = context.QUOTED_TERM().getText();
-	    return this.dispatchQuotedToken(this.state);
+	    this.metadata.setTerm(context.QUOTED_TERM().getText());
+	    return this.dispatchQuotedToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -152,8 +202,8 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitBareTerm(InternalQueryParser.BareTermContext context) {
 	try {
-	    this.state.term = context.TERM().getText();
-	    return this.dispatchBareToken(this.state);
+	    this.metadata.setTerm(context.TERM().getText());
+	    return this.dispatchBareToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -203,8 +253,8 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
      * {@inheritDoc}
      */
     @Override
-    public void dispatch(String field, String term, QueryHandler.Context context) {
-	this.engine.dispatch(field, term, context);
+    public void dispatch(QueryHandler.Context context) {
+	this.engine.dispatch(context);
     }
 
     /**

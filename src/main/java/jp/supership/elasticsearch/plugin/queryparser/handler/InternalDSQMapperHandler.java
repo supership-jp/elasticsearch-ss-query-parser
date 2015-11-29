@@ -69,7 +69,7 @@ public class InternalDSQMapperHandler extends InternalDSQBaseHandler {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void dispatch(String field, String term, QueryHandler.Context context) {
+	public void dispatch(QueryHandler.Context context) {
 	    // THIS IS PLACEHOLDER.
 	}
 
@@ -81,16 +81,16 @@ public class InternalDSQMapperHandler extends InternalDSQBaseHandler {
             Query query;
 
             try {
-                if (context.wildcard) {
-                    query = this.getWildcardQuery(context.field, context.term);
-                } else if (context.prefix) {
-                    query = this.getPrefixQuery(context.field, StringUtils.discardEscapeChar(context.term.substring(0, context.term.length() - 1)));
-                } else if (context.regexp) {
-                    query = this.getRegexpQuery(context.field, context.term.substring(1, context.term.length() - 1));
-                } else if (context.fuzzy) {
-                    query = this.forwardFuzzyQuery(context.field, context.fuzzySlop, context.term);
+                if (context.preferWildcard()) {
+                    query = this.getWildcardQuery(context.getField(), context.getTerm());
+                } else if (context.preferPrefix()) {
+                    query = this.getPrefixQuery(context.getField(), StringUtils.discardEscapeChar(context.getTerm().substring(0, context.getTerm().length() - 1)));
+                } else if (context.preferRegexp()) {
+                    query = this.getRegexpQuery(context.getField(), context.getTerm().substring(1, context.getTerm().length() - 1));
+                } else if (context.preferFuzzy()) {
+                    query = this.forwardFuzzyQuery(context.getField(), context.getFuzzySlop(), context.getTerm());
                 } else {
-                    query = this.getFieldQuery(context.field, context.term, false);
+                    query = this.getFieldQuery(context.getField(), context.getTerm(), false);
                 }
             } catch (ParseException cause) {
                 throw new HandleException(cause);
@@ -131,15 +131,15 @@ public class InternalDSQMapperHandler extends InternalDSQBaseHandler {
         @Override
         public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException {
 	    int phraseSlop = this.getPhraseSlop();
-	    if (context.fuzzySlop != null) {
+	    if (context.getFuzzySlop() != null) {
 		try {
-		    phraseSlop = Float.valueOf(context.fuzzySlop.substring(1)).intValue();
+		    phraseSlop = Float.valueOf(context.getFuzzySlop().substring(1)).intValue();
 		}
 		catch (Exception ignored) {
 		    // DO NOTHING, the value has its default, so this is safe.
 		}
 	    }
-	    return this.getFieldQuery(context.field, StringUtils.discardEscapeChar(context.term.substring(1, context.term.length() - 1)), phraseSlop);
+	    return this.getFieldQuery(context.getField(), StringUtils.discardEscapeChar(context.getTerm().substring(1, context.getTerm().length() - 1)), phraseSlop);
         }
 
         /**
@@ -170,6 +170,6 @@ public class InternalDSQMapperHandler extends InternalDSQBaseHandler {
      */
     public InternalDSQMapperHandler() {
 	this.engine = new Engine(this);
-	this.state = new InternalDSQBaseHandler.State();
+	this.metadata = new InternalDSQBaseHandler.Metadata();
     }
 }

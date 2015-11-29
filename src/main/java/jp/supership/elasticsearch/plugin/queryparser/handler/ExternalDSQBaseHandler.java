@@ -45,7 +45,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
      * this class is also responsible to maintain the currently constructing {@code Query} instance
      * which will be handled with the {@code Engine}.
      */
-    protected class State extends QueryHandler.Context {
+    protected class Metadata extends QueryHandler.Context {
 	/** Holds currently constructing query. */
 	public Query query = null;
 	/** Holds constructing clauses. */
@@ -54,10 +54,50 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
 	public int conjunction = -1;
 	/** Holds previously detected modifier. */
 	public int modifier = -1;
+
+	/** Returns the currently handling query. */
+	public Query getQuery() {
+	    return this.query;
+	}
+
+	/** Sets the currently handling query. */
+	public void setQuery(Query query) {
+	    this.query = query;
+	}
+
+	/** Returns the currently handling clauses. */
+	public List<BooleanClause> getClauses() {
+	    return this.clauses;
+	}
+
+	/** Sets the currently handling clauses. */
+	public void setClauses(List<BooleanClause> clauses) {
+	    this.clauses = clauses;
+	}
+
+	/** Returns the assigned conjunction. */
+	public int getConjunction() {
+	    return this.conjunction;
+	}
+
+	/** Sets the conjunction setting. */
+	public void setConjunction(int conjunction) {
+	    this.conjunction = conjunction;
+	}
+
+	/** Returns the assigned modifier. */
+	public int getModifier() {
+	    return this.modifier;
+	}
+
+	/** Sets the modifier setting. */
+	public void setModifier(int modifier) {
+	    this.modifier = modifier;
+	}
     }
 
     /** Holds this handler's context. */
-    protected ExternalDSQBaseHandler.State state = new ExternalDSQBaseHandler.State();
+    protected ExternalDSQBaseHandler.Metadata metadata;
 
     /** Holds query engine which is reponsible for parsing raw query strings. */
     protected QueryEngine engine;
@@ -72,10 +112,10 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     public Query visitQuery(ExternalQueryParser.QueryContext context) {
 	try {
 	    for (ExternalQueryParser.ExpressionContext expression : context.expression()) {
-		this.state.query = visit(expression);
-		this.engine.conjugate(this.state.clauses, this.state.conjunction, this.state.modifier, this.state.query);
+		this.metadata.setQuery(visit(expression));
+		this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), this.metadata.getQuery());
 	    }
-	    return this.engine.getBooleanQuery(this.state.clauses);
+	    return this.engine.getBooleanQuery(this.metadata.getClauses());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -87,7 +127,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitExpression(ExternalQueryParser.ExpressionContext context) {
 	try {
-	    this.state.conjunction = context.CONJUNCTION_OR() != null ? ExternalQueryParser.CONJUNCTION_OR : ExternalQueryParser.CONJUNCTION_AND;
+	    this.metadata.setConjunction(context.CONJUNCTION_OR() != null ? ExternalQueryParser.CONJUNCTION_OR : ExternalQueryParser.CONJUNCTION_AND);
 	    return visit(context.clause());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -100,7 +140,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitClause(ExternalQueryParser.ClauseContext context) {
 	try {
-	    this.state.modifier = context.MODIFIER_NEGATE() != null ? ExternalQueryParser.MODIFIER_NEGATE : ExternalQueryParser.MODIFIER_REQUIRE;
+	    this.metadata.setModifier(context.MODIFIER_NEGATE() != null ? ExternalQueryParser.MODIFIER_NEGATE : ExternalQueryParser.MODIFIER_REQUIRE);
 	    return visit(context.field());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -113,7 +153,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitField(ExternalQueryParser.FieldContext context) {
 	try {
-	    this.state.field = context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText();
+	    this.metadata.setField(context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText());
 	    return visit(context.terms());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -126,8 +166,8 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitQuotedTerm(ExternalQueryParser.QuotedTermContext context) {
 	try {
-	    this.state.term = context.QUOTED_TERM().getText();
-	    return this.dispatchQuotedToken(this.state);
+	    this.metadata.setTerm(context.QUOTED_TERM().getText());
+	    return this.dispatchQuotedToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -139,8 +179,8 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitBareTerm(ExternalQueryParser.BareTermContext context) {
 	try {
-	    this.state.term = context.TERM().getText();
-	    return this.dispatchBareToken(this.state);
+	    this.metadata.setTerm(context.TERM().getText());
+	    return this.dispatchBareToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -190,8 +230,8 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
      * {@inheritDoc}
      */
     @Override
-    public void dispatch(String field, String term, QueryHandler.Context context) {
-	this.engine.dispatch(field, term, context);
+    public void dispatch(QueryHandler.Context context) {
+	this.engine.dispatch(context);
     }
 
     /**

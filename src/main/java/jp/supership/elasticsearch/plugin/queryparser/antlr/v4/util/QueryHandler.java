@@ -20,19 +20,89 @@ public interface QueryHandler {
      */
     public class Context {
 	/** Holds currently handling field name. */
-	public String field = null;
+	private String field = null;
 	/** Holds currently handling term token. */
-	public String term = null;
+	private String term = null;
 	/** Holds currently handling fuzzy slop term token. */
-	public String fuzzySlop = null;
+	private String fuzzySlop = null;
 	/** true if the process must be done as handling prefix query. */
-	public boolean prefix = false;
+        private boolean preferPrefix = false;
 	/** true if the process must be done as handling wildcard query. */
-	public boolean wildcard = false;
+	private boolean preferWildcard = false;
 	/** true if the process must be done as handling fuzzy query. */
-	public boolean fuzzy = false;
+	private boolean preferFuzzy = false;
 	/** true if the process must be done as handling regexp query. */
-	public boolean regexp = false;
+	private boolean preferRegexp = false;
+
+	/** Returns the currently handling field. */
+	public String getField() {
+	    return this.field;
+	}
+
+	/** Sets the currently handling field. */
+	public void setField(String field) {
+	    this.field = field;
+	}
+
+	/** Return the currently handling term. */
+	public String getTerm() {
+	    return this.term;
+	}
+
+	/** Sets the currently handling term. */
+	public void setTerm(String term) {
+	    this.term = term;
+	}
+
+	/** Returns the assigned fuzzy-slop. */
+	public String getFuzzySlop() {
+	    return this.fuzzySlop;
+	}
+
+	/** Sets the assigned fuzzy-slop. */
+	public void setFuzzySlop(String fuzzySlop) {
+	    this.fuzzySlop = fuzzySlop;
+	}
+
+	/** Returns true when the {@code PrefixQuery} must handle the currently assigned query. */
+	public boolean preferPrefix() {
+	    return this.preferPrefix;
+	}
+
+	/** Sets the assigned prefix-query setting. */
+	public void preferPrefix(boolean preferPrefix) {
+	    this.preferPrefix = preferPrefix;
+	}
+
+	/** Returns true when the {@code WildcardQuery} must handle the currently assigned query. */
+	public boolean preferWildcard() {
+	    return this.preferWildcard;
+	}
+
+	/** Sets the assigned wildcard-querry setting. */
+	public void preferWildcard(boolean preferWildcard) {
+	    this.preferWildcard = preferWildcard;
+	}
+
+	/** Returns true when the {@code FuzzyQuery} must handle the currently assigned query. */
+	public boolean preferFuzzy() {
+	    return this.preferFuzzy;
+	}
+
+	/** Sets the assigned fuzzy-querry setting. */
+	public void preferFuzzy(boolean preferFuzzy) {
+	    this.preferFuzzy = preferFuzzy;
+	}
+
+	/** Returns true when the {@code RegexpQuery} must handle the currently assigned query. */
+	public boolean preferRegexp() {
+	    return this.preferRegexp;
+	}
+
+	/** Sets the assigned regexp-querry setting. */
+	public void preferRegexp(boolean preferRegexp) {
+	    this.preferRegexp = preferRegexp;
+	}
     }
 
     /**
@@ -44,12 +114,10 @@ public interface QueryHandler {
 
     /**
      * Dispatches appropriate query-builder in accordance to the given context.
-     * @param  field the currently handling field.
-     * @param  term the currently handling term.
      * @param  context the currently handling context.
      * @throws HandleException if the handling fails.
      */
-    public void dispatch(String field, String term, QueryHandler.Context context);
+    public void dispatch(QueryHandler.Context context);
 
     /**
      * Dispatches appropriate query-builder in accordance to the given context.
