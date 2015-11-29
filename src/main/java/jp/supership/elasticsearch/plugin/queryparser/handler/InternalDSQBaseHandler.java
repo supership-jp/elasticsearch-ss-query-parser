@@ -163,7 +163,7 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     public Query visitClause(InternalQueryParser.ClauseContext context) {
 	try {
 	    this.metadata.setModifier(context.MODIFIER_NEGATE() != null ? InternalQueryParser.MODIFIER_NEGATE : InternalQueryParser.MODIFIER_REQUIRE);
-	    this.metadata.setBoost(context.NUMBER() == null ? null : context.NUMBER().getText());
+	    this.metadata.setBoost(context.SINGLE_LITERAL() == null ? null : context.SINGLE_LITERAL().getText());
 	    return visit(context.field());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -176,8 +176,8 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitField(InternalQueryParser.FieldContext context) {
 	try {
-	    this.metadata.setField(context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText());
-	    return visit(context.terms());
+	    this.metadata.setField(context.SINGLE_LITERAL() == null ? this.engine.getDefaultField() : context.SINGLE_LITERAL().getText());
+	    return visit(context.term());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -189,7 +189,7 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitQuotedTerm(InternalQueryParser.QuotedTermContext context) {
 	try {
-	    this.metadata.setTerm(context.QUOTED_TERM().getText());
+	    this.metadata.setTerm(context.PHRASE_LITERAL().getText());
 	    return this.dispatchQuotedToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -202,7 +202,7 @@ abstract class InternalDSQBaseHandler extends InternalQueryBaseVisitor<Query> im
     @Override
     public Query visitBareTerm(InternalQueryParser.BareTermContext context) {
 	try {
-	    this.metadata.setTerm(context.TERM().getText());
+	    this.metadata.setTerm(context.SINGLE_LITERAL().getText());
 	    return this.dispatchBareToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);

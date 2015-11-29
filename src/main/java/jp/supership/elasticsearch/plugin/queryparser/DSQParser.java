@@ -104,7 +104,7 @@ public class DSQParser implements QueryParser {
 	}
 
 	// Setd the objective handler's name.
-	public QueryHandlerFactory.Arguments getArguments(QueryParseContext context) {
+	public QueryHandlerFactory.Arguments getArgumentsFor(QueryParseContext context) {
 	    this.prepare(context);
 	    return this.arguments;
 	}
@@ -162,7 +162,7 @@ public class DSQParser implements QueryParser {
 			metadata.setQueryString(queryText);
                     }
 		    // TODO: FIX THIS
-		    QueryHandler handler = HANDLER_FACTORY.create(metadata.getHandlerName(), metadata.getArguments(context));
+		    QueryHandler handler = HANDLER_FACTORY.create(metadata.getHandlerName(), metadata.getArgumentsFor(context));
                     query = handler.handle(metadata.getQueryString());
                     if (query == null) {
                         return null;

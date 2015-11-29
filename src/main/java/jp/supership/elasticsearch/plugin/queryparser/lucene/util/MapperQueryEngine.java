@@ -93,7 +93,6 @@ public abstract class MapperQueryEngine extends QueryEngine {
      * Constructor.
      */
     public MapperQueryEngine(QueryParseContext context, DSQParserConfiguration configuration) {
-	//super(configuration.getDefaultField(), configuration.getDefaultAnalyzer());
         this.context = context;
 	this.configure(configuration);
     }

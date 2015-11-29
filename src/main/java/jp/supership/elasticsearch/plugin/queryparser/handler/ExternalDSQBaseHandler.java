@@ -153,8 +153,8 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitField(ExternalQueryParser.FieldContext context) {
 	try {
-	    this.metadata.setField(context.TERM() == null ? this.engine.getDefaultField() : context.TERM().getText());
-	    return visit(context.terms());
+	    this.metadata.setField(context.SINGLE_LITERAL() == null ? this.engine.getDefaultField() : context.SINGLE_LITERAL().getText());
+	    return visit(context.term());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -166,7 +166,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitQuotedTerm(ExternalQueryParser.QuotedTermContext context) {
 	try {
-	    this.metadata.setTerm(context.QUOTED_TERM().getText());
+	    this.metadata.setTerm(context.PHRASE_LITERAL().getText());
 	    return this.dispatchQuotedToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -179,7 +179,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
     @Override
     public Query visitBareTerm(ExternalQueryParser.BareTermContext context) {
 	try {
-	    this.metadata.setTerm(context.TERM().getText());
+	    this.metadata.setTerm(context.SINGLE_LITERAL().getText());
 	    return this.dispatchBareToken(this.metadata);
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);

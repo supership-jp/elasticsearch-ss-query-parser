@@ -58,12 +58,6 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @since  1.0
  */
 public abstract class QueryEngine extends QueryBuilder implements QueryDriver, QueryHandler, DSQParserConfiguration {
-    /**
-     * DO NOT CATCH THIS EXCEPTION.
-     * This exception will be thrown when you are using methods that should not be used any longer.
-     */
-    public static class DeprecatedMethodCall extends Throwable {}
-
     /** Holds ES query parsing context. */
     protected QueryParseContext context;
 
@@ -277,7 +271,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
                 return null;
             }
             return this.getBooleanQuery(clauses, true);
-        // TODO: THIS MUST BE HANDLED WITHIN {@code TokenFileter} WHICH IMPLEMENTS NAIVE BAYSIAN FILTER.
+        // TODO: THIS MUST BE HANDLED WITHIN {@code Analyzer} WHICH IS BASED ON SOME KIND OF HEURISTICS AND/OR ML ALGORITHM.
         } else if (quoted == false && queryText.matches("^\\d+(\\.\\d+)?.{1,2}?$")) {
             quoted = true;
             this.setPhraseSlop(0);
@@ -288,7 +282,6 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
         return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.getPhraseSlop(), useDisMax);
     }
 
-    // TODO: FIX THIS MECHANISM TO BE APPROPRIATE FOR THE ANTLR-BASED IMPLEMENTATION.
     /**
      * Creates a query from the analysis chain.
      * @param analyzer the analyzer for this query.

@@ -3,32 +3,12 @@
  */
 lexer grammar CommonLexerRules;
 
-fragment DIGIT
-    : [0-9]
-    ;
-
-fragment UNICODE_LITERAL
-    : '\\' 'u' [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]
-    ;
-
-fragment OCTAL_LITERAL
-    : '\\' [0-3] [0-7] [0-7]
-    | '\\' [0-7] [0-7]
-    | '\\' [0-7]
-    ;
-
 fragment ESCAPED_CHARACTER
     : '\\' ~[]
     ;
 
-fragment SPECIAL_CHARACTER
-    : '\\' [btnfr\'\\]
-    | UNICODE_LITERAL
-    | OCTAL_LITERAL
-    ;
-
 fragment TERM_INITIAL
-    : ~(' ' | '\t' | '\n' | '\r' | '-' | '+' | '(' | ')' | ':' | '\"' | '\\' | '\u3000')
+    : ~(' ' | '\t' | '\n' | '\r' | '-' | '+' | '(' | ')' | ':' | '\"' | '\\' | '\u3000' | '^')
     ;
 
 fragment TERM_CHARACTER
@@ -40,11 +20,11 @@ fragment QUATABLE_CHARACTER
     ;
 
 fragment INTEGER
-    : (DIGIT)+
+    : ('0'..'9')+
     ;
 
 fragment EXPONENT
-    : [eE] ('+' | '-')? INTEGER
+    : ('e' | 'E') ('+' | '-')? INTEGER
     ;
 
 fragment FLOAT
@@ -64,7 +44,7 @@ CONJUNCTION_OR   : [oO][rR]                                      ;
 CONJUNCTION_DIS  : '|'                                           ;
 MODIFIER_NEGATE  : '-'                                           ;
 MODIFIER_REQUIRE : '+'                                           ;
-QUOTED_TERM      : '\"' (TERM)* '\"'                             ;
-TERM             : (STRING | NUMBER)                             ;
-STRING           : TERM_INITIAL (TERM_CHARACTER)*                ;
+PHRASE_LITERAL   : '\"' (SINGLE_LITERAL)* '\"'                   ;
+SINGLE_LITERAL   : (NUMBER | STRING)                             ;
 NUMBER           : (INTEGER | FLOAT)                             ;
+STRING           : TERM_INITIAL (TERM_CHARACTER)*                ;
