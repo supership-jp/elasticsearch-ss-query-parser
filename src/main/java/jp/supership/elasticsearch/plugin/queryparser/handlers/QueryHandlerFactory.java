@@ -27,16 +27,66 @@ public interface QueryHandlerFactory<K> {
      * This class specifies {@code QueryHandler} instanciation arguments.
      */
     public static class Arguments {
-	// Holds responsible Luecne's version.
-	public Version version;
-	// Holds assigned default field.
-	public String field;
-	// Holds assigned analyzer.
-	public Analyzer analyzer;
-	// Holds currently handling context.
-	public QueryParseContext context;
-	// Holds assigned configuration.
-	public DSQParserConfiguration configuration;
+	/** Holds responsible Luecne's version. */
+	private Version luceneVersion;
+	/** Holds assigned default field. */
+	private String defaultField;
+	/** Holds assigned analyzer. */
+	private Analyzer analyzer;
+	/** Holds currently handling context. */
+	private QueryParseContext context;
+	/** Holds assigned configuration. */
+	private DSQParserConfiguration configuration;
+
+	/** Returns the assigned Lucene version. */
+	public Version getLuceneVersion() {
+	    return this.luceneVersion;
+	}
+
+	/** Sets the Lucene version. */
+	public void setLuceneVersion(Version luceneVersion) {
+	    this.luceneVersion = luceneVersion;
+	}
+
+	/** Returns the assigned default field. */
+	public String getDefaultField() {
+	    return this.defaultField;
+	}
+
+	/** Sets the default field. */
+	public void setDefaultField(String defaultField) {
+	    this.defaultField = defaultField;
+	}
+
+	/** Returns the assigned analyzer. */
+	public Analyzer getAnalyzer() {
+	    return this.analyzer;
+	}
+
+	/** Sets the analyzer. */
+	public void setAnalyzer(Analyzer analyzer) {
+	    this.analyzer = analyzer;
+	}
+
+	/** Returns the assigned query parsing context. */
+	public QueryParseContext getQueryParseContext() {
+	    return this.context;
+	}
+
+	/** Sets the query parsing context. */
+	public void setQueryParseContext(QueryParseContext context) {
+	    this.context = context;
+	}
+
+	/** Returns the assigned DSQ parser configuration. */
+	public DSQParserConfiguration getDSQParserConfiguration() {
+	    return this.configuration;
+	}
+
+	/** Sets the query DSQ parser configuration. */
+	public void setDSQParserConfiguration(DSQParserConfiguration configuration) {
+	    this.configuration = configuration;
+	}
     }
 
     /**

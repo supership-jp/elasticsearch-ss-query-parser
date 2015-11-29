@@ -68,8 +68,6 @@ public class DSQParser implements QueryParser {
      * Represents metadata for constructing Lucene queries.
      */
     private class Metadata extends DSQParserSettings {
-	// Holds true if this metadata was resolved with QueryParseContext.
-	private boolean isResolved = false;
 	// Holds currently handling field name.
 	private String currentFieldName = null;
 	// Holds objective handler's name.
@@ -97,44 +95,17 @@ public class DSQParser implements QueryParser {
 	    return this.handlerName;
 	}
 
-	// Sets the internal Lucene version.
-	private void setVersionArgument(Version version) {
-	    this.arguments.version = version;
-	}
-
-	// Sets the field name to be passed to the handler.
-	private void setFieldArgument(String field) {
-	    this.arguments.field = field;
-	}
-
-	// Sets the analyzer to be passed to the handler.
-	private void setAnalyzerArgument(Analyzer analyzer) {
-	    this.arguments.analyzer = analyzer;
-	}
-
-	// Sets the query parse context to be passed to the handler.
-	private void setQueryParseContextArgument(QueryParseContext context) {
-	    this.arguments.context = context;
-	}
-
 	// Resolves dependency with the assigend context.
-	public void resolve(QueryParseContext context) {
-	    this.setFieldArgument(this.getDefaultField());
-	    this.setAnalyzerArgument(this.getDefaultAnalyzer());
-	    this.setQueryParseContextArgument(context);
-	    this.arguments.configuration = this;
-	    this.isResolved = true;
-	}
-
-	public void reset() {
-	    this.isResolved = false;
+	private void prepare(QueryParseContext context) {
+	    this.arguments.setDefaultField(this.getDefaultField());
+	    this.arguments.setAnalyzer(this.getDefaultAnalyzer());
+	    this.arguments.setQueryParseContext(context);
+	    this.arguments.setDSQParserConfiguration(this);
 	}
 
 	// Setd the objective handler's name.
 	public QueryHandlerFactory.Arguments getArguments(QueryParseContext context) {
-	    if (!this.isResolved) {
-		this.resolve(context);
-	    }
+	    this.prepare(context);
 	    return this.arguments;
 	}
     }

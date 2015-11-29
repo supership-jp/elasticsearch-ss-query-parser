@@ -156,13 +156,13 @@ public class InternalDSQMapperHandler extends InternalDSQBaseHandler {
      */
     @Override
     public void initialize(QueryHandlerFactory.Arguments arguments) {
-	this.engine.setContext(arguments.context);
-	if (arguments.version != null) {
-	    this.engine.initialize(arguments.version, arguments.field, arguments.analyzer, arguments.configuration);
+	this.engine.setContext(arguments.getQueryParseContext());
+	if (arguments.getLuceneVersion() != null) {
+	    this.engine.initialize(arguments.getLuceneVersion(), arguments.getDefaultField(), arguments.getAnalyzer(), arguments.getDSQParserConfiguration());
 	} else {
-	    this.engine.initialize(arguments.field, arguments.analyzer, arguments.configuration);
+	    this.engine.initialize(arguments.getDefaultField(), arguments.getAnalyzer(), arguments.getDSQParserConfiguration());
 	}
-	this.engine.configure(arguments.configuration);
+	this.engine.configure(arguments.getDSQParserConfiguration());
     }
 
     /**
