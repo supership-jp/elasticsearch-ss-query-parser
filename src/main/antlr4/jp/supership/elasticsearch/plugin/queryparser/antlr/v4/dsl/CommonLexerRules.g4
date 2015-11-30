@@ -32,7 +32,6 @@ fragment FLOAT
     | ('+' | '-')? INTEGER EXPONENT
     ;
 
-WS               : (' ' | '\t' | '\n' | '\r' | '\f')+ {skip();}  ;
 LPAREN           : '('                                           ;
 RPAREN           : ')'                                           ;
 HAT              : '^'                                           ;
@@ -48,3 +47,4 @@ PHRASE_LITERAL   : '\"' (SINGLE_LITERAL)* '\"'                   ;
 SINGLE_LITERAL   : (NUMBER | STRING)                             ;
 NUMBER           : (INTEGER | FLOAT)                             ;
 STRING           : TERM_INITIAL (TERM_CHARACTER)*                ;
+WS               : (' ' | '\t' | '\n' | '\r' | '\f')+ {skip();}  ;
