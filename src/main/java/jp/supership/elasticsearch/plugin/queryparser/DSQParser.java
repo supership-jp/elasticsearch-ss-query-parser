@@ -32,6 +32,9 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryP
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
+import jp.supership.elasticsearch.plugin.queryparser.filter.ChainableFilter;
+import jp.supership.elasticsearch.plugin.queryparser.filters.FilterChainFactory;
+import jp.supership.elasticsearch.plugin.queryparser.filters.NamedStringFilterChainFactory;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.NamedQueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserSettings;
@@ -49,6 +52,9 @@ public class DSQParser implements QueryParser {
 
     /** Holds {@code QueryHandlerFactory}. */
     private static final QueryHandlerFactory<String> HANDLER_FACTORY = new NamedQueryHandlerFactory();
+
+    /** Holds {@code QueryHandlerFactory}. */
+    private static final FilterChainFactory<String, String> FILTER_FACTORY = new NamedStringFilterChainFactory();
 
     /** For ES injection-hook. */
     @Inject
@@ -147,10 +153,8 @@ public class DSQParser implements QueryParser {
 
         try {
 	    Query query = null;
+	    this.preprocess(metadata);
 	    String queryText = metadata.getQueryString();
-	    queryText = Normalizer.normalize(queryText, Normalizer.Form.NFKC);
-	    queryText = queryText.replaceAll("\\s+", " ");
-	    metadata.setQueryString(queryText);
 	    boolean retrying = false;
 
             do {
@@ -190,6 +194,16 @@ public class DSQParser implements QueryParser {
         } catch (HandleException cause) {
             throw new QueryParsingException(context.index(), "[ss_query_parser] failed to parse query [" + metadata.getQueryString() + "]", cause);
         }
+    }
+
+    /**
+     * Executes preprocesses, basically raw query, i.e., string handling.
+     * @param  metadata the currently handling metadata.
+     * @throws IllegalArgumentException if some configuration file is inconsistent with the pre-settings.
+     */
+    protected void preprocess(Metadata metadata) throws IllegalArgumentException {
+	ChainableFilter<String> chain = FILTER_FACTORY.create();
+	metadata.setQueryString(chain.filter(metadata.getQueryString()));
     }
 
     /**

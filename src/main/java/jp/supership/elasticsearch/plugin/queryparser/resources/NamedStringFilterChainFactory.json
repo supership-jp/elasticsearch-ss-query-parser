@@ -5,5 +5,11 @@
 	    "removal_pattern" : "\\s+",
 	    "substitution"    : " "
 	}
+    },
+    "unicode_normalizing" : {
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.filter.string.UnicodeNormalizingFilter",
+	"settings" : {
+	    "normalizer_form" : "NFKC"
+	}
     }
 }

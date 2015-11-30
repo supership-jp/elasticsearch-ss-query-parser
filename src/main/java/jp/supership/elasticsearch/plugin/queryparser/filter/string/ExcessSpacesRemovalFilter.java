@@ -48,7 +48,7 @@ public class ExcessSpacesRemovalFilter extends ChainableFilter<String> implement
 	    throw new IllegalArgumentException("'removal_pattern' element not defined for filter " + ExcessSpacesRemovalFilter.class.getName());
 	}
 	this.substitution = ConfigUtils.getStringValue(settings, JSON_SUBSTITUTION);
-	if (StringUtils.isEmpty(this.substitution)) {
+	if (this.substitution == null) {
 	    throw new IllegalArgumentException("'substitution' element not defined for filter " + ExcessSpacesRemovalFilter.class.getName());
 	}
     }
