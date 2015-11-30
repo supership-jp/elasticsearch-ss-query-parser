@@ -8,7 +8,7 @@
 	"settings" : {}
     },
     "internal_simple" : {
-	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.InternalDSQMapperHandler",
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.handler.InternalDSQSimpleHandler",
 	"settings" : {}
     },
     "internal_mapper" : {

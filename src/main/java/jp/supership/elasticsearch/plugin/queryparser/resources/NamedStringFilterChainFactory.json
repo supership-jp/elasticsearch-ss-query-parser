@@ -1,0 +1,9 @@
+{
+    "excess_spaces_removal" : {
+	"class"    : "jp.supership.elasticsearch.plugin.queryparser.filter.string.ExcessSpacesRemovalFilter",
+	"settings" : {
+	    "removal_pattern" : "\\s+",
+	    "substitution"    : " "
+	}
+    }
+}

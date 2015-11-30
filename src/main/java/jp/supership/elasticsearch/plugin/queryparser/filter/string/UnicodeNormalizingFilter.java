@@ -3,6 +3,8 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.filter.string;
 
+import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.Map;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.ConfigUtils;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
@@ -18,23 +20,26 @@ import jp.supership.elasticsearch.plugin.queryparser.filters.Initializable;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class ExcessSpacesRemovalFilter extends ChainableFilter<String> implements Initializable {
-    /** Holds JSON entry key for removal pattern entity. */
-    public static final String JSON_REMOVAL_PATTERN = "removal_pattern";
+public class UnicodeNormalizingFilter extends ChainableFilter<String> implements Initializable {
+    /** Holds JSON entry key for normalizer form entity. */
+    public static final String JSON_NORMALIZER_FORM = "normalizer_form";
+    /** Holds normalizer-form definitions. */
+    protected static final Map<String, Normalizer.Form> FORMS = new HashMap<String, Normalizer.Form>();
 
-    /** Holds JSON entry key for substitution entity. */
-    public static final String JSON_SUBSTITUTION = "substitution";
+    static {
+	FORMS.put("NFC", Normalizer.Form.NFC);
+	FORMS.put("NFD", Normalizer.Form.NFD);
+	FORMS.put("NFKC", Normalizer.Form.NFKC);
+	FORMS.put("NFKD", Normalizer.Form.NFKD);
+    }
 
     /** Holds the regular expression pattern to be removed. */
-    private String removalRegexp;
-
-    /** Holds the string which will take palce for the spaces. */
-    private String substitution;
+    private Normalizer.Form normalizerForm = Normalizer.Form.NFKC;
 
     /**
      * Constructor.
      */
-    public ExcessSpacesRemovalFilter() {
+    public UnicodeNormalizingFilter() {
 	// DO NOTHING.
     }
 
@@ -43,13 +48,9 @@ public class ExcessSpacesRemovalFilter extends ChainableFilter<String> implement
      */
     @Override
     public void initialize(Map<String, Object> settings) throws IllegalArgumentException {
-	this.removalRegexp = ConfigUtils.getStringValue(settings, JSON_REMOVAL_PATTERN);
-	if (StringUtils.isEmpty(this.removalRegexp)) {
-	    throw new IllegalArgumentException("'removal_pattern' element not defined for filter " + ExcessSpacesRemovalFilter.class.getName());
-	}
-	this.substitution = ConfigUtils.getStringValue(settings, JSON_SUBSTITUTION);
-	if (StringUtils.isEmpty(this.substitution)) {
-	    throw new IllegalArgumentException("'substitution' element not defined for filter " + ExcessSpacesRemovalFilter.class.getName());
+	String formName = ConfigUtils.getStringValue(settings, JSON_NORMALIZER_FORM);
+	if (!StringUtils.isEmpty(formName) && FORMS.containsKey(formName)) {
+	    this.normalizerForm = FORMS.get(formName);
 	}
     }
 
@@ -58,6 +59,6 @@ public class ExcessSpacesRemovalFilter extends ChainableFilter<String> implement
      */
     @Override
     public String doFilter(String target, FilterContext<String, Object> context) throws FilterException {
-	return target.replaceAll(this.removalRegexp, this.substitution);
+	return Normalizer.normalize(target, this.normalizerForm);
     }
 }
