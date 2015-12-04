@@ -14,8 +14,8 @@ import jp.supership.elasticsearch.plugin.queryparser.filter.FilterException;
 import jp.supership.elasticsearch.plugin.queryparser.filters.Initializable;
 
 /**
- * This {@code ChainableFilter} implementation is responsible for removing excess spaces form
- * the given {@code String}.
+ * This {@code ChainableFilter} implementation is responsible for unicode normalizing the
+ * the given string.
  *
  * @author Shingo OKAWA
  * @since  1.0
@@ -23,6 +23,7 @@ import jp.supership.elasticsearch.plugin.queryparser.filters.Initializable;
 public class UnicodeNormalizingFilter extends ChainableFilter<String> implements Initializable {
     /** Holds JSON entry key for normalizer form entity. */
     public static final String JSON_NORMALIZER_FORM = "normalizer_form";
+
     /** Holds normalizer-form definitions. */
     protected static final Map<String, Normalizer.Form> FORMS = new HashMap<String, Normalizer.Form>();
 

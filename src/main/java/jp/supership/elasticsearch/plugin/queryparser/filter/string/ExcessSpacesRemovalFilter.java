@@ -12,8 +12,8 @@ import jp.supership.elasticsearch.plugin.queryparser.filter.FilterException;
 import jp.supership.elasticsearch.plugin.queryparser.filters.Initializable;
 
 /**
- * This {@code ChainableFilter} implementation is responsible for removing excess spaces form
- * the given {@code String}.
+ * This {@code ChainableFilter} implementation is responsiblefor removing excessing spaces from
+ * the given string.
  *
  * @author Shingo OKAWA
  * @since  1.0

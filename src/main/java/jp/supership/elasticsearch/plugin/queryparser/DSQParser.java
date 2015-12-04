@@ -165,7 +165,6 @@ public class DSQParser implements QueryParser {
                         queryText = queryText.replace("OR", "or");
 			metadata.setQueryString(queryText);
                     }
-		    // TODO: FIX THIS
 		    QueryHandler handler = HANDLER_FACTORY.create(metadata.getHandlerName(), metadata.getArgumentsFor(context));
                     query = handler.handle(metadata.getQueryString());
                     if (query == null) {
