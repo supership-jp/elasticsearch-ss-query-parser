@@ -1,9 +1,10 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
 import org.apache.lucene.search.Query;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
 
@@ -26,6 +27,35 @@ public abstract class QueryComposition extends ArgumentedQuery {
     /** Holds separator. */
     public final static String SEPARATOR = ",";
 
+    /**
+     * Represents span query's constructing context.
+     */
+    protected class Queries extends HashMap<ArgumentedQuery, Float> {
+	/** Adds new span query to this metadata. */
+	public void add(ArgumentedQuery query) {
+	    // TODO: check if this logic is appropriate or not.
+	    this.add(query, query.getWeight());
+	}
+
+	/** Adds new span query to this metadata. */
+	public void add(Collection<ArgumentedQuery> queries) {
+	    for (ArgumentedQuery query : queries) {
+		this.add(query);
+	    }
+	}
+
+	/** Adds new span query to this metadata with explicit weight value. */
+	public void add(ArgumentedQuery query, float weight) {
+	    Float value = this.get(query);
+	    if (value != null) {
+		value = Float.valueOf(value.floatValue() + weight);
+	    } else {
+		value = Float.valueOf(weight);
+	    }
+	    this.put(query, value); 
+	}
+    }
+
     /** Holds operator number. */
     protected int operator;
 
@@ -33,12 +63,12 @@ public abstract class QueryComposition extends ArgumentedQuery {
     protected boolean infixed;
 
     /** Holds currently handling queries. */
-    protected List<ArgumentedQuery> queries;
+    protected Queries queries = new Queries();
 
     /**
      * Constructor.
      */
-    public QueryComposition(List<ArgumentedQuery> queries, boolean infixed, int operator) {
+    public QueryComposition(Collection<ArgumentedQuery> queries, boolean infixed, int operator) {
 	this.setQueries(queries);
 	this.infixed = infixed;
 	this.operator = operator;
@@ -48,19 +78,19 @@ public abstract class QueryComposition extends ArgumentedQuery {
      * Sets the handling queries.
      * @param queries the queries to be set.
      */
-    public void setQueries(List<ArgumentedQuery> queries) {
+    public void setQueries(Collection<ArgumentedQuery> queries) {
 	if (queries.size() < 2) {
 	    throw new AssertionError("too few subqueries");
 	}
-	this.queries = queries;
+	this.queries.add(queries);
     }
 
     /**
      * Return the currently handling queries.
      * @return the currently handling queries.
      */
-    public List<ArgumentedQuery> getQueries() {
-	return this.queries;
+    public Collection<ArgumentedQuery> getQueries() {
+	return this.queries.keySet();
     }
 
     /**
@@ -121,7 +151,7 @@ public abstract class QueryComposition extends ArgumentedQuery {
      */
     protected void infixToString(StringBuilder builder) {
 	builder.append(OPEN_PARENTHESIS);
-	for (ArgumentedQuery query : this.queries) {
+	for (ArgumentedQuery query : this.queries.keySet()) {
 	    builder.append(WHITESPACE);
 	    builder.append(String.valueOf(this.getOperator()));
 	    builder.append(WHITESPACE);
@@ -138,7 +168,7 @@ public abstract class QueryComposition extends ArgumentedQuery {
 	builder.append(String.valueOf(this.getOperator()));
 	builder.append(OPEN_PARENTHESIS);
 	String prefix = "";
-	for (ArgumentedQuery query : this.queries) {
+	for (ArgumentedQuery query : this.queries.keySet()) {
 	    builder.append(prefix);
 	    prefix = SEPARATOR;
 	    builder.append(query.toString());

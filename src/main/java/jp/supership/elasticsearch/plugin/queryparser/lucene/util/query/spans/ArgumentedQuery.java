@@ -1,9 +1,11 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans;
 
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
 
 /**
@@ -15,6 +17,27 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryD
 public abstract class ArgumentedQuery implements Cloneable {
     /** Holds open parentheis. */
     public final static String WEIGHT_OPERATOR = "^";
+
+    /** The empty Lucene query. */
+    public final static Query THE_EMPTY_QUERY = new BooleanQuery() {
+	    /** {@inheritDoc} */
+	    @Override
+	    public void setBoost(float boost) {
+		throw new UnsupportedOperationException();
+	    }
+
+	    /** {@inheritDoc} */
+	    @Override
+	    public void add(BooleanClause clause) {
+		throw new UnsupportedOperationException();
+	    }
+
+	    /** {@inheritDoc} */
+	    @Override
+	    public void add(Query query, BooleanClause.Occur occur) {
+		throw new UnsupportedOperationException();
+	    }
+	};
 
     /** Holds weight value. */
     private float weight = 1.0f;
