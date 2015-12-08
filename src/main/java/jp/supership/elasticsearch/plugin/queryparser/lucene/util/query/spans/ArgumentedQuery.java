@@ -15,10 +15,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryD
  * @since  1.0
  */
 public abstract class ArgumentedQuery implements Cloneable {
-    /** Holds open parentheis. */
-    public final static String WEIGHT_OPERATOR = "^";
-
-    /** The empty Lucene query. */
+    /** Holds the empty Lucene query */
     public final static Query THE_EMPTY_QUERY = new BooleanQuery() {
 	    /** {@inheritDoc} */
 	    @Override
@@ -38,6 +35,9 @@ public abstract class ArgumentedQuery implements Cloneable {
 		throw new UnsupportedOperationException();
 	    }
 	};
+
+    /** Holds open weight operator. */
+    public final static String WEIGHT_OPERATOR = "^";
 
     /** Holds weight value. */
     private float weight = 1.0f;
@@ -102,7 +102,21 @@ public abstract class ArgumentedQuery implements Cloneable {
      * @return new {@link Query} instance.
      */
     public Query toQuery(String field, ProximityQueryDriver driver) {
-	Query query = this.prototype(field, driver);
+	Query query = this.generate(field, driver);
+	if (this.isWeighted()) {
+	    query.setBoost(this.getWeight() * query.getBoost());
+	}
+	return query;
+    }
+
+    /**
+     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver}.
+     * @param  field the currently handling field.
+     * @param  driver the driver which is responsible to instanciate queries.
+     * @return new {@link Query} instance.
+     */
+    public Query toQuery(String field, ProximityQueryDriver driver, ProximitySubQueries subQueries) {
+	Query query = this.generate(field, driver);
 	if (this.isWeighted()) {
 	    query.setBoost(this.getWeight() * query.getBoost());
 	}
@@ -112,7 +126,12 @@ public abstract class ArgumentedQuery implements Cloneable {
     /**
      * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
      */
-    public abstract Query prototype(String field, ProximityQueryDriver driver);
+    public abstract Query generate(String field, ProximityQueryDriver driver);
+
+    /**
+     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
+     */
+    public abstract Query generate(String field, ProximityQueryDriver driver, ProximitySubQueries subQueries);
 
     /**
      * {@inheritDoc}

@@ -20,10 +20,10 @@ public interface ProximityQueryDriver extends QueryDriver {
      * @param conjunction the assigen conjunction, this determines the proceeding process.
      * @param modifier    the preceeding modifier which midifies the handling clause.
      * @param slop        the assigned slop value.
-     * @param ordered     the assigned ordering value.
+     * @param inOrder     the assigned ordering value.
      * @param query       the currently handling query.
      */
-    public void conjugate(List<SpanQuery> clauses, int conjunction, int modifier, int slop, boolean ordered, SpanQuery query);
+    public void conjugate(List<SpanQuery> clauses, int conjunction, int modifier, int slop, boolean inOrder, SpanQuery query);
 
     /**
      * Returns {@code SpanTermQuery} in accordance to the assigned configuration.

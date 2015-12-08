@@ -3,8 +3,9 @@
  */
 package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.List;
 import org.apache.lucene.search.Query;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
 
@@ -30,29 +31,12 @@ public abstract class QueryComposition extends ArgumentedQuery {
     /**
      * Represents span query's constructing context.
      */
-    protected class Queries extends HashMap<ArgumentedQuery, Float> {
-	/** Adds new span query to this metadata. */
-	public void add(ArgumentedQuery query) {
-	    // TODO: check if this logic is appropriate or not.
-	    this.add(query, query.getWeight());
-	}
-
+    protected class Queries extends ArrayList<ArgumentedQuery> {
 	/** Adds new span query to this metadata. */
 	public void add(Collection<ArgumentedQuery> queries) {
 	    for (ArgumentedQuery query : queries) {
 		this.add(query);
 	    }
-	}
-
-	/** Adds new span query to this metadata with explicit weight value. */
-	public void add(ArgumentedQuery query, float weight) {
-	    Float value = this.get(query);
-	    if (value != null) {
-		value = Float.valueOf(value.floatValue() + weight);
-	    } else {
-		value = Float.valueOf(weight);
-	    }
-	    this.put(query, value); 
 	}
     }
 
@@ -63,13 +47,13 @@ public abstract class QueryComposition extends ArgumentedQuery {
     protected boolean infixed;
 
     /** Holds currently handling queries. */
-    protected Queries queries = new Queries();
+    protected Queries argumentedQueries = new Queries();
 
     /**
      * Constructor.
      */
     public QueryComposition(Collection<ArgumentedQuery> queries, boolean infixed, int operator) {
-	this.setQueries(queries);
+	this.setArgumentedQueries(queries);
 	this.infixed = infixed;
 	this.operator = operator;
     }
@@ -78,19 +62,19 @@ public abstract class QueryComposition extends ArgumentedQuery {
      * Sets the handling queries.
      * @param queries the queries to be set.
      */
-    public void setQueries(Collection<ArgumentedQuery> queries) {
+    public void setArgumentedQueries(Collection<ArgumentedQuery> queries) {
 	if (queries.size() < 2) {
 	    throw new AssertionError("too few subqueries");
 	}
-	this.queries.add(queries);
+	this.argumentedQueries.add(queries);
     }
 
     /**
      * Return the currently handling queries.
      * @return the currently handling queries.
      */
-    public Collection<ArgumentedQuery> getQueries() {
-	return this.queries.keySet();
+    public Collection<ArgumentedQuery> getArgumentedQueries() {
+	return this.argumentedQueries;
     }
 
     /**
@@ -126,11 +110,6 @@ public abstract class QueryComposition extends ArgumentedQuery {
     }
 
     /**
-     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
-     */
-    public abstract Query prototype(String field, ProximityQueryDriver driver);
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -151,7 +130,7 @@ public abstract class QueryComposition extends ArgumentedQuery {
      */
     protected void infixToString(StringBuilder builder) {
 	builder.append(OPEN_PARENTHESIS);
-	for (ArgumentedQuery query : this.queries.keySet()) {
+	for (ArgumentedQuery query : this.argumentedQueries) {
 	    builder.append(WHITESPACE);
 	    builder.append(String.valueOf(this.getOperator()));
 	    builder.append(WHITESPACE);
@@ -168,7 +147,7 @@ public abstract class QueryComposition extends ArgumentedQuery {
 	builder.append(String.valueOf(this.getOperator()));
 	builder.append(OPEN_PARENTHESIS);
 	String prefix = "";
-	for (ArgumentedQuery query : this.queries.keySet()) {
+	for (ArgumentedQuery query : this.argumentedQueries) {
 	    builder.append(prefix);
 	    prefix = SEPARATOR;
 	    builder.append(query.toString());

@@ -36,6 +36,6 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
      * {@inheritDoc}
      */
     @Override
-    public void conjugate(List<SpanQuery> clauses, int conjunction, int modifier, int slop, boolean ordered, SpanQuery query) {
+    public void conjugate(List<SpanQuery> clauses, int conjunction, int modifier, int slop, boolean inOrder, SpanQuery query) {
     }
 }
