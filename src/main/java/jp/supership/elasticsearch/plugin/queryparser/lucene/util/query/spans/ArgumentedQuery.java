@@ -53,6 +53,17 @@ public abstract class ArgumentedQuery implements Cloneable {
     }
 
     /**
+     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
+     */
+    public abstract Query generate(String field, ProximityQueryDriver driver);
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public abstract String toString();
+
+    /**
      * Sets true if the weight value is assigned.
      * @param weighted the configuration value to be set.
      */
@@ -108,36 +119,6 @@ public abstract class ArgumentedQuery implements Cloneable {
 	}
 	return query;
     }
-
-    /**
-     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver}.
-     * @param  field the currently handling field.
-     * @param  driver the driver which is responsible to instanciate queries.
-     * @return new {@link Query} instance.
-     */
-    public Query toQuery(String field, ProximityQueryDriver driver, ProximitySubQueries subQueries) {
-	Query query = this.generate(field, driver);
-	if (this.isWeighted()) {
-	    query.setBoost(this.getWeight() * query.getBoost());
-	}
-	return query;
-    }
-
-    /**
-     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
-     */
-    public abstract Query generate(String field, ProximityQueryDriver driver);
-
-    /**
-     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
-     */
-    public abstract Query generate(String field, ProximityQueryDriver driver, ProximitySubQueries subQueries);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public abstract String toString();
 
     /**
      * {@inheritDoc}

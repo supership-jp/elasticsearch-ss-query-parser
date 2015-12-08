@@ -45,6 +45,14 @@ public interface ProximityQueryDriver extends QueryDriver {
     public SpanQuery getSpanNotQuery(SpanQuery inclusion, SpanQuery exclusion) throws ParseException;
 
     /**
+     * Returns {@code SpanOrQuery} in accordance to the assigned configuration.
+     * @param  inclusion the span clause to be filtered in.
+     * @return the resulting {@code SpanQuery} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    public SpanQuery getSpanOrQuery(SpanQuery... clauses) throws ParseException;
+
+    /**
      * Returns {@code SpanMultiTermQueryWrapper} in accordance to the assigned configuration.
      * @param  field the currently handling field.
      * @return the resulting {@code SpanQuery} instance.
