@@ -14,8 +14,8 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryD
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class ArgumentedQuery implements Cloneable {
-    /** Holds the empty Lucene query */
+public abstract class QueryArchetype implements Cloneable {
+    /** Holds the empty query. */
     public final static Query THE_EMPTY_QUERY = new BooleanQuery() {
 	    /** {@inheritDoc} */
 	    @Override
@@ -48,7 +48,7 @@ public abstract class ArgumentedQuery implements Cloneable {
     /**
      * Constructor.
      */
-    public ArgumentedQuery() {
+    public QueryArchetype() {
 	// DO NOTHIG.
     }
 
@@ -124,9 +124,9 @@ public abstract class ArgumentedQuery implements Cloneable {
      * {@inheritDoc}
      */
     @Override
-    public ArgumentedQuery clone() {
+    public QueryArchetype clone() {
 	try {
-	    return (ArgumentedQuery) super.clone();
+	    return (QueryArchetype) super.clone();
 	} catch (CloneNotSupportedException cause) {
 	    throw new Error(cause);
 	}

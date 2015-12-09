@@ -18,7 +18,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryD
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class ProximityQuery extends QueryComposition implements ProximitySubQueries {
+public abstract class ProximityQueryArchetype extends QueryComposition {
     /** Holds slop value. */
     private int slop;
 
@@ -31,106 +31,19 @@ public abstract class ProximityQuery extends QueryComposition implements Proximi
     /**
      * Constructor.
      */
-    public ProximityQuery(Collection<ArgumentedQuery> queries, boolean infixed, int slop, int operator, boolean inOrder) {
-	super(queries, infixed, operator);
+    public ProximityQueryArchetype(boolean infixed, int slop, int operator, boolean inOrder) {
+	super(infixed, operator);
 	this.slop = slop;
 	this.inOrder = inOrder;
     }
 
     /**
-     * {@inheritDoc}
+     * Constructor.
      */
-    @Override
-    public int size() {
-	return this.spanQueries.size();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean isEmpty() {
-	return this.spanQueries.isEmpty();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean containsKey(Object key) {
-	return this.spanQueries.containsKey(key);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean containsValue(Object value) {
-	return this.spanQueries.containsValue(value);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Float get(Object key) {
-	return this.spanQueries.get(key);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Float put(SpanQuery key, Float value) {
-	return this.spanQueries.put(key, value);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Float remove(Object key) {
-	return this.spanQueries.remove(key);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void putAll(Map<? extends SpanQuery, ? extends Float> map) {
-	this.spanQueries.putAll(map);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void clear() {
-	this.spanQueries.clear();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<SpanQuery> keySet() {
-	return this.spanQueries.keySet();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Collection<Float> values() {
-	return this.spanQueries.values();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Set<Map.Entry<SpanQuery, Float>> entrySet() {
-	return this.spanQueries.entrySet();
+    public ProximityQueryArchetype(ProximityQueryArchetype parent, boolean infixed, int slop, int operator, boolean inOrder) {
+	super(parent, infixed, operator);
+	this.slop = slop;
+	this.inOrder = inOrder;
     }
 
     /**
@@ -138,7 +51,7 @@ public abstract class ProximityQuery extends QueryComposition implements Proximi
      * @param query the query to be added.
      */
     public void add(Query query) {
-	if (query == ArgumentedQuery.THE_EMPTY_QUERY) {
+	if (query == QueryArchetype.THE_EMPTY_QUERY) {
 	    return;
 	} else if (!(query instanceof SpanQuery)) {
 	    throw new AssertionError("expected span query: " + query.toString());
@@ -152,13 +65,13 @@ public abstract class ProximityQuery extends QueryComposition implements Proximi
      * @param weight the weight valeu which is relating to the given query.
      */
     public void add(SpanQuery query, float weight) {
-	Float value = this.get(query);
+	Float value = this.spanQueries.get(query);
 	if (value != null) {
 	    value = Float.valueOf(value.floatValue() + weight);
 	} else {
 	    value = Float.valueOf(weight);
 	}
-	this.put(query, value); 
+	this.spanQueries.put(query, value); 
     }
 
     /**

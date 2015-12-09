@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.lucene.search.Query;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.AST;
 
 /**
  * This class is responsible for base implementation of the argumented composited queries.
@@ -15,7 +16,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryD
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class QueryComposition extends ArgumentedQuery {
+public abstract class QueryComposition extends QueryArchetype implements AST<QueryComposition> {
     /** Holds open parentheis. */
     public final static String OPEN_PARENTHESIS = "(";
 
@@ -28,53 +29,97 @@ public abstract class QueryComposition extends ArgumentedQuery {
     /** Holds separator. */
     public final static String SEPARATOR = ",";
 
-    /**
-     * Represents span query's constructing context.
-     */
-    protected class Queries extends ArrayList<ArgumentedQuery> {
-	/** Adds new span query to this metadata. */
-	public void add(Collection<ArgumentedQuery> queries) {
-	    for (ArgumentedQuery query : queries) {
-		this.add(query);
-	    }
-	}
-    }
-
     /** Holds operator number. */
     protected int operator;
 
     /** Sets to be true if the operator is infixed. */
     protected boolean infixed;
 
+    /** Holds the parent composition. */
+    protected QueryComposition parent;
+
     /** Holds currently handling queries. */
-    protected Queries argumentedQueries = new Queries();
+    protected List<QueryComposition> children = new ArrayList<QueryComposition>();
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void addChild(QueryComposition child) {
+	this.children.add(child);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<QueryComposition> getChildren() {
+	return this.children;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public QueryComposition getChildAt(int index) {
+	return this.children.get(index);
+    }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getChildCount() {
+	return this.children.size();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getIndexOf(QueryComposition child) {
+	return this.children.indexOf(child);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setParent(QueryComposition parent) {
+	this.parent = parent;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public QueryComposition getParent() {
+	return this.parent;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isLeaf() {
+	return this.getChildCount() == 0;
+    }
 
     /**
      * Constructor.
      */
-    public QueryComposition(Collection<ArgumentedQuery> queries, boolean infixed, int operator) {
-	this.setArgumentedQueries(queries);
+    public QueryComposition(boolean infixed, int operator) {
+	this.setParent(null);
 	this.infixed = infixed;
 	this.operator = operator;
     }
 
     /**
-     * Sets the handling queries.
-     * @param queries the queries to be set.
+     * Constructor.
      */
-    public void setArgumentedQueries(Collection<ArgumentedQuery> queries) {
-	if (queries.size() < 2) {
-	    throw new AssertionError("too few subqueries");
-	}
-	this.argumentedQueries.add(queries);
-    }
-
-    /**
-     * Return the currently handling queries.
-     * @return the currently handling queries.
-     */
-    public Collection<ArgumentedQuery> getArgumentedQueries() {
-	return this.argumentedQueries;
+    public QueryComposition(QueryComposition parent, boolean infixed, int operator) {
+	this.setParent(parent);
+	this.infixed = infixed;
+	this.operator = operator;
     }
 
     /**
@@ -130,11 +175,11 @@ public abstract class QueryComposition extends ArgumentedQuery {
      */
     protected void infixToString(StringBuilder builder) {
 	builder.append(OPEN_PARENTHESIS);
-	for (ArgumentedQuery query : this.argumentedQueries) {
+	for (QueryArchetype child : this.children) {
 	    builder.append(WHITESPACE);
 	    builder.append(String.valueOf(this.getOperator()));
 	    builder.append(WHITESPACE);
-	    builder.append(query.toString());
+	    builder.append(child.toString());
 	}
 	builder.append(CLOSE_PARENTHESIS);
     }
@@ -147,10 +192,10 @@ public abstract class QueryComposition extends ArgumentedQuery {
 	builder.append(String.valueOf(this.getOperator()));
 	builder.append(OPEN_PARENTHESIS);
 	String prefix = "";
-	for (ArgumentedQuery query : this.argumentedQueries) {
+	for (QueryArchetype child : this.children) {
 	    builder.append(prefix);
 	    prefix = SEPARATOR;
-	    builder.append(query.toString());
+	    builder.append(child.toString());
 	}
 	builder.append(CLOSE_PARENTHESIS);
     }

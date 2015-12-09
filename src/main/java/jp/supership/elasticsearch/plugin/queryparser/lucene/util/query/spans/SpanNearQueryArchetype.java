@@ -15,12 +15,22 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryD
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class NearQuery extends ProximityQuery {
+public class SpanNearQueryArchetype extends ProximityQueryArchetype {
+    /** Holds field name. */
+    private String field;
+
     /**
      * Constructor.
      */
-    public NearQuery(Collection<ArgumentedQuery> queries, boolean infixed, int slop, int operator, boolean inOrder) {
-	super(queries, infixed, slop, operator, inOrder);
+    public SpanNearQueryArchetype(boolean infixed, int slop, int operator, boolean inOrder) {
+	super(infixed, slop, operator, inOrder);
+    }
+
+    /**
+     * Constructor.
+     */
+    public SpanNearQueryArchetype(ProximityQueryArchetype parent, boolean infixed, int slop, int operator, boolean inOrder) {
+	super(parent, infixed, slop, operator, inOrder);
     }
 
     /**
@@ -30,10 +40,10 @@ public class NearQuery extends ProximityQuery {
     public Query generate(String field, ProximityQueryDriver driver) {
 	int i = 0;
 	SpanQuery current;
-	SpanQuery[] queries = new SpanQuery[this.size()];
-	for (Map.Entry<SpanQuery, Float> entry : this.entrySet()) {
-	    current = entry.getKey();
-	    current.setBoost(entry.getValue());
+	SpanQuery[] queries = new SpanQuery[this.getChildCount()];
+	for (QueryComposition archetype : this.getChildren()) {
+	    current = (SpanQuery) archetype.toQuery(field, driver);
+	    current.setBoost(archetype.getWeight());
 	    queries[i++] = current;
 	}
 	if (queries.length == 1) {
