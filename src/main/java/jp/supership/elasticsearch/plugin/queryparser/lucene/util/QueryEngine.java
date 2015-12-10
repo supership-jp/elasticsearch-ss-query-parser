@@ -246,7 +246,7 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
      * @param  field the currently handling field.
      * @param  queryText the currently handling raw query string.
      * @param  quoted this value must be ser true if the handling query is considered to be quoted.
-     * @param  useDisMax true if the yet-another disjunction-max-conjugation query construction is used..
+     * @param  useDisMax true if the yet-another disjunction-max-conjugation query construction is used.
      * @return the resulting {@code Query} instance.
      * @throws ParseException if the parsing fails.
      */

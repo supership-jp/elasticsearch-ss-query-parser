@@ -41,9 +41,9 @@ public class SpanNearQueryArchetype extends ProximityQueryArchetype {
 	int i = 0;
 	SpanQuery current;
 	SpanQuery[] queries = new SpanQuery[this.getChildCount()];
-	for (QueryComposition archetype : this.getChildren()) {
-	    current = (SpanQuery) archetype.toQuery(field, driver);
-	    current.setBoost(archetype.getWeight());
+	for (QueryComposition composition : this.getChildren()) {
+	    current = (SpanQuery) composition.toQuery(field, driver);
+	    current.setBoost(composition.getWeight());
 	    queries[i++] = current;
 	}
 	if (queries.length == 1) {

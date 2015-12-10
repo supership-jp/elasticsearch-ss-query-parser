@@ -49,7 +49,7 @@ public abstract class QueryArchetype implements Cloneable {
      * Constructor.
      */
     public QueryArchetype() {
-	// DO NOTHIG.
+	// DO NOTHING.
     }
 
     /**

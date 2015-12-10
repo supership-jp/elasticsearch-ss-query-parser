@@ -28,12 +28,12 @@ public interface ProximityQueryDriver extends QueryDriver {
     /**
      * Returns {@code SpanTermQuery} in accordance to the assigned configuration.
      * @param  field the currently handling field.
-     * @param  queryText the currently handling raw query string.
+     * @param  termText the currently handling raw term string.
      * @param  quoted this value must be ser true if the handling query is considered to be quoted.
      * @return the resulting {@code SpanQuery} instance.
      * @throws ParseException if the parsing fails.
      */
-    public SpanQuery getSpanTermQuery(String field, String queryText, boolean quoted) throws ParseException;
+    public SpanQuery getSpanTermQuery(String field, String termText, boolean quoted) throws ParseException;
 
     /**
      * Returns {@code SpanNotQuery} in accordance to the assigned configuration.
