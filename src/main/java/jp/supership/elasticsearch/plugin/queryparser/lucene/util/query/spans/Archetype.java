@@ -1,41 +1,18 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype;
 
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.spans.SpanQuery;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
 
 /**
- * This class is responsible for base implementation of the argumented query classes.
+ * This class is responsible for base implementation of the ambiguous query archetypes within AST.
  *
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class QueryArchetype implements Cloneable {
-    /** Holds the empty query. */
-    public final static Query THE_EMPTY_QUERY = new BooleanQuery() {
-	    /** {@inheritDoc} */
-	    @Override
-	    public void setBoost(float boost) {
-		throw new UnsupportedOperationException();
-	    }
-
-	    /** {@inheritDoc} */
-	    @Override
-	    public void add(BooleanClause clause) {
-		throw new UnsupportedOperationException();
-	    }
-
-	    /** {@inheritDoc} */
-	    @Override
-	    public void add(Query query, BooleanClause.Occur occur) {
-		throw new UnsupportedOperationException();
-	    }
-	};
-
+public abstract class Archetype implements Cloneable {
     /** Holds open weight operator. */
     public final static String WEIGHT_OPERATOR = "^";
 
@@ -48,14 +25,14 @@ public abstract class QueryArchetype implements Cloneable {
     /**
      * Constructor.
      */
-    public QueryArchetype() {
+    public Archetype() {
 	// DO NOTHING.
     }
 
     /**
-     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
+     * Returns {@code SpanQuery} in accordance to the assigned {@code ProximityQueryDriver} withou boosting.
      */
-    public abstract Query generate(String field, ProximityQueryDriver driver);
+    public abstract SpanQuery toConcrete(String field, ProximityQueryDriver driver);
 
     /**
      * {@inheritDoc}
@@ -85,6 +62,7 @@ public abstract class QueryArchetype implements Cloneable {
      */
     public void setWeight(float weight) {
 	this.weight = weight;
+	this.weighted = true;
     }
 
     /**
@@ -107,13 +85,13 @@ public abstract class QueryArchetype implements Cloneable {
     }
 
     /**
-     * Returns {@code Query} in accordance to the assigned {@code ProximityQueryDriver}.
+     * Returns {@code SpanQuery} in accordance to the assigned {@code ProximityQueryDriver}.
      * @param  field the currently handling field.
      * @param  driver the driver which is responsible to instanciate queries.
-     * @return new {@link Query} instance.
+     * @return new {@link SpanQuery} instance.
      */
-    public Query toQuery(String field, ProximityQueryDriver driver) {
-	Query query = this.generate(field, driver);
+    public SpanQuery toQuery(String field, ProximityQueryDriver driver) {
+	SpanQuery query = this.toConcrete(field, driver);
 	if (this.isWeighted()) {
 	    query.setBoost(this.getWeight() * query.getBoost());
 	}
@@ -124,9 +102,9 @@ public abstract class QueryArchetype implements Cloneable {
      * {@inheritDoc}
      */
     @Override
-    public QueryArchetype clone() {
+    public Archetype clone() {
 	try {
-	    return (QueryArchetype) super.clone();
+	    return (Archetype) super.clone();
 	} catch (CloneNotSupportedException cause) {
 	    throw new Error(cause);
 	}

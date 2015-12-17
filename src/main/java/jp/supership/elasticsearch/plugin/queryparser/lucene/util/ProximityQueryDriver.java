@@ -13,7 +13,13 @@ import org.apache.lucene.search.spans.SpanQuery;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface ProximityQueryDriver extends QueryDriver {
+public interface ProximityQueryDriver {
+    /**
+     * DO NOT CATCH THIS EXCEPTION.
+     * This exception will be thrown when you are using methods that should not be used any longer.
+     */
+    public static class DeprecatedMethodCall extends Throwable {}
+
     /**
      * Conjugates the given query into the assigned clauses.
      * @param clauses     the preceding clauses which is currently handled by the query parser.
