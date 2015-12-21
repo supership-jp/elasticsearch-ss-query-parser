@@ -21,7 +21,7 @@ public class TreeVisitor<N extends Node> {
     }
 
     /** Represents callback functions which will be fired on visit events. */
-    public static interface Callback<C extends Context> {
+    public interface Callback<C extends Context> {
 	/** This method will be called when node visit event has been fired. */
 	public void call(N node, C context);
     }

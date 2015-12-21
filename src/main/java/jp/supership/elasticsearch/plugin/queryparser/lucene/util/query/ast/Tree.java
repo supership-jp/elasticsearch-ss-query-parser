@@ -42,6 +42,12 @@ public interface Tree<T> {
 	public TreePath<T> getLeftMost();
 
 	/**
+	 * Returns the model's current node's right-most child.
+	 * @return the current node's right-most child's path of the model.
+	 */
+	public TreePath<T> getRightMost();
+
+	/**
 	 * Ascends to the current tree path's parent.
 	 * @param refresh if this value is set to be true, marked path rewinds to the appropriate point.
 	 */

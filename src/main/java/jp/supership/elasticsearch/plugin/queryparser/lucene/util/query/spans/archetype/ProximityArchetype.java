@@ -29,7 +29,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
     /** Holds weight operator. */
     public final static String WEIGHT_OPERATOR = "^";
 
-    public static class State extends Node<ProximityArchetype>.State {
+    public static class State extends Node.State {
 	// Holds true if the node represents SpanTermQuery.
 	private boolean isTermQuery = true;
 	// Holds true if the node represents SpanNearQuery.
@@ -91,6 +91,12 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
     /** Holds currently handling queries. */
     private List<ProximityArchetype> children = new ArrayList<ProximityArchetype>();
 
+    /** Holds field value. */
+    private String field;
+
+    /** Holds query text value. */
+    private String queryText;
+
     /** Holds weight value. */
     private float weight = 1.0f;
 
@@ -117,6 +123,15 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	this.inOrder = inOrder;
 	this.operator = operator;
 	this.infixed = infixed;
+    }
+
+    /**
+     * Constructor.
+     */
+    public ProximityArchetype(String field, String queryText, boolean infixed, int slop, int operator, boolean inOrder) {
+	this(infixed, slop, operator, inOrder);
+	this.field = field;
+	this.queryText = queryText;
     }
 
     /**
@@ -189,6 +204,38 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
     @Override
     public boolean isLeaf() {
 	return this.getChildCount() == 0;
+    }
+
+    /**
+     * Sets the field value.
+     * @param field the field value to be set.
+     */
+    public void setField(String field) {
+	this.field = field;
+    }
+
+    /**
+     * Returns the assigned field value.
+     * @return the assigned field value.
+     */
+    public String getField() {
+	return this.field;
+    }
+
+    /**
+     * Sets the query text value.
+     * @param queryText the query text value to be set.
+     */
+    public void setQueryText(String queryText) {
+	this.queryText = queryText;
+    }
+
+    /**
+     * Returns the assigned query text value.
+     * @return the assigned query text value.
+     */
+    public String getQueryText() {
+	return this.queryText;
     }
 
     /**
@@ -320,7 +367,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      */
     protected void infixToString(StringBuilder builder) {
 	builder.append(OPEN_PARENTHESIS);
-	for (Archetype child : this.children) {
+	for (ProximityArchetype child : this.children) {
 	    builder.append(WHITESPACE);
 	    builder.append(String.valueOf(this.getOperator()));
 	    builder.append(WHITESPACE);
@@ -337,7 +384,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	builder.append(String.valueOf(this.getOperator()));
 	builder.append(OPEN_PARENTHESIS);
 	String prefix = "";
-	for (Archetype child : this.children) {
+	for (ProximityArchetype child : this.children) {
 	    builder.append(prefix);
 	    prefix = SEPARATOR;
 	    builder.append(child.toString());

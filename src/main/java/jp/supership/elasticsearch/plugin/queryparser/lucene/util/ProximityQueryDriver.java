@@ -4,7 +4,9 @@
 package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.util.List;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.MultiTermQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 
 /**
@@ -24,12 +26,21 @@ public interface ProximityQueryDriver {
      * Conjugates the given query into the assigned clauses.
      * @param clauses     the preceding clauses which is currently handled by the query parser.
      * @param conjunction the assigen conjunction, this determines the proceeding process.
-     * @param modifier    the preceeding modifier which midifies the handling clause.
-     * @param slop        the assigned slop value.
-     * @param inOrder     the assigned ordering value.
+     * @param midifier    the preceeding modifier which midifies the handling clause.
      * @param query       the currently handling query.
      */
-    public void conjugate(List<SpanQuery> clauses, int conjunction, int modifier, int slop, boolean inOrder, SpanQuery query);
+    public void conjugate(List<BooleanClause> clauses, int conjunction, int modifier, Query query);
+
+    /**
+     * Returns a span query from the analysis chain.
+     * @param analyzer analyzer used for this query.
+     * @param field field to create queries against.
+     * @param queryText text to be passed to the analysis chain.
+     * @param quoted true if phrases should be generated when terms occur at more than one position.
+     * @param phraseSlop slop factor for span and/or phrase/multiphrase queries.
+     * @param inOrder true if the order is important.
+     */
+    public Query getFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder, boolean useDisMax) throws ParseException;
 
     /**
      * Returns {@code SpanTermQuery} in accordance to the assigned configuration.

@@ -30,6 +30,18 @@ public interface TreeEventNotifier {
     public void fireNodesRemoved(TreeEvent event);
 
     /**
+     * Fires path-ascended event and hooks registered handlers.
+     * @param event the event which will be fired.
+     */
+    public void firePathAscended(TreeEvent event);
+
+    /**
+     * Fires path-descended event and hooks registered handlers.
+     * @param event the event which will be fired.
+     */
+    public void firePathDescended(TreeEvent event);
+
+    /**
      * Fires tree-transduced event and hooks regisatered handlers.
      * @param event the event which will be fired.
      */

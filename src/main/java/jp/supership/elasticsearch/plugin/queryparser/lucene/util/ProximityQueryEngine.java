@@ -5,34 +5,40 @@ package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.CachingTokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+import org.apache.lucene.document.DateTools;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.DisjunctionMaxQuery;
-import org.apache.lucene.search.FilteredQuery;
-import org.apache.lucene.search.FuzzyQuery;
-import org.apache.lucene.search.MultiPhraseQuery;
-import org.apache.lucene.search.MultiTermQuery;
-import org.apache.lucene.search.PhraseQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DisjunctionMaxQuery;
+import org.apache.lucene.search.MultiTermQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.IOUtils;
+import org.apache.lucene.util.Version;
+import org.elasticsearch.common.hppc.ObjectFloatOpenHashMap;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
+import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.TreeHandler;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserSettings;
+import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryParserConfiguration.Wildcard;
 
 /**
  * This class is responsible for instanciating Lucene queries, query parser delegates all sub-query
@@ -42,27 +48,124 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParse
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class ProximityQueryEngine extends QueryEngine implements ProximityQueryDriver {
+public abstract class ProximityQueryEngine extends SpanQueryBuilder implements ProximityQueryDriver, TreeHandler, DSQParserConfiguration {
+    /** Holds ES query parsing context. */
+    protected QueryParseContext context;
+
+    /** Holds query-parsing-contect. */
+    protected DSQParserConfiguration configuration;
+
     /**
      * Constructor.
      */
     public ProximityQueryEngine() {
-        super();
+        super(null);
     }
 
     /**
      * Constructor.
      */
     public ProximityQueryEngine(DSQParserConfiguration configuration) {
-        super();
+        super(null);
         this.configuration = configuration;
     }
 
     /**
+     * Initializes a query parser.
+     * @param version  Lucene version to be matched. See <a href="ExternalQueryParser.html#version">here</a>.
+     * @param field    the default field for query terms.
+     * @param analyzer the analyzer which is applied for the given query..
+     */
+    public void initialize(Version version, String field, Analyzer analyzer, DSQParserConfiguration configuration) {
+        this.initialize(field, analyzer, configuration);
+        if (version.onOrAfter(Version.LUCENE_3_1) == false) {
+            this.setPhraseQueryAutoGeneration(true);
+        }
+    }
+
+    /**
+     * Initializes a query parser.
+     * @param field    the default field for query terms.
+     * @param analyzer the analyzer which is applied for the given query..
+     */
+    public void initialize(String field, Analyzer analyzer, DSQParserConfiguration configuration) {
+	this.configuration = configuration;
+        this.setAnalyzer(analyzer);
+        this.setDefaultField(field);
+        this.setPhraseQueryAutoGeneration(false);
+    }
+
+    /**
+     * Configures engine ain according to the given {@code DSQParserConfiguration}.
+     * @param configuration the assigned configuration to be used.
+     */
+    public abstract void configure(DSQParserConfiguration configuration);
+
+    /**
      * {@inheritDoc}
      */
     @Override
-    public void conjugate(List<SpanQuery> clauses, int conjunction, int modifier, int slop, boolean inOrder, SpanQuery query) {
+    public void conjugate(List<BooleanClause> clauses, int conjunction, int modifier, Query query) {
+        boolean required;
+        boolean prohibited;
+
+	// If this term is introduced by DIS, treats the previous clauses and the current one as disjunction-max query.
+        if (clauses.size() > 0 && conjunction == InternalQueryParser.CONJUNCTION_DIS) {
+	    DisjunctionMaxQuery disMaxQuery = new DisjunctionMaxQuery(this.getTieBreaker());
+	    disMaxQuery.add(this.getBooleanQuery(clauses));
+	    disMaxQuery.add(query);
+	    query = disMaxQuery;
+	    clauses = new ArrayList<BooleanClause>();
+        }
+
+        // If this term is introduced by AND, make the preceding term required, unless it is already prohibited.
+        if (clauses.size() > 0 && conjunction == ExternalQueryParser.CONJUNCTION_AND) {
+            BooleanClause previous = clauses.get(clauses.size() - 1);
+            if (!previous.isProhibited()) {
+                previous.setOccur(BooleanClause.Occur.SHOULD);
+            }
+        }
+
+        // If this term is introduced by OR, make the preceeding term optional, unless it is prohibited.
+        if (clauses.size() > 0 && this.configuration.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_AND && conjunction == ExternalQueryParser.CONJUNCTION_OR) {
+            BooleanClause previous = clauses.get(clauses.size() - 1);
+            if (!previous.isProhibited()) {
+                previous.setOccur(BooleanClause.Occur.SHOULD);
+            }
+        }
+
+        // A null query might have been passed, that means the term might have been filtered out by the analyzer.
+        if (query == null) {
+            return;
+        }
+
+	// The term is set to be REQUIRED if the term is introduced by AND or +;
+        // otherwise, REQUIRED if not PROHIBITED and not introduced by OR.
+        if (this.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_OR
+	    || this.getDefaultOperator() == InternalQueryParser.CONJUNCTION_DIS) {
+            prohibited = (modifier == ExternalQueryParser.MODIFIER_NEGATE);
+            required = (modifier == ExternalQueryParser.MODIFIER_REQUIRE);
+            if (conjunction == ExternalQueryParser.CONJUNCTION_AND && !prohibited) {
+                required = true;
+            }
+        // The term is set ti be PROHIBITED if the term is introduced by NOT;
+        // otherwise, REQIURED if not PROHIBITED and not introduce by OR.
+        } else {
+            prohibited = (modifier == ExternalQueryParser.MODIFIER_NEGATE);
+            required = (!prohibited
+			&& conjunction != ExternalQueryParser.CONJUNCTION_OR
+			&& conjunction != InternalQueryParser.CONJUNCTION_DIS);
+        }
+
+        if (required && !prohibited) {
+            clauses.add(this.newBooleanClause(query, BooleanClause.Occur.MUST));
+        } else if (!required && !prohibited) {
+            clauses.add(this.newBooleanClause(query, BooleanClause.Occur.SHOULD));
+        } else if (!required && prohibited) {
+            clauses.add(this.newBooleanClause(query, BooleanClause.Occur.MUST_NOT));
+        } else {
+            throw new RuntimeException("clause could not be both required and prohibited.");
+        }
     }
 
     /**
@@ -70,64 +173,8 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
      * {@inheritDoc}
      */
     @Override
-    public Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
-        return this.newFieldQuery(this.getAnalyzer(), field, queryText, quoted);
-    }
-
-    /**
-     * ANOTHER IMPLEMENTATION FOR SPAN QUERY FAMILY.
-     * {@inheritDoc}
-     */
-    @Override
-    public Query getFieldQuery(String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
-        return this.newFieldQuery(this.getAnalyzer(), field, queryText, quoted, useDisMax);
-    }
-
-    /**
-     * ANOTHER IMPLEMENTATION FOR SPAN QUERY FAMILY.
-     * {@inheritDoc}
-     */
-    @Override
-    public Query getFieldQuery(String field, String queryText, int phraseSlop) throws ParseException {
-        Query query = this.getFieldQuery(field, queryText, true);
-
-	//        if (query instanceof SpanNearQuery) {
-	//            ((SpanNearQuery) query).setSlop(phraseSlop);
-	//        }
-
-        return query;
-    }
-
-    /**
-     * ANOTHER IMPLEMENTATION FOR SPAN QUERY FAMILY.
-     * {@inheritDoc}
-     */
-    @Override
-    public Query getFieldQuery(String field, String queryText, int phraseSlop, boolean useDisMax) throws ParseException {
-        Query query = this.getFieldQuery(field, queryText, true, useDisMax);
-
-	//        if (query instanceof SpanNearQuery) {
-	//            ((SpanNearQuery) query).setSlop(phraseSlop);
-	//        }
-
-        return query;
-    }
-
-    /**
-     * ANOTHER IMPLEMENTATION FOR SPAN QUERY FAMILY.
-     * {@inheritDoc}
-     */
-    @Override
-    protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
-        return this.newFieldQuery(analyzer, field, queryText, quoted, true);
-    }
-
-    /**
-     * ANOTHER IMPLEMENTATION FOR SPAN QUERY FAMILY.
-     * {@inheritDoc}
-     */
-    @Override
-    protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
+    public Query getFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder, boolean useDisMax) throws ParseException {
+	//    protected Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, boolean useDisMax) throws ParseException {
         BooleanClause.Occur occurence = this.getDefaultOperator() == ExternalQueryParser.CONJUNCTION_AND ? BooleanClause.Occur.MUST : BooleanClause.Occur.SHOULD;
 
         String analyzerName = null;
@@ -160,13 +207,17 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
     }
 
     /**
-     * ANOTHER IMPLEMENTATION FOR SPAN QUERY FAMILY.
-     * {@inheritDoc}
+     * Returns a span query from the analysis chain.
+     * @param analyzer analyzer used for this query.
+     * @param field field to create queries against.
+     * @param queryText text to be passed to the analysis chain.
+     * @param quoted true if phrases should be generated when terms occur at more than one position.
+     * @param phraseSlop slop factor for phrase/multiphrase queries.
+     * @param inOrder true if the order is important.
      */
-    @Override
-    protected Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop, boolean useDisMax) {
+    protected Query createFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder, boolean useDisMax) throws ParseException {
         if (!useDisMax) {
-            return this.createFieldQuery(analyzer, operator, field, queryText, quoted, phraseSlop);
+            return this.createFieldQuery(analyzer, field, queryText, quoted, phraseSlop, inOrder);
         }
 
         assert operator == BooleanClause.Occur.SHOULD || operator == BooleanClause.Occur.MUST;
@@ -196,10 +247,10 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
 	    return this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes)));
         } else {
             if (handler.severalTokensAtSamePosition || (!quoted)) {
-                // Not a phrase query.
+                // Not a span near query.
                 if (handler.positionCount == 1 || (!quoted)) {
                     if (handler.positionCount == 1) {
-			SpanOrQuery query = (SpanOrQuery) this.newSpanOrQuery(new SpanQuery[handler.numberOfTokens]);
+			SpanOrQuery query = (SpanOrQuery) this.newSpanOrQuery();
                         for (int i = 0; i < handler.numberOfTokens; i++) {
                             try {
                                 boolean hasNext = handler.incrementToken();
@@ -240,71 +291,59 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
                         query.add(current, operator);
                         return query;
                     }
-                // A phrase query
+                // A complex span near query.
                 } else {
                     MultiPhraseQuery query = this.newMultiPhraseQuery();
                     query.setSlop(phraseSlop);
                     List<Term> terms = new ArrayList<Term>();
-                    int position = -1;
+
+
+		    List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
+		    List<SpanNearQuery> queries = new ArrayList<SpanNearQuery>();
+		    int position = -1;
                     for (int i = 0; i < handler.numberOfTokens; i++) {
-                        int increment = 1;
+                        int positionIncrement = 1;
                         try {
                             boolean hasNext = handler.incrementToken();
                             assert hasNext == true;
                             handler.fillBytesRef();
                             if (handler.positionIncrement != null) {
-                                increment = handler.getPositionIncrement();
+                                positionIncrement = handler.getPositionIncrement();
                             }
                         } catch (IOException e) {
                             // DO NOTHING, because we know the number of tokens
                         }
                       
-                        if (increment > 0 && terms.size() > 0) {
-                            if (this.getEnablePositionIncrements()) {
-                                query.add(terms.toArray(new Term[0]), position);
-                            } else {
-                                query.add(terms.toArray(new Term[0]));
-                            }
-                            terms.clear();
+                        if (positionIncrement > 0 && terms.size() > 0) {
+			    queries.add(this.newSpanNearQuery(terms, -1, inOrder));
+			    terms.clear();
                         }
-                        position += increment;
-                        terms.add(new Term(field, BytesRef.deepCopyOf(bytes)));
+                        position += positionIncrement;
+			terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
                     }
-                    if (this.getEnablePositionIncrements()) {
-                        query.add(terms.toArray(new Term[0]), position);
-                    } else {
-                        query.add(terms.toArray(new Term[0]));
-                    }
-                    return query;
+
+		    return this.newSpanNearQuery(queries, position, inOrder);
                 }
-            // A phrase query
+            // A simple span near query.
             } else {
-                PhraseQuery query = this.newPhraseQuery();
-                query.setSlop(phraseSlop);
-                int position = -1;
-              
+		List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
+		int position = -1;
                 for (int i = 0; i < handler.numberOfTokens; i++) {
-                    int increment = 1;
-                  
+                    int positionIncrement = 1;
                     try {
                         boolean hasNext = handler.incrementToken();
                         assert hasNext == true;
                         handler.fillBytesRef();
                         if (handler.positionIncrement != null) {
-                            increment = handler.getPositionIncrement();
+                            positionIncrement = handler.getPositionIncrement();
                         }
                     } catch (IOException e) {
                         // DO NOTHING, because we know the number of tokens
                     }
-                  
-                    if (this.getEnablePositionIncrements()) {
-                        position += increment;
-                        query.add(new Term(field, BytesRef.deepCopyOf(bytes)), position);
-                    } else {
-                        query.add(new Term(field, BytesRef.deepCopyOf(bytes)));
-                    }
+		    position += positionIncrement;
+		    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
                 }
-                return query;
+		return this.newSpanNearQuery(terms, position, inOrder);
             }
         }
     }
@@ -318,20 +357,11 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
     }
 
     /**
-     * Returns {@code SpanTermQuery} in accordance to the assigned configuration.
-     * @param  query the currently handling sub query.
-     * @return new {@link SpanTermQuery} instance.
-     */
-    protected SpanQuery newSpanTermQuery(Term term) {
-	return new SpanTermQuery(term);
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
     public SpanQuery getSpanNotQuery(SpanQuery inclusion, SpanQuery exclusion) throws ParseException {
-	return null;
+	return this.newSpanNotQuery(inclusion, exclusion);
     }
 
     /**
@@ -339,7 +369,7 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
      */
     @Override
     public SpanQuery getSpanNearQuery(int slop, boolean inOrder, SpanQuery... clauses) throws ParseException {
-	return null;
+	return this.newSpanNearQuery(clauses, slop, inOrder);
     }
 
     /**
@@ -351,19 +381,698 @@ public abstract class ProximityQueryEngine extends QueryEngine implements Proxim
     }
 
     /**
-     * Returns {@code SpanOrQuery} in accordance to the assigned configuration.
-     * @param  clauses the currently handling sub queries.
-     * @return new {@link SpanTermQuery} instance.
+     * {@inheritDoc}
      */
-    protected SpanQuery newSpanOrQuery(SpanQuery... clauses) {
-	return new SpanOrQuery(clauses);
+    @Override
+    public <Q extends MultiTermQuery> SpanQuery getSpanMultiTermQueryWrapper(Q wrapped) throws ParseException {
+	return this.newSpanMultiTermQueryWrapper(wrapped);
+    }
+
+    /**
+     * INTERNAL USE ONLY.
+     * This class represents internal field-query-parsing context.
+     */
+    protected class TokenStreamHandler {
+        // Holds CachingTokenFilter for enabling lookup functionality.
+        public CachingTokenFilter buffer = null;
+        // Holds byte-data refference.
+        public TermToBytesRefAttribute termToBytesRef = null;
+        // Holds relative position.
+        public PositionIncrementAttribute positionIncrement = null;
+        // Holds number of tokens.
+        public int numberOfTokens = 0;
+        // Holds position count.
+        public int positionCount = 0;
+        // true if several tokens appears at the same position.
+        public boolean severalTokensAtSamePosition = false;
+        // true if buffer has more tokens.
+        public boolean hasMoreTokens = false;
+
+        // Constructor.
+        public TokenStreamHandler(TokenStream tokenStream, boolean reset) throws IOException {
+            if (reset) {
+                tokenStream.reset();
+            }
+            this.buffer = new CachingTokenFilter(tokenStream);
+            this.buffer.reset();
+            this.termToBytesRef = this.buffer.getAttribute(TermToBytesRefAttribute.class);
+            this.positionIncrement = this.buffer.getAttribute(PositionIncrementAttribute.class);
+            this.prepare();
+        }
+
+        // Constructor.
+        public TokenStreamHandler(TokenStream tokenStream) throws IOException {
+            this(tokenStream, true);
+        }
+
+        // Prepares for parsing.
+        private void prepare() {
+            if (this.termToBytesRef != null) {
+                try {
+                    this.hasMoreTokens = this.incrementToken();
+                    while (this.hasMoreTokens) {
+                        this.numberOfTokens++;
+                        int increment = (this.positionIncrement != null) ? this.getPositionIncrement() : 1;
+                        if (increment != 0) {
+                            this.positionCount += increment;
+                        } else {
+                            this.severalTokensAtSamePosition = true;
+                        }
+                        this.hasMoreTokens = this.buffer.incrementToken();
+                    }
+                } catch (IOException e) {
+                    // DO NOTHING.
+                }
+            }
+            this.buffer.reset();
+        }
+
+        // Delegates {@code CachingTokenFilter}'s method.
+        public boolean incrementToken() throws IOException {
+            return this.buffer.incrementToken();
+        }
+
+        // Delegates {@code PositionIncrementAttribute}'s method.
+        public int getPositionIncrement() {
+            return this.positionIncrement == null ? 0 : this.positionIncrement.getPositionIncrement();
+        }
+
+        // Delegates {@code PositionIncrementAttribute}'s method.
+        public BytesRef getBytesRef() {
+            return this.termToBytesRef == null ? null : this.termToBytesRef.getBytesRef();
+        }
+
+        // Delegates {@code PositionIncrementAttribute}'s method.
+        public void fillBytesRef() {
+            this.termToBytesRef.fillBytesRef();
+        }
+    }
+
+    /**
+     * Returns assigned context.
+     * @return the currently assigned context.
+     */
+    public QueryParseContext getContext() {
+        return this.context;
+    }
+
+    /**
+     * Sets currently handling context.
+     * @param context the currently handling context.
+     */
+    public void setContext(QueryParseContext context) {
+        this.context = context;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public <Q extends MultiTermQuery> SpanQuery getSpanMultiTermQueryWrapper(Q wrapped) throws ParseException {
-	return null;
+    public void setDefaultField(String defaultField) {
+        this.configuration.setDefaultField(defaultField);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getDefaultField() {
+        return this.configuration.getDefaultField();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultOperator(int defaultOperator) {
+        this.configuration.setDefaultOperator(defaultOperator);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getDefaultOperator() {
+        return this.configuration.getDefaultOperator();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setPhraseQueryAutoGeneration(boolean phraseQueryAutoGeneration) {
+        this.configuration.setPhraseQueryAutoGeneration(phraseQueryAutoGeneration);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getPhraseQueryAutoGeneration() {
+        return this.configuration.getPhraseQueryAutoGeneration();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setEnablePositionIncrements(boolean positionIncrements) {
+        this.configuration.setEnablePositionIncrements(positionIncrements);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getEnablePositionIncrements() {
+        return this.configuration.getEnablePositionIncrements();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFuzzyMinSim(float fuzzyMinSim) {
+        this.configuration.setFuzzyMinSim(fuzzyMinSim);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getFuzzyMinSim() {
+        return this.configuration.getFuzzyMinSim();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFuzzyPrefixLength(int fuzzyPrefixLength) {
+        this.configuration.setFuzzyPrefixLength(fuzzyPrefixLength);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getFuzzyPrefixLength() {
+        return this.configuration.getFuzzyPrefixLength();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setPhraseSlop(int phraseSlop) {
+        this.configuration.setPhraseSlop(phraseSlop);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getPhraseSlop() {
+        return this.configuration.getPhraseSlop();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setAllowLeadingWildcard(boolean allowLeadingWildcard) {
+        this.configuration.setAllowLeadingWildcard(allowLeadingWildcard);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getAllowLeadingWildcard() {
+        return this.configuration.getAllowLeadingWildcard();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setLowercaseExpandedTerms(boolean lowercaseExpandedTerms) {
+        this.configuration.setLowercaseExpandedTerms(lowercaseExpandedTerms);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getLowercaseExpandedTerms() {
+        return this.configuration.getLowercaseExpandedTerms();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setMultiTermRewriteMethod(MultiTermQuery.RewriteMethod multiTermRewriteMethod) {
+        this.configuration.setMultiTermRewriteMethod(multiTermRewriteMethod);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getMultiTermRewriteMethod() {
+        return this.configuration.getMultiTermRewriteMethod();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setLocale(Locale locale) {
+        this.configuration.setLocale(locale);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Locale getLocale() {
+        return this.configuration.getLocale();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setTimeZone(TimeZone timeZone) {
+        this.configuration.setTimeZone(timeZone);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TimeZone getTimeZone() {
+        return this.configuration.getTimeZone();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDateResolution(DateTools.Resolution dateResolution) {
+        this.configuration.setDateResolution(dateResolution);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDateResolution(String field, DateTools.Resolution resolution) {
+        this.configuration.setDateResolution(field, resolution);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public DateTools.Resolution getDateResolution(String field) {
+        return this.configuration.getDateResolution(field);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setRangeTermAnalysis(boolean value) {
+        this.configuration.setRangeTermAnalysis(value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getRangeTermAnalysis() {
+        return this.configuration.getRangeTermAnalysis();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setMaxDeterminizedStates(int max) {
+        this.configuration.setMaxDeterminizedStates(max);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getMaxDeterminizedStates() {
+        return this.configuration.getMaxDeterminizedStates();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean isCacheable() {
+        return this.configuration.isCacheable();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getQueryString() {
+        return this.configuration.getQueryString();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQueryString(String queryString) {
+	this.configuration.setQueryString(queryString);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getBoost() {
+        return this.configuration.getBoost();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBoost(float boost) {
+	this.configuration.setBoost(boost);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getFuzzyMaxExpansions() {
+	return this.configuration.getFuzzyMaxExpansions();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFuzzyMaxExpansions(int fuzzyMaxExpansions) {
+	this.configuration.setFuzzyMaxExpansions(fuzzyMaxExpansions);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getFuzzyRewriteMethod() {
+	return this.configuration.getFuzzyRewriteMethod();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFuzzyRewriteMethod(MultiTermQuery.RewriteMethod fuzzyRewriteMethod) {
+	this.configuration.setFuzzyRewriteMethod(fuzzyRewriteMethod);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getWildcardAnalysis() {
+	return this.configuration.getWildcardAnalysis();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setWildcardAnalysis(boolean wildcardAnalysis) {
+	this.configuration.setWildcardAnalysis(wildcardAnalysis);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getEscape() {
+	return this.configuration.getEscape();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setEscape(boolean escape) {
+	this.configuration.setEscape(escape);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getDefaultAnalyzer() {
+	return this.configuration.getDefaultAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultAnalyzer(Analyzer defaultAnalyzer) {
+	this.configuration.setDefaultAnalyzer(defaultAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getDefaultQuoteAnalyzer() {
+	return this.configuration.getDefaultQuoteAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setDefaultQuoteAnalyzer(Analyzer defaultQuoteAnalyzer) {
+	this.configuration.setDefaultQuoteAnalyzer(defaultQuoteAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getForcedAnalyzer() {
+	return this.configuration.getForcedAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setForcedAnalyzer(Analyzer forcedAnalyzer) {
+	this.configuration.setForcedAnalyzer(forcedAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Analyzer getForcedQuoteAnalyzer() {
+	return this.configuration.getForcedQuoteAnalyzer();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setForcedQuoteAnalyzer(Analyzer forcedQuoteAnalyzer) {
+	this.configuration.setForcedQuoteAnalyzer(forcedQuoteAnalyzer);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getQuoteFieldSuffix() {
+	return this.configuration.getQuoteFieldSuffix();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQuoteFieldSuffix(String quoteFieldSuffix) {
+	this.configuration.setQuoteFieldSuffix(quoteFieldSuffix);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public MultiTermQuery.RewriteMethod getRewriteMethod() {
+	return this.configuration.getRewriteMethod();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setRewriteMethod(MultiTermQuery.RewriteMethod rewriteMethod) {
+	this.configuration.setRewriteMethod(rewriteMethod);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getMinimumShouldMatch() {
+	return this.configuration.getMinimumShouldMatch();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setMinimumShouldMatch(String minimumShouldMatch) {
+	this.configuration.setMinimumShouldMatch(minimumShouldMatch);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getLenient() {
+	return this.configuration.getLenient();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setLenient(boolean lenient) {
+	this.configuration.setLenient(lenient);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getFieldRefinement() {
+	return this.configuration.getFieldRefinement();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFieldRefinement(boolean fieldRefinement) {
+	this.configuration.setFieldRefinement(fieldRefinement);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getQueryNegation() {
+	return this.configuration.getQueryNegation();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQueryNegation(boolean queryNegation) {
+	this.configuration.setQueryNegation(queryNegation);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<String> getFields() {
+	return this.configuration.getFields();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setFields(List<String> fields) {
+	this.configuration.setFields(fields);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<String> getQueryTypes() {
+	return this.configuration.getQueryTypes();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setQueryTypes(Collection<String> queryTypes) {
+	this.configuration.setQueryTypes(queryTypes);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ObjectFloatOpenHashMap<String> getBoosts() {
+	return this.configuration.getBoosts();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setBoosts(ObjectFloatOpenHashMap<String> boosts) {
+	this.configuration.setBoosts(boosts);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getTieBreaker() {
+	return this.configuration.getTieBreaker();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setTieBreaker(float tieBreaker) {
+	this.configuration.setTieBreaker(tieBreaker);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getUseDisMax() {
+	return this.configuration.getUseDisMax();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setUseDisMax(boolean useDisMax) {
+	this.configuration.setUseDisMax(useDisMax);
     }
 }

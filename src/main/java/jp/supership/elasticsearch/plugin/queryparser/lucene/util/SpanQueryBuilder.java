@@ -12,20 +12,9 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.MultiPhraseQuery;
-import org.apache.lucene.search.PhraseQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
@@ -39,9 +28,6 @@ public class SpanQueryBuilder {
     /** Holds analyzer which is responsible for handling chain. */
     private Analyzer analyzer;
 
-    /** Holds true if the builder maintains the offset for the stop-words. */
-    private boolean enablePositionIncrements = true;
-
     /**
      * Constructor.
      */
@@ -49,92 +35,33 @@ public class SpanQueryBuilder {
 	this.analyzer = analyzer;
     }
 
-    /** 
-     * Creates a boolean query from the query text.
-     * @param field field name
-     * @param queryText text to be passed to the analyzer
-     * @return {@code TermQuery} or {@code BooleanQuery}.
-     */
-    public Query createBooleanQuery(String field, String queryText) {
-	return this.createBooleanQuery(field, queryText, BooleanClause.Occur.SHOULD);
-    }
-
-    /** 
-     * Creates a boolean query from the query text.
-     * @param field field name
-     * @param queryText text to be passed to the analyzer
-     * @param operator operator used for clauses between analyzer tokens.
-     * @return {@code TermQuery} or {@code BooleanQuery}.
-     */
-    public Query createBooleanQuery(String field, String queryText, BooleanClause.Occur operator) {
-	if (operator != BooleanClause.Occur.SHOULD && operator != BooleanClause.Occur.MUST) {
-	    throw new IllegalArgumentException("invalid operator: only SHOULD or MUST are allowed");
-	}
-	return this.createFieldQuery(analyzer, operator, field, queryText, false, 0);
-    }
-
-    /** 
-     * Creates a phrase query from the query text.
-     * This is equivalent to {@code createPhraseQuery(field, queryText, 0)}
-     * @param field field name
-     * @param queryText text to be passed to the analyzer
-     * @return {@code TermQuery}, {@code BooleanQuery}, {@code PhraseQuery}, or {@code MultiPhraseQuery}.
-     */
-    public Query createPhraseQuery(String field, String queryText) {
-	return createPhraseQuery(field, queryText, 0);
-    }
-
-    /** 
-     * Creates a phrase query from the query text.
-     * @param field field name
-     * @param queryText text to be passed to the analyzer
-     * @param phraseSlop number of other words permitted between words in query phrase
-     * @return {@code TermQuery}, {@code BooleanQuery}, {@code PhraseQuery}, or {@code MultiPhraseQuery}.
-     */
-    public Query createPhraseQuery(String field, String queryText, int phraseSlop) {
-	return this.createFieldQuery(analyzer, BooleanClause.Occur.MUST, field, queryText, true, phraseSlop);
-    }
-
     /**
-     * Creates a query from the analysis chain.
-     * <p>
-     * Expert: this is more useful for subclasses such as queryparsers. 
-     * If using this class directly, just use {@link #createBooleanQuery(String, String)}
-     * and {@link #createPhraseQuery(String, String)}
-     * @param analyzer analyzer used for this query
-     * @param operator default boolean operator used for this query
-     * @param field field to create queries against
-     * @param queryText text to be passed to the analysis chain
-     * @param quoted true if phrases should be generated when terms occur at more than one position
-     * @param phraseSlop slop factor for phrase/multiphrase queries
+     * Creates a span query from the analysis chain.
+     * @param analyzer analyzer used for this query.
+     * @param field field to create queries against.
+     * @param queryText text to be passed to the analysis chain.
+     * @param quoted true if phrases should be generated when terms occur at more than one position.
+     * @param phraseSlop slop factor for phrase/multiphrase queries.
+     * @param inOrder true if the order is important.
      */
-    protected final Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop) {
-	assert operator == BooleanClause.Occur.SHOULD || operator == BooleanClause.Occur.MUST;
+    protected final SpanQuery createFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder) {
+	try (TokenStream source = analyzer.tokenStream(field, queryText); CachingTokenFilter stream = new CachingTokenFilter(source)) {
+	    TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
+	    PositionIncrementAttribute positionAttribute = stream.addAttribute(PositionIncrementAttribute.class);
 
-	// Use the analyzer to get all the tokens, and then build an appropriate
-	// query based on the analysis chain.
-
-	try (TokenStream source = analyzer.tokenStream(field, queryText);
-	     CachingTokenFilter stream = new CachingTokenFilter(source)) {
-
-	    TermToBytesRefAttribute termAtt = stream.getAttribute(TermToBytesRefAttribute.class);
-	    PositionIncrementAttribute posIncAtt = stream.addAttribute(PositionIncrementAttribute.class);
-
-	    if (termAtt == null) {
+	    if (termAttribute == null) {
 		return null;
 	    }
 
 	    // phase 1: read through the stream and assess the situation:
 	    // counting the number of tokens/positions and marking if we have any synonyms.
-
-	    int numTokens = 0;
+	    int numberOfTokens = 0;
 	    int positionCount = 0;
 	    boolean hasSynonyms = false;
-
 	    stream.reset();
 	    while (stream.incrementToken()) {
-		numTokens++;
-		int positionIncrement = posIncAtt.getPositionIncrement();
+		numberOfTokens++;
+		int positionIncrement = positionAttribute.getPositionIncrement();
 		if (positionIncrement != 0) {
 		    positionCount += positionIncrement;
 		} else {
@@ -144,179 +71,153 @@ public class SpanQueryBuilder {
 
 	    // phase 2: based on token count, presence of synonyms, and options
 	    // formulate a single term, boolean, or phrase.
-
-	    if (numTokens == 0) {
+	    if (numberOfTokens == 0) {
 		return null;
-	    } else if (numTokens == 1) {
+	    } else if (numberOfTokens == 1) {
 		// single term
-		return analyzeTerm(field, stream);
+		return this.analyzeSpanTerm(field, stream);
 	    } else if (quoted && positionCount > 1) {
-		// phrase
+		// span near
 		if (hasSynonyms) {
-		    // complex phrase with synonyms
-		    return analyzeMultiPhrase(field, stream, phraseSlop);
+		    // complex span near with synonyms
+		    return this.analyzeMultiSpanNear(field, stream, phraseSlop, inOrder);
 		} else {
-		    // simple phrase
-		    return analyzePhrase(field, stream, phraseSlop);
+		    // simple span near
+		    return this.analyzeSpanNear(field, stream, phraseSlop, inOrder);
 		}
 	    } else {
-		// boolean
+		// span or
 		if (positionCount == 1) {
 		    // only one position, with synonyms
-		    return analyzeBoolean(field, stream);
+		    return this.analyzeSpanOr(field, stream);
 		} else {
 		    // complex case: multiple positions
-		    return analyzeMultiBoolean(field, stream, operator);
+		    return this.analyzeMultiSpanOr(field, stream, operator, inOrder);
 		}
 	    }
-	} catch (IOException e) {
-	    throw new RuntimeException("Error analyzing query text", e);
+	} catch (IOException cause) {
+	    throw new RuntimeException("Error analyzing query text", cause);
 	}
     }
 
-    /** 
-     * Creates simple term query from the cached tokenstream contents 
+    /**
+     * Creates simple span-term query from the cached tokenstream contents 
+     * @param field the currently hnadling field.
+     * @param stream the currently hnadling token stream.
      */
-    private Query analyzeTerm(String field, TokenStream stream) throws IOException {
-	TermToBytesRefAttribute termAtt = stream.getAttribute(TermToBytesRefAttribute.class);
-	BytesRef bytes = termAtt.getBytesRef();
-
+    private SpanQuery analyzeSpanTerm(String field, TokenStream stream) throws IOException {
+	TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
+	BytesRef bytes = termAttribute.getBytesRef();
 	stream.reset();
 	if (!stream.incrementToken()) {
 	    throw new AssertionError();
 	}
-
-	termAtt.fillBytesRef();
-	return newTermQuery(new Term(field, BytesRef.deepCopyOf(bytes)));
-    }
-
-    /** 
-     * Creates simple boolean query from the cached tokenstream contents 
-     */
-    private Query analyzeBoolean(String field, TokenStream stream) throws IOException {
-	BooleanQuery q = newBooleanQuery(true);
-
-	TermToBytesRefAttribute termAtt = stream.getAttribute(TermToBytesRefAttribute.class);
-	BytesRef bytes = termAtt.getBytesRef();
-
-	stream.reset();
-	while (stream.incrementToken()) {
-	    termAtt.fillBytesRef();
-	    Query currentQuery = newTermQuery(new Term(field, BytesRef.deepCopyOf(bytes)));
-	    q.add(currentQuery, BooleanClause.Occur.SHOULD);
-	}
-
-	return q;
-    }
-
-    /** 
-     * Creates complex boolean query from the cached tokenstream contents 
-     */
-    private Query analyzeMultiBoolean(String field, TokenStream stream, BooleanClause.Occur operator) throws IOException {
-	BooleanQuery q = newBooleanQuery(false);
-	Query currentQuery = null;
-
-	TermToBytesRefAttribute termAtt = stream.getAttribute(TermToBytesRefAttribute.class);
-	BytesRef bytes = termAtt.getBytesRef();
-
-	PositionIncrementAttribute posIncrAtt = stream.getAttribute(PositionIncrementAttribute.class);
-
-	stream.reset();
-	while (stream.incrementToken()) {
-	    termAtt.fillBytesRef();
-	    if (posIncrAtt.getPositionIncrement() == 0) {
-		if (!(currentQuery instanceof BooleanQuery)) {
-		    Query t = currentQuery;
-		    currentQuery = newBooleanQuery(true);
-		    ((BooleanQuery)currentQuery).add(t, BooleanClause.Occur.SHOULD);
-		}
-		((BooleanQuery)currentQuery).add(newTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))), BooleanClause.Occur.SHOULD);
-	    } else {
-		if (currentQuery != null) {
-		    q.add(currentQuery, operator);
-		}
-		currentQuery = newTermQuery(new Term(field, BytesRef.deepCopyOf(bytes)));
-	    }
-	}
-	q.add(currentQuery, operator);
-
-	return q;
-    }
-
-    /** 
-     * Creates simple phrase query from the cached tokenstream contents 
-     */
-    private Query analyzePhrase(String field, TokenStream stream, int slop) throws IOException {
-	PhraseQuery pq = newPhraseQuery();
-	pq.setSlop(slop);
-
-	TermToBytesRefAttribute termAtt = stream.getAttribute(TermToBytesRefAttribute.class);
-	BytesRef bytes = termAtt.getBytesRef();
-
-	PositionIncrementAttribute posIncrAtt = stream.getAttribute(PositionIncrementAttribute.class);
-	int position = -1;
-
-	stream.reset();
-	while (stream.incrementToken()) {
-	    termAtt.fillBytesRef();
-
-	    if (enablePositionIncrements) {
-		position += posIncrAtt.getPositionIncrement();
-		pq.add(new Term(field, BytesRef.deepCopyOf(bytes)), position);
-	    } else {
-		pq.add(new Term(field, BytesRef.deepCopyOf(bytes)));
-	    }
-	}
-
-	return pq;
-    }
-
-    /** 
-     * Creates complex phrase query from the cached tokenstream contents 
-     */
-    private Query analyzeMultiPhrase(String field, TokenStream stream, int slop) throws IOException {
-	MultiPhraseQuery mpq = newMultiPhraseQuery();
-	mpq.setSlop(slop);
-
-	TermToBytesRefAttribute termAtt = stream.getAttribute(TermToBytesRefAttribute.class);
-	BytesRef bytes = termAtt.getBytesRef();
-
-	PositionIncrementAttribute posIncrAtt = stream.getAttribute(PositionIncrementAttribute.class);
-	int position = -1;
-
-	List<Term> multiTerms = new ArrayList<>();
-	stream.reset();
-	while (stream.incrementToken()) {
-	    termAtt.fillBytesRef();
-	    int positionIncrement = posIncrAtt.getPositionIncrement();
-
-	    if (positionIncrement > 0 && multiTerms.size() > 0) {
-		if (enablePositionIncrements) {
-		    mpq.add(multiTerms.toArray(new Term[0]), position);
-		} else {
-		    mpq.add(multiTerms.toArray(new Term[0]));
-		}
-		multiTerms.clear();
-	    }
-	    position += positionIncrement;
-	    multiTerms.add(new Term(field, BytesRef.deepCopyOf(bytes)));
-	}
-
-	if (enablePositionIncrements) {
-	    mpq.add(multiTerms.toArray(new Term[0]), position);
-	} else {
-	    mpq.add(multiTerms.toArray(new Term[0]));
-	}
-	return mpq;
+	termAttribute.fillBytesRef();
+	return this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes)));
     }
 
     /**
-     * Instanciates a new BooleanQuery.
-     * @param  disableCoord set to be true if the coordinate information is not important fot scoring.
-     * @return new BooleanQuery instance.
+     * Creates simple span-or query from the cached tokenstream contents 
+     * @param field the currently hnadling field.
+     * @param stream the currently hnadling token stream.
      */
-    protected BooleanQuery newBooleanQuery(boolean disableCoord) {
-	return new BooleanQuery(disableCoord);
+    private SpanQuery analyzeSpanOr(String field, TokenStream stream) throws IOException {
+	TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
+	BytesRef bytes = termAttribute.getBytesRef();
+
+	List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
+	stream.reset();
+	while (stream.incrementToken()) {
+	    termAttribute.fillBytesRef();
+	    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	}
+
+	return this.newSpanOrQuery(terms);
+    }
+
+    /**
+     * Creates complex span-or query from the cached tokenstream contents 
+     * @param field the currently hnadling field.
+     * @param stream the currently hnadling token stream.
+     * @param inOrder true if the order is important.
+     */
+    private SpanQuery analyzeMultiSpanOr(String field, TokenStream stream, boolean inOrder) throws IOException {
+	TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
+	PositionIncrementAttribute positionAttribute = stream.getAttribute(PositionIncrementAttribute.class);
+	BytesRef bytes = termAttribute.getBytesRef();
+
+	SpanOrQuery query = this.newSpanOrQuery();
+	List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
+	List<SpanNearQuery> queries = new ArrayList<SpanNearQuery>();
+	stream.reset();
+	while (stream.incrementToken()) {
+	    termAttribute.fillBytesRef();
+	    if (positionAttribute.getPositionIncrement() == 0) {
+		terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	    } else {
+		query.addClause(this.newSpanNearQuery(terms, -1, inOrder));
+		terms.clear();
+	    }
+	}
+
+	if (!terms.isEmpty()) {
+	    query.addClause(this.newSpanNearQuery(terms, -1, inOrder));
+	}
+
+	return query;
+    }
+
+    /**
+     * Creates span-near query from the cached tokenstream contents.
+     * @param field the currently hnadling field.
+     * @param stream the currently hnadling token stream.
+     * @param inOrder true if the order is important.
+     */
+    private SpanQuery analyzeSpanNear(String field, TokenStream stream, int slop) throws IOException {
+	TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
+	PositionIncrementAttribute positionAttribute = stream.getAttribute(PositionIncrementAttribute.class);
+	BytesRef bytes = termAttribute.getBytesRef();
+	int position = -1;
+
+	List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
+	stream.reset();
+	while (stream.incrementToken()) {
+	    termAttribute.fillBytesRef();
+	    int positionIncrement = positionAttribute.getPositionIncrement();
+	    position += positionIncrement;
+	    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	}
+
+	return this.newSpanNearQuery(terms, position, inOrder);
+    }
+
+    /**
+     * Creates complex span-near query from the cached tokenstream contents.
+     * @param field the currently hnadling field.
+     * @param stream the currently hnadling token stream.
+     * @param inOrder true if the order is important.
+     */
+    private SpanQuery analyzeMultiSpanNear(String field, TokenStream stream, boolean inOrder) throws IOException {
+	TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
+	PositionIncrementAttribute positionAttribute = stream.getAttribute(PositionIncrementAttribute.class);
+	BytesRef bytes = termAttribute.getBytesRef();
+	int position = -1;
+
+	List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
+	List<SpanNearQuery> queries = new ArrayList<SpanNearQuery>();
+	stream.reset();
+	while (stream.incrementToken()) {
+	    termAttribute.fillBytesRef();
+	    int positionIncrement = positionAttribute.getPositionIncrement();
+	    if (positionIncrement > 0 && terms.size() > 0) {
+		queries.add(this.newSpanNearQuery(terms, -1, inOrder));
+		terms.clear();
+	    }
+	    position += positionIncrement;
+	    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	}
+
+	return this.newSpanNearQuery(queries, position, inOrder);
     }
 
     /**
@@ -324,8 +225,25 @@ public class SpanQueryBuilder {
      * @param  term the term to be used for query construction.
      * @return new SpanTermQuery instance.
      */
-    protected SpanTermQuery newSpanTermQuery(Term term) {
+    protected SpanQuery newSpanTermQuery(Term term) {
 	return new SpanTermQuery(term);
+    }
+
+    /**
+     * Instanciates a new SpanOrQuery.
+     * @return new SpanOrQuery instance.
+     */
+    protected SpanQuery newSpanOrQuery() {
+	return new SpanOrQuery();
+    }
+
+    /**
+     * Instanciates a new SpanOrQuery.
+     * @param  clauses the clauses constructs the argumented span near query.
+     * @return new SpanOrQuery instance.
+     */
+    protected SpanQuery newSpanOrQuery(SpanQuery[] clauses) {
+	return new SpanOrQuery(clauses);
     }
 
     /**
@@ -335,7 +253,7 @@ public class SpanQueryBuilder {
      * @param  inOrder set to be true if the order is important.
      * @return new SpanNearQuery instance.
      */
-    protected SpanNearQuery newSpanNearQuery(SpanQuery[] clauses, int slop, boolean inOrder) {
+    protected SpanQuery newSpanNearQuery(SpanQuery[] clauses, int slop, boolean inOrder) {
 	return new SpanNearQuery(clauses, slop, inOrder);
     }
 
@@ -347,8 +265,18 @@ public class SpanQueryBuilder {
      * @param  collectPayloads set to be true if the payload information is neccessary.
      * @return new SpanNearQuery instance.
      */
-    protected SpanNearQuery newSpanNearQuery(SpanQuery[] clauses, int slop, boolean inOrder, boolean collectPayloads) {
+    protected SpanQuery newSpanNearQuery(SpanQuery[] clauses, int slop, boolean inOrder, boolean collectPayloads) {
 	return new SpanNearQuery(clauses, slop, inOrder, collectPayloads);
+    }
+
+    /**
+     * Instanciates a new SpanNotQuery.
+     * @param  inclusion the clauses which is to be included.
+     * @param  exclusion the clauses which is to be excluded.
+     * @return new SpanNotQuery instance.
+     */
+    protected SpanQuery newSpanNotQuery(SpanQuery[] inclusion, SpanQuery[] exclusion) {
+	return new SpanNotQuery(inclusion, exclusion);
     }
 
     /**
@@ -374,21 +302,5 @@ public class SpanQueryBuilder {
      */
     public void setAnalyzer(Analyzer analyzer) {
 	this.analyzer = analyzer;
-    }
-
-    /**
-     * Returns true if position increments are enabled.
-     * @return true if the position increment functionality is set to be true.
-     */
-    public boolean getEnablePositionIncrements() {
-	return this.enablePositionIncrements;
-    }
-
-    /**
-     * Sets the position-increments functionality.
-     * @param enablePositionIncrements the position-increments functionality setting value.
-     */
-    public void setEnablePositionIncrements(boolean enablePositionIncrements) {
-	this.enablePositionIncrements = enablePositionIncrements;
     }
 }

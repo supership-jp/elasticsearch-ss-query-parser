@@ -13,10 +13,9 @@ import java.util.List;
  */
 public interface TreeTransducer<S extends Tree, T extends Tree> {
     /**
-     * Returns the index of node in the parent children.
-     * @param  parent the target parent.
-     * @param  child the target child.
-     * @return the index of the given child.
+     * Transduces the given tree into the other tree.
+     * @param  source the source tree to be transduced.
+     * @return the transduced tree.
      */
     public T transduce(S source);
 }

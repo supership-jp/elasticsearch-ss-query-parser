@@ -12,40 +12,40 @@ import java.util.EventListener;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface TreeEventListener extends EventListener {
+public interface TreeEventListener<N extends Node> extends EventListener {
     /**
      * This method will be hooked when the handling nodes were changed.
      * @param event the target event which will be handled.
      */
-    public void onNodesChanged(TreeEvent event);
+    public void onNodesChanged(TreeEvent<N> event);
 
     /**
      * This method will be hooked when the new nodes were inserted.
      * @param event the target event which will be handled.
      */
-    public void onNodesInserted(TreeEvent event);
+    public void onNodesInserted(TreeEvent<N> event);
 
     /**
      * This method will be hooked when the some nodes were removed.
      * @param event the target event which will be handled.
      */
-    public void onNodesRemoved(TreeEvent event);
+    public void onNodesRemoved(TreeEvent<N> event);
 
     /**
      * This method will be hooked when the tree path ascended.
      * @param event the target event which will be handled.
      */
-    public void onPathAscended(TreeEvent event);
+    public void onPathAscended(TreeEvent<N> event);
 
     /**
      * This method will be hooked when the tree path changed.
      * @param event the target event which will be handled.
      */
-    public void onPathDescended(TreeEvent event);
+    public void onPathDescended(TreeEvent<N> event);
 
     /**
      * This method will be hooked when the structure of the tree was changed.
      * @param event the target event which will be handled.
      */
-    public void onTransduced(TreeEvent event);
+    public void onTransduced(TreeEvent<N> event);
 }

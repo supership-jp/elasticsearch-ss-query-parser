@@ -112,8 +112,9 @@ public class TreePath<T> implements Serializable {
      * @return the internal path expression as an array.
      */
     public T[] getPath() {
-	@SurpressWarnings("unchecked")
-        return (T[]) this.path;
+	@SuppressWarnings("unchecked")
+        T[] result = this.path;
+        return result;
     }
 
     /**
@@ -121,8 +122,9 @@ public class TreePath<T> implements Serializable {
      * @return the very last node in the path.
      */
     public T getLastPathElement() {
-	@SurpressWarnings("unchecked")
-	return (T) this.path[this.path.length - 1];
+	@SuppressWarnings("unchecked")
+	T result = this.path[this.path.length - 1];
+	return result;
     }
 
     /**
