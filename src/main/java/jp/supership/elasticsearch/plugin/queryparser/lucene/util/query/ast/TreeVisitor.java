@@ -23,20 +23,20 @@ public class TreeVisitor<N extends Node> {
     /** Represents callback functions which will be fired on visit events. */
     public interface Callback<C extends Context> {
 	/** This method will be called when node visit event has been fired. */
-	public void call(N node, C context);
+	public void call(Node node, C context);
     }
 
     /** Provides functionality to traverse in preorder. */
-    private class PreorderIterator<N> implements Iterator<N>, Iterable<N> {
+    private class PreorderIterator implements Iterator<Node>, Iterable<Node> {
 	/** Holds internal buffer. */
-	private Stack<N> visiting;
+	private Stack<Node> visiting;
 	/** Holds tree root. */
-	private N root;
+	private Node root;
 
 	/**
 	 * Constructor.
 	 */
-	public PreorderIterator(N root) {
+	public PreorderIterator(Node root) {
 	    this.root = root;
 	    this.visiting.push(this.root);
 	}
@@ -45,7 +45,7 @@ public class TreeVisitor<N extends Node> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Iterator<N> iterator() {
+	public Iterator<Node> iterator() {
 	    return this;
 	}
 
@@ -61,8 +61,16 @@ public class TreeVisitor<N extends Node> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public N next() {
-	    N result = this.visiting.pop();
+	public void remove() {
+	    // DO NOTHING.
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Node next() {
+	    Node result = this.visiting.pop();
 	    int childCount = result.getChildCount();
 	    if (childCount > 0) {
 		for (int i = childCount; i > -1; i--) {
@@ -74,16 +82,16 @@ public class TreeVisitor<N extends Node> {
     }
 
     /** Provides functionality to traverse in postorder. */
-    private class PostorderIterator<N> implements Iterator<N>, Iterable<N> {
+    private class PostorderIterator implements Iterator<Node>, Iterable<Node> {
 	/** Holds internal buffer. */
-	private N nextNode;
+	private Node nextNode;
 	/** Holds tree root. */
-	private N root;
+	private Node root;
 
 	/**
 	 * Constructor.
 	 */
-	public PostorderIterator(N root) {
+	public PostorderIterator(Node root) {
 	    this.root = root;
 	    this.nextNode = this.root;
 	}
@@ -92,7 +100,7 @@ public class TreeVisitor<N extends Node> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Iterator<N> iterator() {
+	public Iterator<Node> iterator() {
 	    return this;
 	}
 
@@ -105,12 +113,20 @@ public class TreeVisitor<N extends Node> {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void remove() {
+	    // DO NOTHING.
+	}
+
+	/**
 	 * Returns the right sibling of the assigned node.
 	 * @param  node the node to be checked.
 	 * @return the right sibling of the given node.
 	 */
-	private N getRightSiblingOf(N node) {
-	    N parent = node.getParent();
+	private Node getRightSiblingOf(Node node) {
+	    Node parent = node.getParent();
 	    if (parent == null) {
 		return null;
 	    } else {
@@ -129,16 +145,16 @@ public class TreeVisitor<N extends Node> {
 	 * @param  node the node to be checked.
 	 * @return the next node of the given one in postorder.
 	 */
-	private N nextOf(N node) {
-	    N rightSibling = this.getRightSiblingOf(node);
+	private Node nextOf(Node node) {
+	    Node rightSibling = this.getRightSiblingOf(node);
 	    if (rightSibling != null) {
-		N current = rightSibling;
+		Node current = rightSibling;
 		while (current.getChildCount() > 0) {
 		    current = current.getChildAt(0);
 		}
 		return current;
 	    } else {
-		N parent = node.getParent();
+		Node parent = node.getParent();
 		if (parent != null) {
 		    return parent;
 		} else {
@@ -151,8 +167,8 @@ public class TreeVisitor<N extends Node> {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public N next() {
-	    N result = this.nextNode;
+	public Node next() {
+	    Node result = this.nextNode;
 	    this.nextNode = this.nextOf(this.nextNode);
 	    return result;
 	}
@@ -172,8 +188,8 @@ public class TreeVisitor<N extends Node> {
      * @param context the context to be handled within the traversal.
      */
     public void preorder(N root, Callback callback, Context context) {
-	PreorderIterator<N> flatten = new PreorderIterator<N>(root);
-	for (N node : flatten) {
+	PreorderIterator flatten = new PreorderIterator(root);
+	for (Node node : flatten) {
 	    callback.call(node, context);
 	}
     }
@@ -185,8 +201,8 @@ public class TreeVisitor<N extends Node> {
      * @param context the context to be handled within the traversal.
      */
     public void postorder(N root, Callback callback, Context context) {
-	PostorderIterator<N> flatten = new PostorderIterator<N>(root);
-	for (N node : flatten) {
+	PostorderIterator flatten = new PostorderIterator(root);
+	for (Node node : flatten) {
 	    callback.call(node, context);
 	}
     }

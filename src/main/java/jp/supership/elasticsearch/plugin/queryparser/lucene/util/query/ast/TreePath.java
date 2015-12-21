@@ -80,7 +80,7 @@ public class TreePath<T> implements Serializable {
     @Override
     public boolean equals(Object that) {
 	Object[] treePath;
-	if (that instanceof TreePath<T>) {
+	if (that instanceof TreePath) {
 	    treePath = ((TreePath<T>) that).getPath();
 	    if (treePath.length != this.path.length) {
 		return false;
@@ -103,7 +103,7 @@ public class TreePath<T> implements Serializable {
 	if (this.path.length == 1) {
 	    return String.valueOf(path[0]);
 	} else {
-	    Arrays.asList(this.path).toString();
+	    return Arrays.asList(this.path).toString();
 	}
     }
 
@@ -113,7 +113,7 @@ public class TreePath<T> implements Serializable {
      */
     public T[] getPath() {
 	@SuppressWarnings("unchecked")
-        T[] result = this.path;
+	T[] result = (T[]) this.path;
         return result;
     }
 
@@ -123,7 +123,7 @@ public class TreePath<T> implements Serializable {
      */
     public T getLastPathElement() {
 	@SuppressWarnings("unchecked")
-	T result = this.path[this.path.length - 1];
+	T result = (T) this.path[this.path.length - 1];
 	return result;
     }
 
@@ -144,7 +144,9 @@ public class TreePath<T> implements Serializable {
 	if (index < 0 || index >= this.getPathCount()) {
 	    throw new IllegalArgumentException("invalid index: " + index);
 	}
-	return this.path[index];
+	@SuppressWarnings("unchecked")
+	T result = (T) this.path[index];
+	return result;
     }
 
     /**

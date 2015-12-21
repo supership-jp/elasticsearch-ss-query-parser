@@ -4,6 +4,7 @@
 package jp.supership.elasticsearch.plugin.queryparser.lucene.util;
 
 import java.util.List;
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
@@ -34,6 +35,7 @@ public interface ProximityQueryDriver {
     /**
      * Returns a span query from the analysis chain.
      * @param analyzer analyzer used for this query.
+     * @param operator the default boolean operator used for this query.
      * @param field field to create queries against.
      * @param queryText text to be passed to the analysis chain.
      * @param quoted true if phrases should be generated when terms occur at more than one position.

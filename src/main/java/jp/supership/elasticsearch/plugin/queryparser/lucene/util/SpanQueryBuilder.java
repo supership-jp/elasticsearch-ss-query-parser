@@ -12,11 +12,18 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.analysis.tokenattributes.TermToBytesRefAttribute;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MultiTermQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanNearQuery;
+import org.apache.lucene.search.spans.SpanNotQuery;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.util.BytesRef;
 
 /**
  * Creates queries from the {@link Analyzer} chain.
@@ -50,6 +57,8 @@ public class SpanQueryBuilder {
 	    PositionIncrementAttribute positionAttribute = stream.addAttribute(PositionIncrementAttribute.class);
 
 	    if (termAttribute == null) {
+
+
 		return null;
 	    }
 
@@ -80,10 +89,10 @@ public class SpanQueryBuilder {
 		// span near
 		if (hasSynonyms) {
 		    // complex span near with synonyms
-		    return this.analyzeMultiSpanNear(field, stream, phraseSlop, inOrder);
+		    return this.analyzeMultiSpanNear(field, stream, inOrder);
 		} else {
 		    // simple span near
-		    return this.analyzeSpanNear(field, stream, phraseSlop, inOrder);
+		    return this.analyzeSpanNear(field, stream, inOrder);
 		}
 	    } else {
 		// span or
@@ -92,7 +101,7 @@ public class SpanQueryBuilder {
 		    return this.analyzeSpanOr(field, stream);
 		} else {
 		    // complex case: multiple positions
-		    return this.analyzeMultiSpanOr(field, stream, operator, inOrder);
+		    return this.analyzeMultiSpanOr(field, stream, inOrder);
 		}
 	    }
 	} catch (IOException cause) {
@@ -129,10 +138,10 @@ public class SpanQueryBuilder {
 	stream.reset();
 	while (stream.incrementToken()) {
 	    termAttribute.fillBytesRef();
-	    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	    terms.add((SpanTermQuery) this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
 	}
 
-	return this.newSpanOrQuery(terms);
+	return this.newSpanOrQuery(terms.toArray(new SpanTermQuery[0]));
     }
 
     /**
@@ -146,22 +155,22 @@ public class SpanQueryBuilder {
 	PositionIncrementAttribute positionAttribute = stream.getAttribute(PositionIncrementAttribute.class);
 	BytesRef bytes = termAttribute.getBytesRef();
 
-	SpanOrQuery query = this.newSpanOrQuery();
+	SpanOrQuery query = (SpanOrQuery) this.newSpanOrQuery();
 	List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
 	List<SpanNearQuery> queries = new ArrayList<SpanNearQuery>();
 	stream.reset();
 	while (stream.incrementToken()) {
 	    termAttribute.fillBytesRef();
 	    if (positionAttribute.getPositionIncrement() == 0) {
-		terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+		terms.add((SpanTermQuery) this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
 	    } else {
-		query.addClause(this.newSpanNearQuery(terms, -1, inOrder));
+		query.addClause(this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), -1, inOrder));
 		terms.clear();
 	    }
 	}
 
 	if (!terms.isEmpty()) {
-	    query.addClause(this.newSpanNearQuery(terms, -1, inOrder));
+	    query.addClause(this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), -1, inOrder));
 	}
 
 	return query;
@@ -173,7 +182,7 @@ public class SpanQueryBuilder {
      * @param stream the currently hnadling token stream.
      * @param inOrder true if the order is important.
      */
-    private SpanQuery analyzeSpanNear(String field, TokenStream stream, int slop) throws IOException {
+    private SpanQuery analyzeSpanNear(String field, TokenStream stream, boolean inOrder) throws IOException {
 	TermToBytesRefAttribute termAttribute = stream.getAttribute(TermToBytesRefAttribute.class);
 	PositionIncrementAttribute positionAttribute = stream.getAttribute(PositionIncrementAttribute.class);
 	BytesRef bytes = termAttribute.getBytesRef();
@@ -185,10 +194,10 @@ public class SpanQueryBuilder {
 	    termAttribute.fillBytesRef();
 	    int positionIncrement = positionAttribute.getPositionIncrement();
 	    position += positionIncrement;
-	    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	    terms.add((SpanTermQuery) this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
 	}
 
-	return this.newSpanNearQuery(terms, position, inOrder);
+	return this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), position, inOrder);
     }
 
     /**
@@ -210,14 +219,69 @@ public class SpanQueryBuilder {
 	    termAttribute.fillBytesRef();
 	    int positionIncrement = positionAttribute.getPositionIncrement();
 	    if (positionIncrement > 0 && terms.size() > 0) {
-		queries.add(this.newSpanNearQuery(terms, -1, inOrder));
+		queries.add((SpanNearQuery) this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), -1, inOrder));
 		terms.clear();
 	    }
 	    position += positionIncrement;
-	    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+	    terms.add((SpanTermQuery) this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
 	}
 
-	return this.newSpanNearQuery(queries, position, inOrder);
+	return this.newSpanNearQuery(queries.toArray(new SpanNearQuery[0]), position, inOrder);
+    }
+
+    /**
+     * Returns {@code BooleanQuery} in accordance to the assigned configuration.
+     * @param  clauses the currently handling sub query.
+     * @return new {@link BooleanQuery} instance.
+     */
+    public Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException {
+        return this.getBooleanQuery(clauses, false);
+    }
+
+    /**
+     * Returns {@code BooleanQuery} in accordance to the assigned configuration.
+     * @param  clauses the currently handling sub query.
+     * @param  disableCoord if this value is set to be true, disables coord.
+     * @return new {@link BooleanQuery} instance.
+     */
+    protected Query getBooleanQuery(List<BooleanClause> clauses, boolean disableCoord) throws ParseException {
+        if (clauses.size() == 0) {
+            return null;
+        }
+
+        BooleanQuery query = (BooleanQuery) this.newBooleanQuery(disableCoord);
+        for(final BooleanClause clause: clauses) {
+            query.add(clause);
+        }
+        return query;
+    }
+
+    /**
+     * Returns {@code BooleanClause} in accordance to the assigned configuration.
+     * @param  query the currently handling sub query.
+     * @param  occurence how this clause should occur when matching documents.
+     * @return new {@link BooleanClause} instance.
+     */
+    protected BooleanClause newBooleanClause(Query query, BooleanClause.Occur occurence) {
+        return new BooleanClause(query, occurence);
+    }
+
+    /**
+     * Instanciates a new BooleanQuery.
+     * @param  disableCoord if this value is set to be true, disables coord.
+     * @return new BooleanQuery instance.
+     */
+    protected Query newBooleanQuery(boolean disableCoord) {
+	return new BooleanQuery(disableCoord);
+    }
+
+    /**
+     * Instanciates a new TermQuery.
+     * @param  term the term to be used for query construction.
+     * @return new TermQuery instance.
+     */
+    protected Query newTermQuery(Term term) {
+	return new TermQuery(term);
     }
 
     /**
@@ -247,7 +311,7 @@ public class SpanQueryBuilder {
     }
 
     /**
-     * Instanciates a new SpanNearQuery.
+b     * Instanciates a new SpanNearQuery.
      * @param  clauses the clauses constructs the argumented span near query.
      * @param  slop the slop width to be set.
      * @param  inOrder set to be true if the order is important.
@@ -275,7 +339,7 @@ public class SpanQueryBuilder {
      * @param  exclusion the clauses which is to be excluded.
      * @return new SpanNotQuery instance.
      */
-    protected SpanQuery newSpanNotQuery(SpanQuery[] inclusion, SpanQuery[] exclusion) {
+    protected SpanQuery newSpanNotQuery(SpanQuery inclusion, SpanQuery exclusion) {
 	return new SpanNotQuery(inclusion, exclusion);
     }
 

@@ -16,7 +16,7 @@ public interface Tree<T> {
     /**
      * Represents internal tree model.
      */
-    public static interface Model {
+    public static interface Model<T> {
 	/**
 	 * Returns the model's root node.
 	 * @return the root node path of the model.

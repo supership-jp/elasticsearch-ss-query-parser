@@ -27,7 +27,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     /**
      * Represents parsing phase context.
      */
-    private class Model implements Tree<ProximityArchetype>.Model {
+    private class Model implements Tree.Model<ProximityArchetype> {
 	/** Holds each nodes' states as hashtable. */
 	private Hashtable<TreePath<ProximityArchetype>, ProximityArchetype.State> states = new Hashtable<TreePath<ProximityArchetype>, ProximityArchetype.State>();
 
@@ -91,15 +91,6 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 */
 	public void put(ProximityArchetype node, ProximityArchetype.State state) {
 	    this.states.put(this.current.getPathTo(node), state);
-	}
-
-	/**
-	 * Registers the given tree path to the model with default state.
-	 * @param path the concerning node's path.
-	 * @param state the concerning node's state.
-	 */
-	public void put(TreePath<ProximityArchetype> path, ProximityArchetype.State state) {
-	    this.states.put(path, state);
 	}
 
 	/**
@@ -235,7 +226,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     /**
      * This class handles transformaytions of the tree structure.
      */
-    private class TreeTransformationHandler implements TreeEventListener<PrioximityArchetype> {
+    private class TreeTransformationHandler implements TreeEventListener<ProximityArchetype> {
 	/** Holds bundled model. */
 	private Model model;
 
@@ -274,8 +265,8 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onNodesRemoved(TreeEvent<ProximityArcheType> event) {
-	    @SuplpressWarnings("unckecked")
+	public void onNodesRemoved(TreeEvent<ProximityArchetype> event) {
+	    @SuppressWarnings("unckecked")
 	    ProximityArchetype source = (ProximityArchetype) event.getSource();
 	    TreePath<ProximityArchetype> parentPath = event.getPath().getParentPath();
 	    if (parentPath != null && source.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
@@ -492,6 +483,84 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
+    public void addListener(TreeEventListener listener) {
+	this.listeners.add(listener);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ProximityArchetype getChildAt(int index) {
+	return this.getModel().getCurrent().getLastPathElement().getChildAt(index);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ProximityArchetype getChildAt(ProximityArchetype parent, int index) {
+	return parent.getChildAt(index);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getChildCount() {
+	return this.getModel().getCurrent().getLastPathElement().getChildCount();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getChildCount(ProximityArchetype parent) {
+	return parent.getChildCount();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getIndexOf(ProximityArchetype child) {
+	return this.getModel().getCurrent().getLastPathElement().getIndexOf(child);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getIndexOf(ProximityArchetype parent, ProximityArchetype child) {
+	return parent.getIndexOf(child);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ProximityArchetype getRoot() {
+	return this.getModel().getRoot().getLastPathElement();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isLeaf() {
+	return this.getModel().getCurrent().getLastPathElement().isLeaf();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isLeaf(ProximityArchetype node) {
+	return node.isLeaf();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void fireNodesChanged(TreeEvent event) {
 	for (TreeEventListener listener : this.listeners) {
 	    listener.onNodesChanged(event);
@@ -546,52 +615,5 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	for (TreeEventListener listener : this.listeners) {
 	    listener.onTransduced(event);
 	}
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void addListener(TreeEventListener listener) {
-	this.listeners.add(listener);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ProximityArchetype getChildAt(ProximityArchetype parent, int index) {
-	return parent.getChildAt(index);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getChildCount(ProximityArchetype parent) {
-	return parent.getChildCount();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public int getIndexOf(ProximityArchetype parent, ProximityArchetype child) {
-	return parent.getIndexOf(child);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public ProximityArchetype getRoot() {
-	return this.getModel().getRoot().getLastPathElement();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isLeaf(ProximityArchetype node) {
-	return node.isLeaf();
     }
 }

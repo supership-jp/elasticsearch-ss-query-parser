@@ -27,6 +27,8 @@ import org.apache.lucene.search.spans.SpanNearQuery;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.Version;
 import org.elasticsearch.common.hppc.ObjectFloatOpenHashMap;
 import org.elasticsearch.index.analysis.NamedAnalyzer;
@@ -161,7 +163,10 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
             clauses.add(this.newBooleanClause(query, BooleanClause.Occur.MUST));
         } else if (!required && !prohibited) {
             clauses.add(this.newBooleanClause(query, BooleanClause.Occur.SHOULD));
-        } else if (!required && prohibited) {
+        }
+
+
+	else if (!required && prohibited) {
             clauses.add(this.newBooleanClause(query, BooleanClause.Occur.MUST_NOT));
         } else {
             throw new RuntimeException("clause could not be both required and prohibited.");
@@ -186,7 +191,7 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
             List<BooleanClause> clauses = new ArrayList<BooleanClause>();
             String[] tokens = queryText.split(StringUtils.UNICODE_START_OF_HEADING);
             for (String token : tokens) {
-                Query query = this.createFieldQuery(analyzer, occurence, field, queryText, true, 0, true);
+                Query query = this.createFieldQuery(analyzer, occurence, field, queryText, true, 0, true, true);
                 if (query != null) {
                     clauses.add(new BooleanClause(query, occurence));
                 }
@@ -200,22 +205,24 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
             quoted = true;
             this.setPhraseSlop(0);
         } else {
+	    
             quoted = quoted || this.getPhraseQueryAutoGeneration();
         }
 
-        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.getPhraseSlop(), useDisMax);
+        return this.createFieldQuery(analyzer, occurence, field, queryText, quoted, this.getPhraseSlop(), inOrder, useDisMax);
     }
 
     /**
      * Returns a span query from the analysis chain.
      * @param analyzer analyzer used for this query.
+     * @param operator the default boolean operator used for this query.
      * @param field field to create queries against.
      * @param queryText text to be passed to the analysis chain.
      * @param quoted true if phrases should be generated when terms occur at more than one position.
      * @param phraseSlop slop factor for phrase/multiphrase queries.
      * @param inOrder true if the order is important.
      */
-    protected Query createFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder, boolean useDisMax) throws ParseException {
+    protected Query createFieldQuery(Analyzer analyzer, BooleanClause.Occur operator, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder, boolean useDisMax) throws ParseException {
         if (!useDisMax) {
             return this.createFieldQuery(analyzer, field, queryText, quoted, phraseSlop, inOrder);
         }
@@ -264,7 +271,7 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
                         }
                         return query;
                     } else {
-                        BooleanQuery query = this.newBooleanQuery(false);
+                        BooleanQuery query = (BooleanQuery) this.newBooleanQuery(false);
                         Query current = null;
                         for (int i = 0; i < handler.numberOfTokens; i++) {
                             try {
@@ -293,11 +300,6 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
                     }
                 // A complex span near query.
                 } else {
-                    MultiPhraseQuery query = this.newMultiPhraseQuery();
-                    query.setSlop(phraseSlop);
-                    List<Term> terms = new ArrayList<Term>();
-
-
 		    List<SpanTermQuery> terms = new ArrayList<SpanTermQuery>();
 		    List<SpanNearQuery> queries = new ArrayList<SpanNearQuery>();
 		    int position = -1;
@@ -315,14 +317,14 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
                         }
                       
                         if (positionIncrement > 0 && terms.size() > 0) {
-			    queries.add(this.newSpanNearQuery(terms, -1, inOrder));
+			    queries.add((SpanNearQuery) this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), -1, inOrder));
 			    terms.clear();
                         }
                         position += positionIncrement;
-			terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+			terms.add((SpanTermQuery) this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
                     }
 
-		    return this.newSpanNearQuery(queries, position, inOrder);
+		    return this.newSpanNearQuery(queries.toArray(new SpanNearQuery[0]), position, inOrder);
                 }
             // A simple span near query.
             } else {
@@ -341,11 +343,35 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
                         // DO NOTHING, because we know the number of tokens
                     }
 		    position += positionIncrement;
-		    terms.add(this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
+		    terms.add((SpanTermQuery) this.newSpanTermQuery(new Term(field, BytesRef.deepCopyOf(bytes))));
                 }
-		return this.newSpanNearQuery(terms, position, inOrder);
+		return this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), position, inOrder);
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException {
+        return this.getBooleanQuery(clauses, false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query getBooleanQuery(List<BooleanClause> clauses, boolean disableCoord) throws ParseException {
+        if (clauses.size() == 0) {
+            return null;
+        }
+
+        BooleanQuery query = (BooleanQuery) this.newBooleanQuery(disableCoord);
+        for(final BooleanClause clause: clauses) {
+            query.add(clause);
+        }
+        return query;
     }
 
     /**
