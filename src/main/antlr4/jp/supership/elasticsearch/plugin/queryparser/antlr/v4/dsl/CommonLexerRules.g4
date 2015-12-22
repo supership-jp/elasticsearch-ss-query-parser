@@ -38,6 +38,7 @@ HAT              : '^'                                           ;
 COLON            : ':'                                           ;
 ASTERISC         : '*'                                           ;
 QUESTION         : '?'                                           ;
+DOUBLE_QUOTE     : '\"'                                          ;
 CONJUNCTION_AND  : [aA][nN][dD]                                  ;
 CONJUNCTION_OR   : [oO][rR]                                      ;
 CONJUNCTION_DIS  : '|'                                           ;
