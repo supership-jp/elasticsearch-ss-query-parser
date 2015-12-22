@@ -90,7 +90,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * @param state the concerning node's state.
 	 */
 	public void put(ProximityArchetype node, ProximityArchetype.State state) {
-	    this.states.put(this.current.getPathTo(node), state);
+	    this.put(this.current.getPathTo(node), state);
 	}
 
 	/**
@@ -107,6 +107,16 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * @param state the concerning node's state.
 	 */
 	public void put(TreePath<ProximityArchetype> path, ProximityArchetype.State state) {
+	    ProximityArchetype node = path.getLastPathElement();
+	    node.setTreePath(path);
+	    TreePath<ProximityArchetype> parentPath = path.getParentPath();
+	    if (parentPath != null) {
+		ProximityArchetype parent = parentPath.getLastPathElement();
+		int index = parent.getIndexOf(node);
+		if (index == -1) {
+		    parent.addChild(node);
+		}
+	    }
 	    this.states.put(path, state);
 	}
 
@@ -287,7 +297,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 */
 	@Override
 	public void onPathAscended(TreeEvent<ProximityArchetype> event) {
-	    // TODO: IMPLEMENT THIS.
+	    // DO NOTHING.
 	}
 
 	/**
@@ -295,7 +305,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 */
 	@Override
 	public void onPathDescended(TreeEvent<ProximityArchetype> event) {
-	    // TODO: IMPLEMENT THIS.
+	    // DO NOTHING.
 	}
 
 	/**
@@ -316,8 +326,26 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     /**
      * Constructor.
      */
+    public ProximityArchetypeTree() {
+	// The following parameters means nothind, because the root node will be managed as a SpanOrQuery,
+	// hence the given parameters will be ignored.
+	this(new ProximityArchetype(false, -1, -1, false));
+    }
+
+    /**
+     * Constructor.
+     */
+    public ProximityArchetypeTree(boolean infixed, int slop, int operator, boolean inOrder) {
+	this(new ProximityArchetype(infixed, slop, operator, inOrder));
+    }
+
+    /**
+     * Constructor.
+     */
     public ProximityArchetypeTree(ProximityArchetype root) {
-	this.model = new Model(new TreePath<ProximityArchetype>(root));
+	ProximityArchetype.State state = new ProximityArchetype.State();
+	state.isOrQuery(true);
+	this.model = new Model(new TreePath<ProximityArchetype>(root), state);
 	this.addListener(new TreeTransformationHandler(this.model));
     }
 
@@ -327,6 +355,15 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      */
     protected Model getModel() {
 	return this.model;
+    }
+
+    /**
+     * Returns the bundled state of the specified path.
+     * @param  path the concerning node's path.
+     * @return the state of the node which is specified with the given path.
+     */
+    public ProximityArchetype.State getStateOf(TreePath<ProximityArchetype> path) {
+	return this.getModel().getStateOf(path);
     }
 
     /**

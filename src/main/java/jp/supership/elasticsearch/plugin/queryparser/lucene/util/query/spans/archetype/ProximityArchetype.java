@@ -4,8 +4,14 @@
 package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import org.apache.lucene.search.spans.SpanQuery;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.Node;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.TreePath;
 
 /**
  * This class represents ambiguous queries, i.e., unspecified queries within parsing, which is able to handle proximity search.
@@ -52,6 +58,11 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	// Sets true if the node represents SpanTermQuery.
 	public void isTermQuery(boolean isTermQuery) {
 	    this.isTermQuery = isTermQuery;
+	    if (isTermQuery) {
+		this.isNearQuery(false);
+		this.isOrQuery(false);
+		this.isNotQuery(false);
+	    }
 	}
 
 	// Returns true if the node represents SpanTermQuery.
@@ -62,6 +73,11 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	// Sets true if the node represents SpanNearQuery.
 	public void isNearQuery(boolean isNearQuery) {
 	    this.isNearQuery = isNearQuery;
+	    if (isNearQuery) {
+		this.isTermQuery(false);
+		this.isOrQuery(false);
+		this.isNotQuery(false);
+	    }
 	}
 
 	// Returns true if the node represents SpanOrQuery.
@@ -72,6 +88,11 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	// Sets true if the node represents SpanOrQuery.
 	public void isOrQuery(boolean isOrQuery) {
 	    this.isOrQuery = isOrQuery;
+	    if (isOrQuery) {
+		this.isTermQuery(false);
+		this.isNearQuery(false);
+		this.isNotQuery(false);
+	    }
 	}
 
 	// Returns true if the node represents SpanNotQuery.
@@ -82,6 +103,11 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	// Sets true if the node represents SpanNotQuery.
 	public void isNotQuery(boolean isNotQuery) {
 	    this.isNotQuery = isNotQuery;
+	    if (isNotQuery) {
+		this.isTermQuery(false);
+		this.isNearQuery(false);
+		this.isOrQuery(false);
+	    }
 	}
     }
 
@@ -90,6 +116,9 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 
     /** Holds currently handling queries. */
     private List<ProximityArchetype> children = new ArrayList<ProximityArchetype>();
+
+    /** Holds currently handling queries. */
+    private TreePath<ProximityArchetype> treePath;
 
     /** Holds field value. */
     private String field;
@@ -202,8 +231,160 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
+    public void setTreePath(TreePath<ProximityArchetype> treePath) {
+	this.treePath = treePath;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public TreePath<ProximityArchetype> getTreePath() {
+	return this.treePath;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean isLeaf() {
 	return this.getChildCount() == 0;
+    }
+
+    /**
+     * Transforms this archetype into the corresponding query.
+     * @param field the field value to be handled.
+     * @param tree the node belongs to.
+     * @param driver the driver which is responsible to instanciate queries.
+     */
+    public SpanQuery toQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+	SpanQuery query = this.toConcrete(field, tree, driver);
+	if (query != null && this.isWeighted()) {
+	    query.setBoost(this.getWeight() * query.getBoost());
+	}
+	return query;
+    }
+
+    /**
+     * Concretizes this archetype into the correspondig span query.
+     * @param field the field value to be handled.
+     * @param tree the node belongs to.
+     * @param driver the driver which is responsible to instanciate queries.
+     */
+    protected SpanQuery toConcrete(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+	ProximityArchetype.State state = tree.getStateOf(this.getTreePath());
+	if (state != null) {
+	    if (state.isNearQuery()) {
+		return this.toSpanNearQuery(field, tree, driver);
+	    } else if (state.isOrQuery()) {
+		return this.toSpanOrQuery(field, tree, driver);
+	    } else if (state.isNotQuery()) {
+		return this.toSpanNotQuery(field, tree, driver);
+	    } else {
+		return this.toSpanTermQuery(field, tree, driver);
+	    }
+	} else {
+	    return null;
+	}
+    }
+
+    /**
+     * Transforms this archetype into a span near query.
+     * @param field the field value to be handled.
+     * @param tree the node belongs to.
+     * @param driver the driver which is responsible to instanciate queries.
+     */
+    protected SpanQuery toSpanTermQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+	if (this.getQueryText() != null && !(this.getQueryText().isEmpty())) {
+	    return driver.getSpanTermQuery(field, this.getQueryText(), false);
+	}
+	return null;
+    }
+
+    /**
+     * Transforms this archetype into a span near query.
+     * @param field the field value to be handled.
+     * @param tree the node belongs to.
+     * @param driver the driver which is responsible to instanciate queries.
+     */
+    protected SpanQuery toSpanNearQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+	int i = 0;
+	SpanQuery current;
+	SpanQuery[] queries = new SpanQuery[this.getChildCount()];
+	for (ProximityArchetype child : this.getChildren()) {
+	    current = (SpanQuery) child.toQuery(field, tree, driver);
+	    if (current != null) {
+		current.setBoost(child.getWeight());
+		queries[i++] = current;
+	    }
+	}
+	if (i > 0) {
+	    return driver.getSpanNearQuery(this.getSlop(), this.isInOrder(), Arrays.copyOfRange(queries, 0, i - 1));
+	} else {
+	    return null;
+	}
+    }
+
+    /**
+     * Transforms this archetype into a span or query.
+     * @param field the field value to be handled.
+     * @param tree the node belongs to.
+     * @param driver the driver which is responsible to instanciate queries.
+     */
+    protected SpanQuery toSpanOrQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+	int i = 0;
+	SpanQuery current;
+	SpanQuery[] queries = new SpanQuery[this.getChildCount()];
+	for (ProximityArchetype child : this.getChildren()) {
+	    current = (SpanQuery) child.toQuery(field, tree, driver);
+	    if (current != null) {
+		current.setBoost(child.getWeight());
+		queries[i++] = current;
+	    }
+	}
+	if (i > 0) {
+	    return driver.getSpanOrQuery(Arrays.copyOfRange(queries, 0, i - 1));
+	} else {
+	    return null;
+	}
+    }
+
+    /**
+     * Transforms this archetype into a span not query.
+     * @param field the field value to be handled.
+     * @param tree the node belongs to.
+     * @param driver the driver which is responsible to instanciate queries.
+     */
+    protected SpanQuery toSpanNotQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+	int i = 0;
+	int j = 0;
+	SpanQuery current;
+	SpanQuery[] inclusions = new SpanQuery[this.getChildCount()];
+	SpanQuery[] exclusions = new SpanQuery[this.getChildCount()];
+	for (ProximityArchetype child : this.getChildren()) {
+	    current = (SpanQuery) child.toQuery(field, tree, driver);
+	    if (current != null) {
+		current.setBoost(child.getWeight());
+		if (child.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
+		    exclusions[j++] = current;
+		} else {
+		    inclusions[i++] = current;
+		}
+	    }
+	}
+	SpanQuery inclusion = null;
+	SpanQuery exclusion = null;
+	if (i > 0) {
+	    inclusion = driver.getSpanOrQuery(Arrays.copyOfRange(inclusions, 0, i - 1));
+	}
+	if (j > 0) {
+	    exclusion = driver.getSpanOrQuery(Arrays.copyOfRange(exclusions, 0, j - 1));
+	}
+	if (i > 0 && j > 0) {
+	    return driver.getSpanNotQuery(inclusion, exclusion);
+	} else {
+	    return null;
+	}
     }
 
     /**

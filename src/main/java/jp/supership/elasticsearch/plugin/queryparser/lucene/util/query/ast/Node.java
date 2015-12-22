@@ -115,6 +115,18 @@ public interface Node<N extends Node> {
     public N getParent();
 
     /**
+     * Sets the tree path to this node within the tree.
+     * @param treePath the tree path to be set.
+     */
+    public void setTreePath(TreePath<N> treePath);
+
+    /**
+     * Returns the tree path to this node within the tree.
+     * @return the tree path to this node within the tree.
+     */
+    public TreePath<N> getTreePath();
+
+    /**
      * Returns true if the node is a leaf.
      * @return true if the node is a a leaf.
      */
