@@ -45,6 +45,12 @@ public interface TreeHandler {
 	public void setTerm(String term) {
 	    this.term = term;
 	}
+
+	/** Clears currently handling properties. */
+	public void clear() {
+	    this.field = null;
+	    this.term = null;
+	}
     }
 
     /**
@@ -83,9 +89,10 @@ public interface TreeHandler {
     public void rewind();
 
     /**
-     * Clears the currently handling context.
+     * Forgets currently handling tree and possibly clears the assigned properties.
+     * @param clear if this value is set to be true, the previously assigned properties will be palished.
      */
-    public void clear();
+    public void forget(boolean clear);
 
     /**
      * Inserts the given node into the model.

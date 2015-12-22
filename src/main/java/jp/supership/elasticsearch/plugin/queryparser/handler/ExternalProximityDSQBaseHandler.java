@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.spans.SpanQuery;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryBaseVisitor;
@@ -50,11 +51,13 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
 	/** Holds constructing tree. */
 	private ProximityArchetypeTree tree = new ProximityArchetypeTree();
 	/** Holds constructing clauses. */
-	public List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+	private List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+	/** Previously assigned archetype's state. */
+	private ProximityArchetype.State state = null;
 	/** Holds previously detected cunjuntion. */
-	public int conjunction = -1;
+	private int conjunction = -1;
 	/** Holds previously detected modifier. */
-	public int modifier = -1;
+	private int modifier = -1;
 
 	/** Constructor. */
 	public Metadata() {
@@ -81,6 +84,16 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
 	    this.clauses = clauses;
 	}
 
+	/** Returns the currently handling archetype state. */
+	public ProximityArchetype.State getState() {
+	    return this.state;
+	}
+
+	/** Sets the currently handling archetype state. */
+	public void setState(ProximityArchetype.State state) {
+	    this.state = state;
+	}
+
 	/** Returns the previous assigned conjunction. */
 	public int getConjunction() {
 	    return this.conjunction;
@@ -99,6 +112,22 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
 	/** Sets the previously assigned modifier. */
 	public void setModifier(int modifier) {
 	    this.modifier = modifier;
+	}
+
+	/** Clears currently handling properties. */
+	public void clear() {
+	    this.state = null;
+	    this.conjunction = -1;
+	    this.modifier = -1;
+	    super.clear();
+	}
+
+	/** Forgets currently handling tree and possibly clears the assigned properties. */
+	public void forget(boolean clear) {
+	    this.tree = new ProximityArchetypeTree();
+	    if (clear) {
+		this.clear();
+	    }
 	}
     }
 
@@ -172,8 +201,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
      * {@inheritDoc}
      */
     @Override
-    public void clear() {
-	ProximityArchetypeTree tree = new ProximityArchetypeTree();
+    public void forget(boolean clear) {
+	this.metadata.forget(clear);
     }
 
     /**
@@ -205,7 +234,19 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
     public ProximityArchetype visitQuery(ExternalQueryParser.QueryContext context) {
 	try {
 	    for (ExternalQueryParser.ExpressionContext expression : context.expression()) {
-		this.insert(visit(expression));
+		this.forget(true);
+		ProximityArchetype archetype = visit(expression);
+		if (archetype != null) {
+		    if (this.metadata.getConjunction() == -1) {
+			this.insert(archetype, this.metadata.getState());
+		    } else {
+			ProximityArchetype root = this.root();
+			if (root != null) {
+			    SpanQuery query = root.toQuery(this.metadata.getField(), this.metadata.getTree(), this.engine);
+			    this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), query);
+			}
+		    }
+		}
 	    }
 	    return this.root();
 	} catch (Exception cause) {
@@ -226,12 +267,6 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
 		operator = ExternalQueryParser.CONJUNCTION_AND;
 	    }
 	    this.metadata.setConjunction(operator);
-
-	    if (operator > -1 && this.root() != null && !(this.root().isLeaf())) {
-		this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), this.root().toQuery(this.engine.getDefaultField(), this.metadata.getTree(), this.engine));
-		this.clear();
-	    }
-
 	    return visit(context.clause());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
