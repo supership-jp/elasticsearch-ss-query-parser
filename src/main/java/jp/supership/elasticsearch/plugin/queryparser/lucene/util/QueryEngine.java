@@ -1403,4 +1403,20 @@ public abstract class QueryEngine extends QueryBuilder implements QueryDriver, Q
     public void setUseDisMax(boolean useDisMax) {
 	this.configuration.setUseDisMax(useDisMax);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getInOrder() {
+	return this.configuration.getInOrder();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setInOrder(boolean inOrder) {
+	this.configuration.setInOrder(inOrder);
+    }
 }

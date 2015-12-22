@@ -63,7 +63,7 @@ public interface TreeHandler {
     /**
      * Returns the root of the currently handling tree.
      */
-    public ProximityArchetype root();
+    public ProximityArchetype getRoot();
 
     /**
      * Ascends to the current tree path's parent.

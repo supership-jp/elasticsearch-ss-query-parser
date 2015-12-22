@@ -144,7 +144,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype root() {
+    public ProximityArchetype getRoot() {
 	ProximityArchetypeTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    return tree.getRoot();
@@ -240,15 +240,18 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
 		    if (this.metadata.getConjunction() == -1) {
 			this.insert(archetype, this.metadata.getState());
 		    } else {
-			ProximityArchetype root = this.root();
+			ProximityArchetype root = this.getRoot();
 			if (root != null) {
 			    SpanQuery query = root.toQuery(this.metadata.getField(), this.metadata.getTree(), this.engine);
-			    this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), query);
+			    if (query != null) {
+				this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), query);
+			    }
 			}
 		    }
 		}
 	    }
-	    return this.root();
+	    // This root node will be handled within the "handle" method.
+	    return this.getRoot();
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -320,8 +323,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalQueryBaseVisitor<
     public ProximityArchetype visitBareTerm(ExternalQueryParser.BareTermContext context) {
 	try {
 	    this.metadata.setTerm(context.SINGLE_LITERAL().getText());
-	    //	    return this.dispatchBareToken(this.metadata);
-	    return null;
+	    return new ProximityArchetype(this.metadata.getField(), this.metadata.getTerm(), false, this.engine.getPhraseSlop(), this.metadata.getModifier(), this.engine.getInOrder());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}

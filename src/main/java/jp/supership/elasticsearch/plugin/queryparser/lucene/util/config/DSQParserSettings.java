@@ -71,19 +71,22 @@ public class DSQParserSettings extends QueryParserSettings implements DSQParserC
     private boolean queryNegation = DEFAULT_QUERY_NEGATION;
 
     /** Holds the whole handling fields. */
-    List<String> fields = null;
+    private List<String> fields = null;
 
     /** Holds the currently handling query types. */
-    Collection<String> queryTypes = null;
+    private Collection<String> queryTypes = null;
 
     /** Holds the currently handling boosting coefficients. */
-    ObjectFloatOpenHashMap<String> boosts = null;
+    private ObjectFloatOpenHashMap<String> boosts = null;
 
     /** Holds the tie-break value. */
-    float tieBreaker = DEFAULT_TIE_BREAKER;
+    private float tieBreaker = DEFAULT_TIE_BREAKER;
 
     /** Holds the disjunction-max-query generation functionaliuty setting. */
-    boolean useDisMax = DEFAULT_USE_DISJUNCTION_MAX;
+    private boolean useDisMax = DEFAULT_USE_DISJUNCTION_MAX;
+
+    /** Holds the in-order functionality setting. */
+    private boolean inOrder = false;
 
     /**
      * {@inheritDoc}
@@ -428,5 +431,21 @@ public class DSQParserSettings extends QueryParserSettings implements DSQParserC
     @Override
     public void setUseDisMax(boolean useDisMax) {
         this.useDisMax = useDisMax;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getInOrder() {
+	return this.inOrder;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void setInOrder(boolean inOrder) {
+	this.inOrder = inOrder;
     }
 }

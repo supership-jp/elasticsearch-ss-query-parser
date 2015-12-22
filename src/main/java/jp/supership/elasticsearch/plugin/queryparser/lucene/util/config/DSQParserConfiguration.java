@@ -274,4 +274,16 @@ public interface DSQParserConfiguration extends QueryParserConfiguration {
      * @param useDisMax the disjunction-max-query generation functionality setting to be set.
      */
     public void setUseDisMax(boolean useDisMax);
+
+    /**
+     * Returns the in-order functionality setting.
+     * @return the assigned in-order functionality setting.
+     */
+    public boolean getInOrder();
+
+    /**
+     * Sets the in-order functionality setting.
+     * @param inOrder the in-order functionality setting to be set.
+     */
+    public void setInOrder(boolean inOrder);
 }

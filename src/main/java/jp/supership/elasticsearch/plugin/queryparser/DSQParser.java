@@ -303,6 +303,8 @@ public class DSQParser implements QueryParser {
 	    metadata.setEscape(parser.booleanValue());
 	} else if ("use_dis_max".equals(metadata.getCurrentFieldName()) || "useDisMax".equals(metadata.getCurrentFieldName())) {
 	    metadata.setUseDisMax(parser.booleanValue());
+	} else if ("in_order".equals(metadata.getCurrentFieldName()) || "inOrder".equals(metadata.getCurrentFieldName())) {
+	    metadata.setInOrder(parser.booleanValue());
 	} else if ("phrase_slop".equals(metadata.getCurrentFieldName()) || "phraseSlop".equals(metadata.getCurrentFieldName())) {
 	    metadata.setPhraseSlop(parser.intValue());
 	} else if ("boost".equals(metadata.getCurrentFieldName())) {
