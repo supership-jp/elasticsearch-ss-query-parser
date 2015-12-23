@@ -181,6 +181,18 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     }
 
     /**
+     * Returns the number of children of current node.
+     */
+    private int getChildCount() {
+	ProximityArchetypeTree tree = this.metadata.getTree();
+	if (tree != null) {
+	    return tree.getChildCount();
+	} else {
+	    return 0;
+	}
+    }
+
+    /**
      * Suspends currently handling context.
      */
     private void suspend() {
@@ -330,9 +342,21 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     @Override
     public ProximityArchetype visitQuotedTerm(ExternalProximityQueryParser.QuotedTermContext context) {
 	try {
-	    //	    this.metadata.setTerm(context.PHRASE_LITERAL().getText());
-	    //	    return this.dispatchQuotedToken(this.metadata);
-	    ProximityArchetype archetype = visit(context.query());
+	    ProximityArchetype archetype = new ProximityArchetype(
+		this.metadata.getField(),
+		this.metadata.getTerm(),
+		false,
+		this.engine.getPhraseSlop(),
+		this.metadata.getModifier(),
+		this.engine.getInOrder()
+	    );
+	    ProximityArchetype.State state = new ProximityArchetype.State();
+	    state.isNearQuery(true);
+	    this.metadata.setState(state);
+	    this.insert(archetype, this.metadata.getState());
+	    this.descend(this.getChildCount() - 1, false);
+	    visit(context.query());
+	    this.ascend(false);
 	    return null;
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
@@ -349,7 +373,14 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	    ProximityArchetype.State state = new ProximityArchetype.State();
 	    state.isTermQuery(true);
 	    this.metadata.setState(state);
-	    return new ProximityArchetype(this.metadata.getField(), this.metadata.getTerm(), false, this.engine.getPhraseSlop(), this.metadata.getModifier(), this.engine.getInOrder());
+	    return new ProximityArchetype(
+		this.metadata.getField(),
+		this.metadata.getTerm(),
+		false,
+		this.engine.getPhraseSlop(),
+		this.metadata.getModifier(),
+		this.engine.getInOrder()
+	    );
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}

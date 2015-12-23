@@ -15,7 +15,7 @@ import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.arc
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface TreeHandler {
+public interface TreeHandler extends QueryHandler {
     /**
      * Represents query handling context, i.e., in accordance to this instance's state, appropriate
      * {@code Query} will be instanciated.
@@ -52,13 +52,6 @@ public interface TreeHandler {
 	    this.term = null;
 	}
     }
-
-    /**
-     * Creates {@link org.apache.lucene.search.Query} in accordance with the given raw query string.
-     * @param  queryText the raw query string to be parsed.
-     * @throws HandleException if the handling fails.
-     */
-    public Query handle(String queryText) throws HandleException;
 
     /**
      * Returns the root of the currently handling tree.
@@ -105,11 +98,4 @@ public interface TreeHandler {
      * @param node the node to be inserted.
      */
     public void insert(ProximityArchetype node, ProximityArchetype.State state);
-
-    /**
-     * Fetches the given {@link java.io.Reader} to this handler.
-     * @param  input the default field for query terms.
-     * @throws
-     */
-    public void fetch(Reader input);
 }
