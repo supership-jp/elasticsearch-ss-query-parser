@@ -43,7 +43,7 @@ import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.DispatcherHandler;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserConfiguration;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.DSQParserSettings;
@@ -57,7 +57,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class QueryEngine extends QueryBuilder implements QueryDriver, QueryHandler, DSQParserConfiguration {
+public abstract class QueryEngine extends QueryBuilder implements QueryDriver, DispatcherHandler, DSQParserConfiguration {
     /** Holds ES query parsing context. */
     protected QueryParseContext context;
 

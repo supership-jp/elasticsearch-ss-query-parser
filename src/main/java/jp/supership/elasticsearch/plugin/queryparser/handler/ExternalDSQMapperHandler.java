@@ -9,7 +9,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import org.elasticsearch.index.query.QueryParseContext;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.DispatcherHandler;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
@@ -31,12 +31,12 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
      */
     private class Engine extends MapperQueryEngine {
         /** Holds query engine which is reponsible for parsing raw query strings. */
-        private QueryHandler handler;
+        private DispatcherHandler handler;
 
 	/**
 	 * Constructor.
 	 */
-	public Engine(QueryHandler handler) {
+	public Engine(DispatcherHandler handler) {
 	    super();
 	    this.handler = handler;
 	}
@@ -44,7 +44,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
 	/**
 	 * Constructor.
 	 */
-	public Engine(QueryHandler handler, QueryParseContext context) {
+	public Engine(DispatcherHandler handler, QueryParseContext context) {
 	    super(context);
 	    this.handler = handler;
 	}
@@ -52,7 +52,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
 	/**
 	 * Constructor.
 	 */
-	public Engine(QueryHandler handler, QueryParseContext context, DSQParserConfiguration configuration) {
+	public Engine(DispatcherHandler handler, QueryParseContext context, DSQParserConfiguration configuration) {
 	    super(context, configuration);
 	    this.handler = handler;
 	}
@@ -69,7 +69,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void dispatch(QueryHandler.Context context) {
+	public void dispatch(DispatcherHandler.Context context) {
 	    // THIS IS PLACEHOLDER.
 	}
 
@@ -77,7 +77,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
          * {@inheritDoc}
          */
         @Override
-        public Query dispatchBareToken(QueryHandler.Context context) throws HandleException {
+        public Query dispatchBareToken(DispatcherHandler.Context context) throws HandleException {
             Query query;
 
             try {
@@ -129,7 +129,7 @@ public class ExternalDSQMapperHandler extends ExternalDSQBaseHandler {
          * {@inheritDoc}
          */
         @Override
-        public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException {
+        public Query dispatchQuotedToken(DispatcherHandler.Context context) throws HandleException {
 	    int phraseSlop = this.getPhraseSlop();
 	    if (context.getFuzzySlop() != null) {
 		try {

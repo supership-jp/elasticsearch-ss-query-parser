@@ -28,7 +28,7 @@ public interface FilterChainFactory<K, T> {
     /**
      * Returns associating {@code ChainableFilter} instance.
      * @param  key the key which is associated with the requesting {@code ChainableFilter}.
-     * @return the associating {@code QueryHandler} instance.
+     * @return the associating {@code ChainableFilter} instance.
      */
     public ChainableFilter<T> create(K key) throws IllegalArgumentException;
 }

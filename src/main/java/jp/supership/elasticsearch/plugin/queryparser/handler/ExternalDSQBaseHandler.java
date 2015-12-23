@@ -21,7 +21,7 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryB
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.DispatcherHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.Initializable;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.QueryEngine;
@@ -36,7 +36,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @author Shingo OKAWA
  * @since  1.0
  */
-abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> implements QueryHandler, Initializable {
+abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> implements DispatcherHandler, Initializable {
     /** Holds ES logger. */
     private static ESLogger LOGGER = Loggers.getLogger(ExternalDSQBaseHandler.class);
 
@@ -45,7 +45,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
      * this class is also responsible to maintain the currently constructing {@code Query} instance
      * which will be handled with the {@code Engine}.
      */
-    protected class Metadata extends QueryHandler.Context {
+    protected class Metadata extends DispatcherHandler.Context {
 	/** Holds currently constructing query. */
 	public Query query = null;
 	/** Holds constructing clauses. */
@@ -230,7 +230,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
      * {@inheritDoc}
      */
     @Override
-    public void dispatch(QueryHandler.Context context) {
+    public void dispatch(DispatcherHandler.Context context) {
 	this.engine.dispatch(context);
     }
 
@@ -238,7 +238,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
      * {@inheritDoc}
      */
     @Override
-    public Query dispatchBareToken(QueryHandler.Context context) throws HandleException {
+    public Query dispatchBareToken(DispatcherHandler.Context context) throws HandleException {
         return this.engine.dispatchBareToken(context);
     }
 
@@ -246,7 +246,7 @@ abstract class ExternalDSQBaseHandler extends ExternalQueryBaseVisitor<Query> im
      * {@inheritDoc}
      */
     @Override
-    public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException {
+    public Query dispatchQuotedToken(DispatcherHandler.Context context) throws HandleException {
         return this.engine.dispatchQuotedToken(context);
     }
 

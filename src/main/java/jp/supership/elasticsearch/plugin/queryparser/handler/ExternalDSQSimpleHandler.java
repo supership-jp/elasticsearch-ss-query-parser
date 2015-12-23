@@ -8,7 +8,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
-import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.QueryHandler;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.DispatcherHandler;
 import jp.supership.elasticsearch.plugin.queryparser.common.util.StringUtils;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.QueryHandlerFactory;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
@@ -30,12 +30,12 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
      */
     private class Engine extends QueryEngine {
         /** Holds query engine which is reponsible for parsing raw query strings. */
-        private QueryHandler handler;
+        private DispatcherHandler handler;
 
 	/**
 	 * Constructor.
 	 */
-	public Engine(QueryHandler handler) {
+	public Engine(DispatcherHandler handler) {
 	    this.handler = handler;
 	}
 
@@ -59,7 +59,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void dispatch(QueryHandler.Context context) {
+	public void dispatch(DispatcherHandler.Context context) {
 	    // THIS IS PLACEHOLDER.
 	}
 
@@ -67,7 +67,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
          * {@inheritDoc}
          */
         @Override
-        public Query dispatchBareToken(QueryHandler.Context context) throws HandleException {
+        public Query dispatchBareToken(DispatcherHandler.Context context) throws HandleException {
             Query query;
 
             try {
@@ -119,7 +119,7 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
          * {@inheritDoc}
          */
         @Override
-        public Query dispatchQuotedToken(QueryHandler.Context context) throws HandleException {
+        public Query dispatchQuotedToken(DispatcherHandler.Context context) throws HandleException {
 	    int phraseSlop = this.getPhraseSlop();
 	    if (context.getFuzzySlop() != null) {
 		try {

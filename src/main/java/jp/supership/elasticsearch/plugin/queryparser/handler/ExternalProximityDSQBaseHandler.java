@@ -269,7 +269,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	try {
 	    for (ExternalProximityQueryParser.ExpressionContext expression : context.expression()) {
 		this.forget(true);
-		ProximityArchetype archetype = visit(expression);
+		ProximityArchetype archetype = this.visit(expression);
 		if (archetype != null) {
 		    if (this.metadata.getConjunction() == -1) {
 			this.insert(archetype, this.metadata.getState());
@@ -304,7 +304,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 		operator = ExternalProximityQueryParser.CONJUNCTION_AND;
 	    }
 	    this.metadata.setConjunction(operator);
-	    return visit(context.clause());
+	    return this.visit(context.clause());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -317,7 +317,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     public ProximityArchetype visitClause(ExternalProximityQueryParser.ClauseContext context) {
 	try {
 	    this.metadata.setModifier(context.MODIFIER_NEGATE() != null ? ExternalProximityQueryParser.MODIFIER_NEGATE : ExternalProximityQueryParser.MODIFIER_REQUIRE);
-	    return visit(context.field());
+	    return this.visit(context.field());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -330,7 +330,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     public ProximityArchetype visitField(ExternalProximityQueryParser.FieldContext context) {
 	try {
 	    this.metadata.setField(context.SINGLE_LITERAL() == null ? this.engine.getDefaultField() : context.SINGLE_LITERAL().getText());
-	    return visit(context.term());
+	    return this.visit(context.term());
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
@@ -355,7 +355,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	    this.metadata.setState(state);
 	    this.insert(archetype, this.metadata.getState());
 	    this.descend(this.getChildCount() - 1, false);
-	    visit(context.query());
+	    this.visit(context.query());
 	    this.ascend(false);
 	    return null;
 	} catch (Exception cause) {
