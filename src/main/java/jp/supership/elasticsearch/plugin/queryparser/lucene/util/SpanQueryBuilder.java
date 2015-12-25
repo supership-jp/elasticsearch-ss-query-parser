@@ -231,6 +231,15 @@ public class SpanQueryBuilder {
 
     /**
      * Returns {@code BooleanQuery} in accordance to the assigned configuration.
+     * @param  disableCoord if this value is set to be true, disables coord.
+     * @return new {@link BooleanQuery} instance.
+     */
+    public Query getBooleanQuery(boolean disableCoord) {
+	return this.newBooleanQuery(disableCoord);
+    }
+
+    /**
+     * Returns {@code BooleanQuery} in accordance to the assigned configuration.
      * @param  clauses the currently handling sub query.
      * @return new {@link BooleanQuery} instance.
      */

@@ -15,10 +15,12 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.elasticsearch.common.logging.ESLogger;
 import org.elasticsearch.common.logging.Loggers;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalProximityQueryBaseVisitor;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalProximityQueryLexer;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalProximityQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.HandleException;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.TreeHandler;
@@ -42,6 +44,9 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     /** Holds ES logger. */
     private static ESLogger LOGGER = Loggers.getLogger(ExternalDSQBaseHandler.class);
 
+    /** Holds the currently handling clauses. */
+    protected List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+
     /**
      * Represents domain specific query context, besides holding the query constructing settings
      * this class is also responsible to maintain the currently constructing {@code Query} instance
@@ -50,8 +55,6 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     protected class Metadata extends TreeHandler.Context {
 	/** Holds constructing tree. */
 	private ProximityArchetypeTree tree = new ProximityArchetypeTree();
-	/** Holds constructing clauses. */
-	private List<BooleanClause> clauses = new ArrayList<BooleanClause>();
 	/** Previously assigned archetype's state. */
 	private ProximityArchetype.State state = null;
 	/** Holds previously detected cunjuntion. */
@@ -76,12 +79,12 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 
 	/** Returns the currently handling clauses. */
 	public List<BooleanClause> getClauses() {
-	    return this.clauses;
+	    return clauses;
 	}
 
 	/** Sets the currently handling clauses. */
 	public void setClauses(List<BooleanClause> clauses) {
-	    this.clauses = clauses;
+	    clauses = clauses;
 	}
 
 	/** Returns the currently handling archetype state. */
@@ -116,18 +119,11 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 
 	/** Clears currently handling properties. */
 	public void clear() {
+	    this.tree = new ProximityArchetypeTree();
 	    this.state = null;
 	    this.conjunction = -1;
 	    this.modifier = -1;
 	    super.clear();
-	}
-
-	/** Forgets currently handling tree and possibly clears the assigned properties. */
-	public void forget(boolean clear) {
-	    this.tree = new ProximityArchetypeTree();
-	    if (clear) {
-		this.clear();
-	    }
 	}
     }
 
@@ -235,8 +231,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public void forget(boolean clear) {
-	this.metadata.forget(clear);
+    public void clear() {
+	this.metadata.clear();
     }
 
     /**
@@ -268,7 +264,6 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     public ProximityArchetype visitQuery(ExternalProximityQueryParser.QueryContext context) {
 	try {
 	    for (ExternalProximityQueryParser.ExpressionContext expression : context.expression()) {
-		this.forget(true);
 		ProximityArchetype archetype = this.visit(expression);
 		if (archetype != null) {
 		    if (this.metadata.getConjunction() == -1) {
@@ -281,6 +276,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 				this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), query);
 			    }
 			}
+			this.clear();
 		    }
 		}
 	    }
@@ -384,5 +380,60 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	} catch (Exception cause) {
 	    throw new ParseCancellationException(cause);
 	}
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Query handle(String queryText) throws HandleException {
+        this.fetch(new StringReader(queryText));
+        try {
+            Query instanciated = this.visit();
+	    if (LOGGER.isDebugEnabled()) {
+		LOGGER.debug(instanciated.toString());
+	    }
+            return instanciated != null ? instanciated : this.engine.getBooleanQuery(false);
+        } catch (HandleException cause) {
+            HandleException exception = new HandleException("could not parse '" + queryText + "': " + cause.getMessage());
+            exception.initCause(cause);
+            throw exception;
+        } catch (BooleanQuery.TooManyClauses cause) {
+            HandleException exception = new HandleException("could not parse '" + queryText + "': too many boolean clauses");
+            exception.initCause(cause);
+            throw exception;
+        }
+    }
+
+    /**
+     * Visits AST and generates {@code Query}.
+     * @throws HandleException if the handling fails.
+     */
+    private Query visit() throws HandleException {
+        try {
+            ANTLRInputStream input = new ANTLRInputStream(this.input);
+            ExternalProximityQueryLexer lexer = new ExternalProximityQueryLexer(input);
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+            ExternalProximityQueryParser parser = new ExternalProximityQueryParser(tokens);
+            ParseTree tree = parser.query();
+	    ProximityArchetype root = this.visit(tree);
+	    if (root != null) {
+		SpanQuery query = root.toQuery(this.metadata.getField(), this.metadata.getTree(), this.engine);
+		if (query != null) {
+		    this.engine.conjugate(this.metadata.getClauses(), this.metadata.getConjunction(), this.metadata.getModifier(), query);
+		}
+	    }
+	    return this.engine.getBooleanQuery(this.metadata.getClauses());
+        } catch (Exception cause) {
+            throw new HandleException(cause);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void fetch(Reader input) {
+        this.input = input;
     }
 }

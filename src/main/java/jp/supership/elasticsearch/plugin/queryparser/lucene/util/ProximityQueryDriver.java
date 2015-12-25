@@ -45,6 +45,24 @@ public interface ProximityQueryDriver {
     public Query getFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted, int phraseSlop, boolean inOrder, boolean useDisMax) throws ParseException;
 
     /**
+     * Returns {@code Query} in accordance to the assigned configuration.
+     * Can be overridden by extending classes, to modify query being  returned.
+     * @param  disableCoord true if coord scoring should be disabled.
+     * @return the Resulting {@link Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    public Query getBooleanQuery(boolean disableCoord) throws ParseException;
+
+    /**
+     * Returns {@code Query} in accordance to the assigned configuration.
+     * Can be overridden by extending classes, to modify query being  returned.
+     * @param  clauses list that contains {@link BooleanClause} instances to join.
+     * @return the Resulting {@link Query} instance.
+     * @throws ParseException if the parsing fails.
+     */
+    public Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException;
+
+    /**
      * Returns {@code SpanTermQuery} in accordance to the assigned configuration.
      * @param  field the currently handling field.
      * @param  termText the currently handling raw term string.

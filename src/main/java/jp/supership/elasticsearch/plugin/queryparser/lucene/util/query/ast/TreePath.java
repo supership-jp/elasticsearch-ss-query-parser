@@ -79,14 +79,14 @@ public class TreePath<T> implements Serializable {
      */
     @Override
     public boolean equals(Object that) {
-	Object[] treePath;
 	if (that instanceof TreePath) {
-	    treePath = ((TreePath<T>) that).getPath();
+	    @SuppressWarnings("unchecked")
+	    T[] treePath = ((TreePath<T>) that).getPath();
 	    if (treePath.length != this.path.length) {
 		return false;
 	    }
 	    for (int i = 0; i < this.path.length; i++) {
-		if (!this.path[i].equals(treePath[i])) {
+		if (!((T) this.path[i]).equals(treePath[i])) {
 		    return false;
 		}
 	    }

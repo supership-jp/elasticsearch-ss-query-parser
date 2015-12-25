@@ -11,11 +11,11 @@ import java.util.List;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public interface TreeTransducer<S extends Tree, T extends Tree> {
+public abstract class TreeTransducer<S extends Tree, N extends Node, T extends Tree> extends TreeVisitor<N> {
     /**
      * Transduces the given tree into the other tree.
      * @param  source the source tree to be transduced.
      * @return the transduced tree.
      */
-    public T transduce(S source);
+    public abstract T transduce(S source);
 }

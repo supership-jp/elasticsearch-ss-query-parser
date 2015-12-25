@@ -73,7 +73,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	public Model(TreePath<ProximityArchetype> root, ProximityArchetype.State state) {
 	    this.root = root;
 	    this.current = root;
-	    this.states.put(root, state);
+	    this.put(root, state);
 	}
 
 	/**

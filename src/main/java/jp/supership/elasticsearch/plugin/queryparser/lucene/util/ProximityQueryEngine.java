@@ -50,7 +50,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @author Shingo OKAWA
  * @since  1.0
  */
-public abstract class ProximityQueryEngine extends SpanQueryBuilder implements ProximityQueryDriver, TreeHandler, DSQParserConfiguration {
+public abstract class ProximityQueryEngine extends SpanQueryBuilder implements ProximityQueryDriver, DSQParserConfiguration {
     /** Holds ES query parsing context. */
     protected QueryParseContext context;
 
@@ -348,30 +348,6 @@ public abstract class ProximityQueryEngine extends SpanQueryBuilder implements P
 		return this.newSpanNearQuery(terms.toArray(new SpanTermQuery[0]), position, inOrder);
             }
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Query getBooleanQuery(List<BooleanClause> clauses) throws ParseException {
-        return this.getBooleanQuery(clauses, false);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public Query getBooleanQuery(List<BooleanClause> clauses, boolean disableCoord) throws ParseException {
-        if (clauses.size() == 0) {
-            return null;
-        }
-
-        BooleanQuery query = (BooleanQuery) this.newBooleanQuery(disableCoord);
-        for(final BooleanClause clause: clauses) {
-            query.add(clause);
-        }
-        return query;
     }
 
     /**

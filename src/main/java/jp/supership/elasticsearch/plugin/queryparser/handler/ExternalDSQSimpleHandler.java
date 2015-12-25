@@ -145,7 +145,13 @@ public class ExternalDSQSimpleHandler extends ExternalDSQBaseHandler {
      */
     @Override
     public void initialize(QueryHandlerFactory.Arguments arguments) {
-	this.engine.initialize(arguments.getLuceneVersion(), arguments.getDefaultField(), arguments.getAnalyzer(), arguments.getDSQParserConfiguration());
+	this.engine.setContext(arguments.getQueryParseContext());
+	if (arguments.getLuceneVersion() != null) {
+	    this.engine.initialize(arguments.getLuceneVersion(), arguments.getDefaultField(), arguments.getAnalyzer(), arguments.getDSQParserConfiguration());
+	} else {
+	    this.engine.initialize(arguments.getDefaultField(), arguments.getAnalyzer(), arguments.getDSQParserConfiguration());
+	}
+	this.engine.configure(arguments.getDSQParserConfiguration());
     }
 
     /**

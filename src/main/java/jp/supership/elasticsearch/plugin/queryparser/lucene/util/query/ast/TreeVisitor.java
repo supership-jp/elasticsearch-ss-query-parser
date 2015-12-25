@@ -14,14 +14,14 @@ import java.util.Stack;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class TreeVisitor<N extends Node> {
+class TreeVisitor<N extends Node> {
     /** This interfaces' implementation is responsible to hold some common context within traversal. */
     public static class Context {
 	// THIS IS PLACEHOLDER.
     }
 
     /** Represents callback functions which will be fired on visit events. */
-    public interface Callback<C extends Context> {
+    public static interface Callback<C extends Context> {
 	/** This method will be called when node visit event has been fired. */
 	public void call(Node node, C context);
     }
@@ -175,19 +175,12 @@ public class TreeVisitor<N extends Node> {
     }
 
     /**
-     * Constructor.
-     */
-    public TreeVisitor() {
-	// DO NOTHING.
-    }
-
-    /**
      * Traverses the given AST in preorder with given callback and context.
      * @param root the root node of the argumenting AST.
      * @param callback the callback function to be called when the visitor visits the node.
      * @param context the context to be handled within the traversal.
      */
-    public void preorder(N root, Callback callback, Context context) {
+    protected void preorder(N root, Callback callback, Context context) {
 	PreorderIterator flatten = new PreorderIterator(root);
 	for (Node node : flatten) {
 	    callback.call(node, context);
@@ -200,7 +193,7 @@ public class TreeVisitor<N extends Node> {
      * @param callback the callback function to be called when the visitor visits the node.
      * @param context the context to be handled within the traversal.
      */
-    public void postorder(N root, Callback callback, Context context) {
+    protected void postorder(N root, Callback callback, Context context) {
 	PostorderIterator flatten = new PostorderIterator(root);
 	for (Node node : flatten) {
 	    callback.call(node, context);
