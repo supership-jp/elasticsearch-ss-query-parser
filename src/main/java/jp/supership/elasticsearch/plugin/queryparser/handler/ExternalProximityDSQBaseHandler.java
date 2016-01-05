@@ -27,8 +27,8 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.TreeHandler;
 import jp.supership.elasticsearch.plugin.queryparser.handlers.Initializable;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ParseException;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryEngine;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype.ProximityArchetype;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype.ProximityArchetypeTree;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.xst.Fragment;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.xst.ConcreteSyntaxTree;
 import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.QueryParserConfiguration.Wildcard;
 
 /**
@@ -40,7 +40,7 @@ import static jp.supership.elasticsearch.plugin.queryparser.lucene.util.config.Q
  * @author Shingo OKAWA
  * @since  1.0
  */
-abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBaseVisitor<ProximityArchetype> implements TreeHandler, Initializable {
+abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBaseVisitor<Fragment> implements TreeHandler, Initializable {
     /** Holds ES logger. */
     private static ESLogger LOGGER = Loggers.getLogger(ExternalDSQBaseHandler.class);
 
@@ -54,9 +54,9 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      */
     protected class Metadata extends TreeHandler.Context {
 	/** Holds constructing tree. */
-	private ProximityArchetypeTree tree = new ProximityArchetypeTree();
-	/** Previously assigned archetype's state. */
-	private ProximityArchetype.State state = null;
+	private ConcreteSyntaxTree tree = new ConcreteSyntaxTree();
+	/** Previously assigned fragment's state. */
+	private Fragment.State state = null;
 	/** Holds previously detected cunjuntion. */
 	private int conjunction = -1;
 	/** Holds previously detected modifier. */
@@ -68,12 +68,12 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	}
 
 	/** Returns the currently handling tree. */
-	public ProximityArchetypeTree getTree() {
+	public ConcreteSyntaxTree getTree() {
 	    return this.tree;
 	}
 
 	/** Sets the currently handling tree. */
-	public void setTree(ProximityArchetypeTree tree) {
+	public void setTree(ConcreteSyntaxTree tree) {
 	    this.tree = tree;
 	}
 
@@ -87,13 +87,13 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	    clauses = clauses;
 	}
 
-	/** Returns the currently handling archetype state. */
-	public ProximityArchetype.State getState() {
+	/** Returns the currently handling fragment state. */
+	public Fragment.State getState() {
 	    return this.state;
 	}
 
-	/** Sets the currently handling archetype state. */
-	public void setState(ProximityArchetype.State state) {
+	/** Sets the currently handling fragment state. */
+	public void setState(Fragment.State state) {
 	    this.state = state;
 	}
 
@@ -119,7 +119,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 
 	/** Clears currently handling properties. */
 	public void clear() {
-	    this.tree = new ProximityArchetypeTree();
+	    this.tree = new ConcreteSyntaxTree();
 	    this.state = null;
 	    this.conjunction = -1;
 	    this.modifier = -1;
@@ -143,8 +143,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype getRoot() {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+    public Fragment getRoot() {
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    return tree.getRoot();
 	} else {
@@ -157,7 +157,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      */
     @Override
     public void ascend(boolean refresh) {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    this.resume();
 	    tree.ascend(refresh);
@@ -169,7 +169,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      */
     @Override
     public void descend(int index, boolean mark) {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    this.suspend();
 	    tree.descend(index, mark);
@@ -180,7 +180,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * Returns the number of children of current node.
      */
     private int getChildCount() {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    return tree.getChildCount();
 	} else {
@@ -210,7 +210,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      */
     @Override
     public void mark() {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    tree.mark();
 	}
@@ -221,7 +221,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      */
     @Override
     public void rewind() {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    tree.rewind();
 	}
@@ -239,8 +239,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public void insert(ProximityArchetype node) {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+    public void insert(Fragment node) {
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    tree.insert(node);
 	}
@@ -250,8 +250,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public void insert(ProximityArchetype node, ProximityArchetype.State state) {
-	ProximityArchetypeTree tree = this.metadata.getTree();
+    public void insert(Fragment node, Fragment.State state) {
+	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
 	    tree.insert(node, state);
 	}
@@ -261,15 +261,15 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype visitQuery(ExternalProximityQueryParser.QueryContext context) {
+    public Fragment visitQuery(ExternalProximityQueryParser.QueryContext context) {
 	try {
 	    for (ExternalProximityQueryParser.ExpressionContext expression : context.expression()) {
-		ProximityArchetype archetype = this.visit(expression);
-		if (archetype != null) {
+		Fragment fragment = this.visit(expression);
+		if (fragment != null) {
 		    if (this.metadata.getConjunction() == -1) {
-			this.insert(archetype, this.metadata.getState());
+			this.insert(fragment, this.metadata.getState());
 		    } else {
-			ProximityArchetype root = this.getRoot();
+			Fragment root = this.getRoot();
 			if (root != null) {
 			    SpanQuery query = root.toQuery(this.metadata.getField(), this.metadata.getTree(), this.engine);
 			    if (query != null) {
@@ -291,7 +291,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype visitExpression(ExternalProximityQueryParser.ExpressionContext context) {
+    public Fragment visitExpression(ExternalProximityQueryParser.ExpressionContext context) {
 	try {
 	    int operator = -1;
 	    if (context.CONJUNCTION_OR() != null) {
@@ -310,7 +310,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype visitClause(ExternalProximityQueryParser.ClauseContext context) {
+    public Fragment visitClause(ExternalProximityQueryParser.ClauseContext context) {
 	try {
 	    this.metadata.setModifier(context.MODIFIER_NEGATE() != null ? ExternalProximityQueryParser.MODIFIER_NEGATE : ExternalProximityQueryParser.MODIFIER_REQUIRE);
 	    return this.visit(context.field());
@@ -323,7 +323,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype visitField(ExternalProximityQueryParser.FieldContext context) {
+    public Fragment visitField(ExternalProximityQueryParser.FieldContext context) {
 	try {
 	    this.metadata.setField(context.SINGLE_LITERAL() == null ? this.engine.getDefaultField() : context.SINGLE_LITERAL().getText());
 	    return this.visit(context.term());
@@ -336,9 +336,9 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype visitQuotedTerm(ExternalProximityQueryParser.QuotedTermContext context) {
+    public Fragment visitQuotedTerm(ExternalProximityQueryParser.QuotedTermContext context) {
 	try {
-	    ProximityArchetype archetype = new ProximityArchetype(
+	    Fragment fragment = new Fragment(
 		this.metadata.getField(),
 		this.metadata.getTerm(),
 		false,
@@ -346,10 +346,10 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 		this.metadata.getModifier(),
 		this.engine.getInOrder()
 	    );
-	    ProximityArchetype.State state = new ProximityArchetype.State();
+	    Fragment.State state = new Fragment.State();
 	    state.isNearQuery(true);
 	    this.metadata.setState(state);
-	    this.insert(archetype, this.metadata.getState());
+	    this.insert(fragment, this.metadata.getState());
 	    this.descend(this.getChildCount() - 1, false);
 	    this.visit(context.query());
 	    this.ascend(false);
@@ -363,13 +363,13 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype visitBareTerm(ExternalProximityQueryParser.BareTermContext context) {
+    public Fragment visitBareTerm(ExternalProximityQueryParser.BareTermContext context) {
 	try {
 	    this.metadata.setTerm(context.SINGLE_LITERAL().getText());
-	    ProximityArchetype.State state = new ProximityArchetype.State();
+	    Fragment.State state = new Fragment.State();
 	    state.isTermQuery(true);
 	    this.metadata.setState(state);
-	    return new ProximityArchetype(
+	    return new Fragment(
 		this.metadata.getField(),
 		this.metadata.getTerm(),
 		false,
@@ -416,7 +416,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             ExternalProximityQueryParser parser = new ExternalProximityQueryParser(tokens);
             ParseTree tree = parser.query();
-	    ProximityArchetype root = this.visit(tree);
+	    Fragment root = this.visit(tree);
 	    if (root != null) {
 		SpanQuery query = root.toQuery(this.metadata.getField(), this.metadata.getTree(), this.engine);
 		if (query != null) {

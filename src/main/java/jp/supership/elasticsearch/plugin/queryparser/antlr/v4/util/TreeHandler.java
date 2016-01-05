@@ -5,8 +5,8 @@ package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util;
 
 import java.io.Reader;
 import org.apache.lucene.search.Query;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype.ProximityArchetype;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype.ProximityArchetypeTree;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.xst.Fragment;
+import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.xst.ConcreteSyntaxTree;
 
 /**
  * This interface specifies the implementing class can handle the given {@code java.io.Reader}
@@ -56,7 +56,7 @@ public interface TreeHandler extends QueryHandler {
     /**
      * Returns the root of the currently handling tree.
      */
-    public ProximityArchetype getRoot();
+    public Fragment getRoot();
 
     /**
      * Ascends to the current tree path's parent.
@@ -91,11 +91,11 @@ public interface TreeHandler extends QueryHandler {
      * Inserts the given node into the model.
      * @param node the node to be inserted.
      */
-    public void insert(ProximityArchetype node);
+    public void insert(Fragment node);
 
     /**
      * Inserts the given node into the model.
      * @param node the node to be inserted.
      */
-    public void insert(ProximityArchetype node, ProximityArchetype.State state);
+    public void insert(Fragment node, Fragment.State state);
 }

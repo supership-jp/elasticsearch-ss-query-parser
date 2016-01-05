@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.xst;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,12 +14,13 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.Node;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreePath;
 
 /**
- * This class represents ambiguous queries, i.e., unspecified queries within parsing, which is able to handle proximity search.
+ * This class represents each query fragments appears within raw query strings. In general, flatten form of proximity query
+ * families could be undecidable while parsing, hence this class will be responsible for those ambigouity as well.
  *
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
+public class Fragment implements Cloneable, Node<Fragment> {
     /** Holds open parentheis. */
     public final static String OPEN_PARENTHESIS = "(";
 
@@ -112,13 +113,13 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
     }
 
     /** Holds the parent composition. */
-    private ProximityArchetype parent;
+    private Fragment parent;
 
     /** Holds currently handling queries. */
-    private List<ProximityArchetype> children = new ArrayList<ProximityArchetype>();
+    private List<Fragment> children = new ArrayList<Fragment>();
 
     /** Holds currently handling queries. */
-    private TreePath<ProximityArchetype> treePath;
+    private TreePath<Fragment> treePath;
 
     /** Holds field value. */
     private String field;
@@ -147,7 +148,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
     /**
      * Constructor.
      */
-    public ProximityArchetype(boolean infixed, int slop, int operator, boolean inOrder) {
+    public Fragment(boolean infixed, int slop, int operator, boolean inOrder) {
 	this.slop = slop;
 	this.inOrder = inOrder;
 	this.operator = operator;
@@ -157,7 +158,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
     /**
      * Constructor.
      */
-    public ProximityArchetype(String field, String queryText, boolean infixed, int slop, int operator, boolean inOrder) {
+    public Fragment(String field, String queryText, boolean infixed, int slop, int operator, boolean inOrder) {
 	this(infixed, slop, operator, inOrder);
 	this.field = field;
 	this.queryText = queryText;
@@ -167,7 +168,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public void addChild(ProximityArchetype child) {
+    public void addChild(Fragment child) {
 	this.children.add(child);
     }
 
@@ -175,7 +176,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public List<ProximityArchetype> getChildren() {
+    public List<Fragment> getChildren() {
 	return this.children;
     }
 
@@ -183,7 +184,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public void setChildAt(int index, ProximityArchetype child) {
+    public void setChildAt(int index, Fragment child) {
 	this.children.add(index, child);
     }
 
@@ -191,7 +192,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype getChildAt(int index) {
+    public Fragment getChildAt(int index) {
 	return this.children.get(index);
     }
 
@@ -207,7 +208,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public int getIndexOf(ProximityArchetype child) {
+    public int getIndexOf(Fragment child) {
 	return this.children.indexOf(child);
     }
 
@@ -215,7 +216,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public void setParent(ProximityArchetype parent) {
+    public void setParent(Fragment parent) {
 	this.parent = parent;
     }
 
@@ -223,7 +224,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype getParent() {
+    public Fragment getParent() {
 	return this.parent;
     }
 
@@ -231,7 +232,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public void setTreePath(TreePath<ProximityArchetype> treePath) {
+    public void setTreePath(TreePath<Fragment> treePath) {
 	this.treePath = treePath;
     }
 
@@ -239,7 +240,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public TreePath<ProximityArchetype> getTreePath() {
+    public TreePath<Fragment> getTreePath() {
 	return this.treePath;
     }
 
@@ -257,7 +258,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * @param tree the node belongs to.
      * @param driver the driver which is responsible to instanciate queries.
      */
-    public SpanQuery toQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+    public SpanQuery toQuery(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
 	SpanQuery query = this.toConcrete(field, tree, driver);
 	if (query != null && this.isWeighted()) {
 	    query.setBoost(this.getWeight() * query.getBoost());
@@ -271,8 +272,8 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * @param tree the node belongs to.
      * @param driver the driver which is responsible to instanciate queries.
      */
-    protected SpanQuery toConcrete(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
-	ProximityArchetype.State state = tree.getStateOf(this.getTreePath());
+    protected SpanQuery toConcrete(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
+	Fragment.State state = tree.getStateOf(this.getTreePath());
 	if (state != null) {
 	    if (state.isNearQuery()) {
 		return this.toSpanNearQuery(field, tree, driver);
@@ -294,7 +295,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * @param tree the node belongs to.
      * @param driver the driver which is responsible to instanciate queries.
      */
-    protected SpanQuery toSpanTermQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+    protected SpanQuery toSpanTermQuery(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
 	if (this.getQueryText() != null && !(this.getQueryText().isEmpty())) {
 	    return driver.getSpanTermQuery(field, this.getQueryText(), false);
 	}
@@ -307,11 +308,11 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * @param tree the node belongs to.
      * @param driver the driver which is responsible to instanciate queries.
      */
-    protected SpanQuery toSpanNearQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+    protected SpanQuery toSpanNearQuery(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
 	int i = 0;
 	SpanQuery current;
 	SpanQuery[] queries = new SpanQuery[this.getChildCount()];
-	for (ProximityArchetype child : this.getChildren()) {
+	for (Fragment child : this.getChildren()) {
 	    current = (SpanQuery) child.toQuery(field, tree, driver);
 	    if (current != null) {
 		current.setBoost(child.getWeight());
@@ -331,11 +332,11 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * @param tree the node belongs to.
      * @param driver the driver which is responsible to instanciate queries.
      */
-    protected SpanQuery toSpanOrQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+    protected SpanQuery toSpanOrQuery(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
 	int i = 0;
 	SpanQuery current;
 	SpanQuery[] queries = new SpanQuery[this.getChildCount()];
-	for (ProximityArchetype child : this.getChildren()) {
+	for (Fragment child : this.getChildren()) {
 	    current = (SpanQuery) child.toQuery(field, tree, driver);
 	    if (current != null) {
 		current.setBoost(child.getWeight());
@@ -355,13 +356,13 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * @param tree the node belongs to.
      * @param driver the driver which is responsible to instanciate queries.
      */
-    protected SpanQuery toSpanNotQuery(String field, ProximityArchetypeTree tree, ProximityQueryDriver driver) {
+    protected SpanQuery toSpanNotQuery(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
 	int i = 0;
 	int j = 0;
 	SpanQuery current;
 	SpanQuery[] inclusions = new SpanQuery[this.getChildCount()];
 	SpanQuery[] exclusions = new SpanQuery[this.getChildCount()];
-	for (ProximityArchetype child : this.getChildren()) {
+	for (Fragment child : this.getChildren()) {
 	    current = (SpanQuery) child.toQuery(field, tree, driver);
 	    if (current != null) {
 		current.setBoost(child.getWeight());
@@ -548,7 +549,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      */
     protected void infixToString(StringBuilder builder) {
 	builder.append(OPEN_PARENTHESIS);
-	for (ProximityArchetype child : this.children) {
+	for (Fragment child : this.children) {
 	    builder.append(WHITESPACE);
 	    builder.append(String.valueOf(this.getOperator()));
 	    builder.append(WHITESPACE);
@@ -565,7 +566,7 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
 	builder.append(String.valueOf(this.getOperator()));
 	builder.append(OPEN_PARENTHESIS);
 	String prefix = "";
-	for (ProximityArchetype child : this.children) {
+	for (Fragment child : this.children) {
 	    builder.append(prefix);
 	    prefix = SEPARATOR;
 	    builder.append(child.toString());
@@ -577,9 +578,9 @@ public class ProximityArchetype implements Cloneable, Node<ProximityArchetype> {
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype clone() {
+    public Fragment clone() {
 	try {
-	    return (ProximityArchetype) super.clone();
+	    return (Fragment) super.clone();
 	} catch (CloneNotSupportedException cause) {
 	    throw new Error(cause);
 	}

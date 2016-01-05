@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.archetype;
+package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.spans.xst;
 
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -23,54 +23,54 @@ import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreePath;
  * @author Shingo OKAWA
  * @since  1.0
  */
-public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEventNotifier {
+public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
     /**
      * Represents parsing phase context.
      */
-    private class Model implements Tree.Model<ProximityArchetype> {
+    private class Model implements Tree.Model<Fragment> {
 	/** Holds each nodes' states as hashtable. */
-	private Hashtable<TreePath<ProximityArchetype>, ProximityArchetype.State> states = new Hashtable<TreePath<ProximityArchetype>, ProximityArchetype.State>();
+	private Hashtable<TreePath<Fragment>, Fragment.State> states = new Hashtable<TreePath<Fragment>, Fragment.State>();
 
 	/** Holds the marked nodes' path. */
-	private Stack<TreePath<ProximityArchetype>> marks = new Stack<TreePath<ProximityArchetype>>();
+	private Stack<TreePath<Fragment>> marks = new Stack<TreePath<Fragment>>();
 
 	/** Holds the root node's path. */
-	private TreePath<ProximityArchetype> root;
+	private TreePath<Fragment> root;
 
 	/** Holds the current node's path. */
-	private transient TreePath<ProximityArchetype> current;
+	private transient TreePath<Fragment> current;
 
 	/** Holds the current node's left-most child's path. */
-	private transient TreePath<ProximityArchetype> leftMost;
+	private transient TreePath<Fragment> leftMost;
 
 	/** Holds the current node's right-most child's path. */
-	private transient TreePath<ProximityArchetype> rightMost;
+	private transient TreePath<Fragment> rightMost;
 
 	/**
 	 * Constructor.
 	 */
-	public Model(ProximityArchetype root) {
-	    this(new TreePath<ProximityArchetype>(root));
+	public Model(Fragment root) {
+	    this(new TreePath<Fragment>(root));
 	}
 
 	/**
 	 * Constructor.
 	 */
-	public Model(ProximityArchetype root, ProximityArchetype.State state) {
-	    this(new TreePath<ProximityArchetype>(root), state);
+	public Model(Fragment root, Fragment.State state) {
+	    this(new TreePath<Fragment>(root), state);
 	}
 
 	/**
 	 * Constructor.
 	 */
-	public Model(TreePath<ProximityArchetype> root) {
-	    this(root, new ProximityArchetype.State());
+	public Model(TreePath<Fragment> root) {
+	    this(root, new Fragment.State());
 	}
 
 	/**
 	 * Constructor.
 	 */
-	public Model(TreePath<ProximityArchetype> root, ProximityArchetype.State state) {
+	public Model(TreePath<Fragment> root, Fragment.State state) {
 	    this.root = root;
 	    this.current = root;
 	    this.put(root, state);
@@ -80,7 +80,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * Registers the given node to the model with default state.
 	 * @param node the concerning node.
 	 */
-	public void put(ProximityArchetype node) {
+	public void put(Fragment node) {
 	    this.put(this.current.getPathTo(node));
 	}
 
@@ -89,7 +89,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * @param node the concerning node.
 	 * @param state the concerning node's state.
 	 */
-	public void put(ProximityArchetype node, ProximityArchetype.State state) {
+	public void put(Fragment node, Fragment.State state) {
 	    this.put(this.current.getPathTo(node), state);
 	}
 
@@ -97,8 +97,8 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * Registers the given tree path to the model with default state.
 	 * @param path the concerning node's path.
 	 */
-	public void put(TreePath<ProximityArchetype> path) {
-	    this.put(path, new ProximityArchetype.State());
+	public void put(TreePath<Fragment> path) {
+	    this.put(path, new Fragment.State());
 	}
 
 	/**
@@ -106,12 +106,12 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * @param path the concerning node's path.
 	 * @param state the concerning node's state.
 	 */
-	public void put(TreePath<ProximityArchetype> path, ProximityArchetype.State state) {
-	    ProximityArchetype node = path.getTail();
+	public void put(TreePath<Fragment> path, Fragment.State state) {
+	    Fragment node = path.getTail();
 	    node.setTreePath(path);
-	    TreePath<ProximityArchetype> parentPath = path.getParent();
+	    TreePath<Fragment> parentPath = path.getParent();
 	    if (parentPath != null) {
-		ProximityArchetype parent = parentPath.getTail();
+		Fragment parent = parentPath.getTail();
 		int index = parent.getIndexOf(node);
 		if (index == -1) {
 		    parent.addChild(node);
@@ -125,7 +125,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * @param  path the concerning node's path.
 	 * @return the state of the node which is specified with the given path.
 	 */
-	public ProximityArchetype.State getStateOf(TreePath<ProximityArchetype> path) {
+	public Fragment.State getStateOf(TreePath<Fragment> path) {
 	    return this.states.get(path);
 	}
 
@@ -133,7 +133,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public TreePath<ProximityArchetype> getRoot() {
+	public TreePath<Fragment> getRoot() {
 	    return this.root;
 	}
 
@@ -141,7 +141,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public TreePath<ProximityArchetype> getCurrent() {
+	public TreePath<Fragment> getCurrent() {
 	    return this.current;
 	}
 
@@ -149,7 +149,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setCurrent(TreePath<ProximityArchetype> current) {
+	public void setCurrent(TreePath<Fragment> current) {
 	    this.current = current;
 	}
 
@@ -157,9 +157,9 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public TreePath<ProximityArchetype> getLeftMost() {
+	public TreePath<Fragment> getLeftMost() {
 	    if (this.leftMost == null) {
-		ProximityArchetype node = this.current.getTail();
+		Fragment node = this.current.getTail();
 		if (node.isLeaf()) {
 		    this.leftMost = null;
 		} else {
@@ -173,9 +173,9 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public TreePath<ProximityArchetype> getRightMost() {
+	public TreePath<Fragment> getRightMost() {
 	    if (this.rightMost == null) {
-		ProximityArchetype node = this.current.getTail();
+		Fragment node = this.current.getTail();
 		if (node.isLeaf()) {
 		    this.rightMost = null;
 		} else {
@@ -190,7 +190,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 */
 	@Override
 	public void ascend(boolean refresh) {
-	    ProximityArchetype parent = this.current.getTail().getParent();
+	    Fragment parent = this.current.getTail().getParent();
 	    if (parent != null) {
 		int candidate = this.marks.search(this.current);
 		if (refresh && candidate > 0) {
@@ -205,7 +205,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 */
 	@Override
 	public void descend(int index, boolean mark) {
-	    TreePath<ProximityArchetype> candidate = this.getLeftMost();
+	    TreePath<Fragment> candidate = this.getLeftMost();
 	    if (candidate != null) {
 		if (mark) {
 		    this.mark();
@@ -236,7 +236,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     /**
      * This class handles transformaytions of the tree structure.
      */
-    private class TreeTransformationHandler implements TreeEventListener<ProximityArchetype> {
+    private class TreeTransformationHandler implements TreeEventListener<Fragment> {
 	/** Holds bundled model. */
 	private Model model;
 
@@ -251,7 +251,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onNodesChanged(TreeEvent<ProximityArchetype> event) {
+	public void onNodesChanged(TreeEvent<Fragment> event) {
 	    // DO NOTHING.
 	}
 
@@ -259,12 +259,12 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onNodesInserted(TreeEvent<ProximityArchetype> event) {
+	public void onNodesInserted(TreeEvent<Fragment> event) {
 	    @SuppressWarnings("unckecked")
-	    ProximityArchetype source = (ProximityArchetype) event.getSource();
-	    TreePath<ProximityArchetype> parentPath = event.getPath().getParent();
+	    Fragment source = (Fragment) event.getSource();
+	    TreePath<Fragment> parentPath = event.getPath().getParent();
 	    if (parentPath != null) {
-		ProximityArchetype.State parentState = this.model.getStateOf(parentPath);
+		Fragment.State parentState = this.model.getStateOf(parentPath);
 		if (source.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
 		    parentState.isNotQuery(true);
 		}
@@ -275,19 +275,19 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onNodesRemoved(TreeEvent<ProximityArchetype> event) {
+	public void onNodesRemoved(TreeEvent<Fragment> event) {
 	    @SuppressWarnings("unckecked")
-	    ProximityArchetype source = (ProximityArchetype) event.getSource();
-	    TreePath<ProximityArchetype> parentPath = event.getPath().getParent();
+	    Fragment source = (Fragment) event.getSource();
+	    TreePath<Fragment> parentPath = event.getPath().getParent();
 	    if (parentPath != null && source.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
-		ProximityArchetype parent = parentPath.getTail();
+		Fragment parent = parentPath.getTail();
 		boolean isNotQuery = false;
-		for (ProximityArchetype child : parent.getChildren()) {
+		for (Fragment child : parent.getChildren()) {
 		    if (child.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
 			isNotQuery = true;
 		    }
 		}
-		ProximityArchetype.State parentState = this.model.getStateOf(parentPath);
+		Fragment.State parentState = this.model.getStateOf(parentPath);
 		parentState.isNotQuery(isNotQuery);
 	    }
 	}
@@ -296,7 +296,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onPathAscended(TreeEvent<ProximityArchetype> event) {
+	public void onPathAscended(TreeEvent<Fragment> event) {
 	    // DO NOTHING.
 	}
 
@@ -304,7 +304,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onPathDescended(TreeEvent<ProximityArchetype> event) {
+	public void onPathDescended(TreeEvent<Fragment> event) {
 	    // DO NOTHING.
 	}
 
@@ -312,7 +312,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void onTransduced(TreeEvent<ProximityArchetype> event) {
+	public void onTransduced(TreeEvent<Fragment> event) {
 	    // DO NOTHING.
 	}
     }
@@ -326,26 +326,26 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     /**
      * Constructor.
      */
-    public ProximityArchetypeTree() {
+    public ConcreteSyntaxTree() {
 	// The following parameters means nothind, because the root node will be managed as a SpanOrQuery,
 	// hence the given parameters will be ignored.
-	this(new ProximityArchetype(false, -1, -1, false));
+	this(new Fragment(false, -1, -1, false));
     }
 
     /**
      * Constructor.
      */
-    public ProximityArchetypeTree(boolean infixed, int slop, int operator, boolean inOrder) {
-	this(new ProximityArchetype(infixed, slop, operator, inOrder));
+    public ConcreteSyntaxTree(boolean infixed, int slop, int operator, boolean inOrder) {
+	this(new Fragment(infixed, slop, operator, inOrder));
     }
 
     /**
      * Constructor.
      */
-    public ProximityArchetypeTree(ProximityArchetype root) {
-	ProximityArchetype.State state = new ProximityArchetype.State();
+    public ConcreteSyntaxTree(Fragment root) {
+	Fragment.State state = new Fragment.State();
 	state.isOrQuery(true);
-	this.model = new Model(new TreePath<ProximityArchetype>(root), state);
+	this.model = new Model(new TreePath<Fragment>(root), state);
 	this.addListener(new TreeTransformationHandler(this.model));
     }
 
@@ -362,7 +362,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param  path the concerning node's path.
      * @return the state of the node which is specified with the given path.
      */
-    public ProximityArchetype.State getStateOf(TreePath<ProximityArchetype> path) {
+    public Fragment.State getStateOf(TreePath<Fragment> path) {
 	return this.getModel().getStateOf(path);
     }
 
@@ -370,7 +370,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * Inserts the given node into the model.
      * @param node the node to be inserted.
      */
-    public void insert(ProximityArchetype node) {
+    public void insert(Fragment node) {
 	this.insert(node, false, false);
     }
 
@@ -378,7 +378,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * Inserts the given node into the model.
      * @param node the node to be inserted.
      */
-    public void insert(ProximityArchetype node, ProximityArchetype.State state) {
+    public void insert(Fragment node, Fragment.State state) {
 	this.insert(node, state, false, false);
     }
 
@@ -387,7 +387,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param node the node to be inserted.
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      */
-    public void insert(ProximityArchetype node, boolean proceed) {
+    public void insert(Fragment node, boolean proceed) {
 	this.insert(node, proceed, false);
     }
 
@@ -397,7 +397,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param state the node state to be inserted.
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      */
-    public void insert(ProximityArchetype node, ProximityArchetype.State state, boolean proceed) {
+    public void insert(Fragment node, Fragment.State state, boolean proceed) {
 	this.insert(node, state, proceed, false);
     }
 
@@ -407,7 +407,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      * @param mark if this value is set to be true, the previous path is marked.
      */
-    public void insert(ProximityArchetype node, boolean proceed, boolean mark) {
+    public void insert(Fragment node, boolean proceed, boolean mark) {
 	this.insert(this.getModel().getCurrent().getPathTo(node), proceed, mark);
     }
 
@@ -418,7 +418,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      * @param mark if this value is set to be true, the previous path is marked.
      */
-    public void insert(ProximityArchetype node, ProximityArchetype.State state, boolean proceed, boolean mark) {
+    public void insert(Fragment node, Fragment.State state, boolean proceed, boolean mark) {
 	this.insert(this.getModel().getCurrent().getPathTo(node), state, proceed, mark);
     }
 
@@ -428,12 +428,12 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      * @param mark if this value is set to be true, the previous path is marked.
      */
-    public void insert(TreePath<ProximityArchetype> path, boolean proceed, boolean mark) {
+    public void insert(TreePath<Fragment> path, boolean proceed, boolean mark) {
 	if (mark) {
 	    this.getModel().mark();
 	}
 	this.getModel().put(path);
-	this.fireNodesInserted(new TreeEvent<ProximityArchetype>(path.getTail(), path));
+	this.fireNodesInserted(new TreeEvent<Fragment>(path.getTail(), path));
 	if (proceed) {
 	    this.getModel().setCurrent(path);
 	}
@@ -446,12 +446,12 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      * @param mark if this value is set to be true, the previous path is marked.
      */
-    public void insert(TreePath<ProximityArchetype> path, ProximityArchetype.State state, boolean proceed, boolean mark) {
+    public void insert(TreePath<Fragment> path, Fragment.State state, boolean proceed, boolean mark) {
 	if (mark) {
 	    this.getModel().mark();
 	}
 	this.getModel().put(path, state);
-	this.fireNodesInserted(new TreeEvent<ProximityArchetype>(path.getTail(), path));
+	this.fireNodesInserted(new TreeEvent<Fragment>(path.getTail(), path));
 	if (proceed) {
 	    this.getModel().setCurrent(path);
 	}
@@ -477,9 +477,9 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param refresh if this value is set to be true, the preceeding marks after the current node will be vanished.
      */
     public void ascend(boolean refresh) {
-	TreePath<ProximityArchetype> path = this.getModel().getCurrent();
+	TreePath<Fragment> path = this.getModel().getCurrent();
 	this.getModel().ascend(refresh);
-	this.firePathAscended(new TreeEvent<ProximityArchetype>(path.getTail(), path));
+	this.firePathAscended(new TreeEvent<Fragment>(path.getTail(), path));
     }
 
     /**
@@ -488,9 +488,9 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * @param mark if this value is set to be true, the previous node will be marked.
      */
     public void descend(int index, boolean mark) {
-	TreePath<ProximityArchetype> path = this.getModel().getCurrent();
+	TreePath<Fragment> path = this.getModel().getCurrent();
 	this.getModel().descend(index, mark);
-	this.firePathDescended(new TreeEvent<ProximityArchetype>(path.getTail(), path));
+	this.firePathDescended(new TreeEvent<Fragment>(path.getTail(), path));
     }
 
     /**
@@ -528,7 +528,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype getChildAt(int index) {
+    public Fragment getChildAt(int index) {
 	return this.getModel().getCurrent().getTail().getChildAt(index);
     }
 
@@ -536,7 +536,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype getChildAt(ProximityArchetype parent, int index) {
+    public Fragment getChildAt(Fragment parent, int index) {
 	return parent.getChildAt(index);
     }
 
@@ -552,7 +552,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
-    public int getChildCount(ProximityArchetype parent) {
+    public int getChildCount(Fragment parent) {
 	return parent.getChildCount();
     }
 
@@ -560,7 +560,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
-    public int getIndexOf(ProximityArchetype child) {
+    public int getIndexOf(Fragment child) {
 	return this.getModel().getCurrent().getTail().getIndexOf(child);
     }
 
@@ -568,7 +568,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
-    public int getIndexOf(ProximityArchetype parent, ProximityArchetype child) {
+    public int getIndexOf(Fragment parent, Fragment child) {
 	return parent.getIndexOf(child);
     }
 
@@ -576,7 +576,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * {@inheritDoc}
      */
     @Override
-    public ProximityArchetype getRoot() {
+    public Fragment getRoot() {
 	return this.getModel().getRoot().getTail();
     }
 
@@ -590,7 +590,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     /**
      * {@inheritDoc}
      */
-    public boolean isLeaf(ProximityArchetype node) {
+    public boolean isLeaf(Fragment node) {
 	return node.isLeaf();
     }
 
