@@ -44,4 +44,37 @@ public final class ObjectUtils {
 	}
 	return false;
     }
+
+    /**
+     * Validates that the given value is not null.
+     * @param value the value to be checked.
+     */
+    public static void validateNotNull(Object value) throws NullPointerException {
+	if (value == null) {
+	    throw new NullPointerException();
+	}
+    }
+
+    /**
+     * Validates that the given condition stands true.
+     * @param condition the condition to be checked.
+     * @param message the error message.
+     */
+    public static void validateCondition(boolean condition, String message) throws IllegalArgumentException {
+	if (!condition) {
+	    throw new IllegalArgumentException(message);
+	}
+    }
+
+    /**
+     * Validates that the given condition stands true.
+     * @param condition the condition to be checked.
+     * @param format the error message format.
+     * @param arguments the error message arguments.
+     */
+    public static void validateCondition(boolean condition, String format, Object... arguments) throws IllegalArgumentException {
+	if (!condition) {
+	    throw new IllegalArgumentException(String.format(format, arguments));
+	}
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast;
+package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst;
 
 import java.util.EventObject;
 

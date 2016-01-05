@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2015- Supership Inc.
  */
-package jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast;
+package jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst;
 
 import java.util.List;
 
@@ -17,50 +17,7 @@ public interface Node<N extends Node> {
      * Reprents each nodes' state.
      */
     public static class State {
-	/** Holds true if the node was removed. */
-	private boolean isRemoved = false;
-
-	/** Holds true if the node was changed. */
-	private boolean isChanged = false;
-
-	/**
-	 * Constructor.
-	 */
-	public State() {
-	    // DO NOTHING.
-	}
-
-	/**
-	 * Returns true if the node was removed.
-	 * @return true if the node was removed.
-	 */
-	public boolean isRemoved() {
-	    return this.isRemoved;
-	}
-
-	/**
-	 * Sets to be true if the node was removed.
-	 * @param isRemoved set to be true if the node was removed.
-	 */
-	public void isRemoved(boolean isRemoved) {
-	    this.isRemoved = isRemoved;
-	}
-
-	/**
-	 * Returns true if the node was changed.
-	 * @return true if the node was changed.
-	 */
-	public boolean isChanged() {
-	    return this.isChanged;
-	}
-
-	/**
-	 * Sets to be true if the node was changed.
-	 * @param isChanged set to be true if the node was changed.
-	 */
-	public void isChanged(boolean isChanged) {
-	    this.isChanged = isChanged;
-	}
+	// THIS IS PLACEHOLDER.
     }
 
     /**

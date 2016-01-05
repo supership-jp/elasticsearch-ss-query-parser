@@ -10,8 +10,8 @@ import org.apache.lucene.search.spans.SpanQuery;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.lucene.util.ProximityQueryDriver;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.Node;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.TreePath;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.Node;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreePath;
 
 /**
  * This class represents ambiguous queries, i.e., unspecified queries within parsing, which is able to handle proximity search.

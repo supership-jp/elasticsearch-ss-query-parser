@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Stack;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.ExternalQueryParser;
 import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.dsl.InternalQueryParser;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.Tree;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.TreeEvent;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.TreeEventListener;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.TreeEventNotifier;
-import jp.supership.elasticsearch.plugin.queryparser.lucene.util.query.ast.TreePath;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.Tree;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreeEvent;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreeEventListener;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreeEventNotifier;
+import jp.supership.elasticsearch.plugin.queryparser.antlr.v4.util.xst.TreePath;
 
 /**
  * This interface specifies the implementing class has ability to handle abstract syntax trees
@@ -107,11 +107,11 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 * @param state the concerning node's state.
 	 */
 	public void put(TreePath<ProximityArchetype> path, ProximityArchetype.State state) {
-	    ProximityArchetype node = path.getLastPathElement();
+	    ProximityArchetype node = path.getTail();
 	    node.setTreePath(path);
-	    TreePath<ProximityArchetype> parentPath = path.getParentPath();
+	    TreePath<ProximityArchetype> parentPath = path.getParent();
 	    if (parentPath != null) {
-		ProximityArchetype parent = parentPath.getLastPathElement();
+		ProximityArchetype parent = parentPath.getTail();
 		int index = parent.getIndexOf(node);
 		if (index == -1) {
 		    parent.addChild(node);
@@ -159,7 +159,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	@Override
 	public TreePath<ProximityArchetype> getLeftMost() {
 	    if (this.leftMost == null) {
-		ProximityArchetype node = this.current.getLastPathElement();
+		ProximityArchetype node = this.current.getTail();
 		if (node.isLeaf()) {
 		    this.leftMost = null;
 		} else {
@@ -175,7 +175,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	@Override
 	public TreePath<ProximityArchetype> getRightMost() {
 	    if (this.rightMost == null) {
-		ProximityArchetype node = this.current.getLastPathElement();
+		ProximityArchetype node = this.current.getTail();
 		if (node.isLeaf()) {
 		    this.rightMost = null;
 		} else {
@@ -190,13 +190,13 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	 */
 	@Override
 	public void ascend(boolean refresh) {
-	    ProximityArchetype parent = this.current.getLastPathElement().getParent();
+	    ProximityArchetype parent = this.current.getTail().getParent();
 	    if (parent != null) {
 		int candidate = this.marks.search(this.current);
 		if (refresh && candidate > 0) {
 		    this.marks.setSize(candidate - 1);
 		}
-		this.current = this.current.getParentPath();
+		this.current = this.current.getParent();
 	    }
 	}
 
@@ -262,7 +262,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	public void onNodesInserted(TreeEvent<ProximityArchetype> event) {
 	    @SuppressWarnings("unckecked")
 	    ProximityArchetype source = (ProximityArchetype) event.getSource();
-	    TreePath<ProximityArchetype> parentPath = event.getPath().getParentPath();
+	    TreePath<ProximityArchetype> parentPath = event.getPath().getParent();
 	    if (parentPath != null) {
 		ProximityArchetype.State parentState = this.model.getStateOf(parentPath);
 		if (source.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
@@ -278,9 +278,9 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	public void onNodesRemoved(TreeEvent<ProximityArchetype> event) {
 	    @SuppressWarnings("unckecked")
 	    ProximityArchetype source = (ProximityArchetype) event.getSource();
-	    TreePath<ProximityArchetype> parentPath = event.getPath().getParentPath();
+	    TreePath<ProximityArchetype> parentPath = event.getPath().getParent();
 	    if (parentPath != null && source.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
-		ProximityArchetype parent = parentPath.getLastPathElement();
+		ProximityArchetype parent = parentPath.getTail();
 		boolean isNotQuery = false;
 		for (ProximityArchetype child : parent.getChildren()) {
 		    if (child.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
@@ -433,7 +433,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	    this.getModel().mark();
 	}
 	this.getModel().put(path);
-	this.fireNodesInserted(new TreeEvent<ProximityArchetype>(path.getLastPathElement(), path));
+	this.fireNodesInserted(new TreeEvent<ProximityArchetype>(path.getTail(), path));
 	if (proceed) {
 	    this.getModel().setCurrent(path);
 	}
@@ -451,7 +451,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
 	    this.getModel().mark();
 	}
 	this.getModel().put(path, state);
-	this.fireNodesInserted(new TreeEvent<ProximityArchetype>(path.getLastPathElement(), path));
+	this.fireNodesInserted(new TreeEvent<ProximityArchetype>(path.getTail(), path));
 	if (proceed) {
 	    this.getModel().setCurrent(path);
 	}
@@ -479,7 +479,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     public void ascend(boolean refresh) {
 	TreePath<ProximityArchetype> path = this.getModel().getCurrent();
 	this.getModel().ascend(refresh);
-	this.firePathAscended(new TreeEvent<ProximityArchetype>(path.getLastPathElement(), path));
+	this.firePathAscended(new TreeEvent<ProximityArchetype>(path.getTail(), path));
     }
 
     /**
@@ -490,7 +490,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
     public void descend(int index, boolean mark) {
 	TreePath<ProximityArchetype> path = this.getModel().getCurrent();
 	this.getModel().descend(index, mark);
-	this.firePathDescended(new TreeEvent<ProximityArchetype>(path.getLastPathElement(), path));
+	this.firePathDescended(new TreeEvent<ProximityArchetype>(path.getTail(), path));
     }
 
     /**
@@ -511,7 +511,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      * Rewinds the currently handling node.
      */
     public void rewindAll() {
-	while (this.getModel().getCurrent().getParentPath() != null) {
+	while (this.getModel().getCurrent().getParent() != null) {
 	    this.getModel().rewind();
 	}
     }
@@ -529,7 +529,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      */
     @Override
     public ProximityArchetype getChildAt(int index) {
-	return this.getModel().getCurrent().getLastPathElement().getChildAt(index);
+	return this.getModel().getCurrent().getTail().getChildAt(index);
     }
 
     /**
@@ -545,7 +545,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      */
     @Override
     public int getChildCount() {
-	return this.getModel().getCurrent().getLastPathElement().getChildCount();
+	return this.getModel().getCurrent().getTail().getChildCount();
     }
 
     /**
@@ -561,7 +561,7 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      */
     @Override
     public int getIndexOf(ProximityArchetype child) {
-	return this.getModel().getCurrent().getLastPathElement().getIndexOf(child);
+	return this.getModel().getCurrent().getTail().getIndexOf(child);
     }
 
     /**
@@ -577,14 +577,14 @@ public class ProximityArchetypeTree implements Tree<ProximityArchetype>, TreeEve
      */
     @Override
     public ProximityArchetype getRoot() {
-	return this.getModel().getRoot().getLastPathElement();
+	return this.getModel().getRoot().getTail();
     }
 
     /**
      * {@inheritDoc}
      */
     public boolean isLeaf() {
-	return this.getModel().getCurrent().getLastPathElement().isLeaf();
+	return this.getModel().getCurrent().getTail().isLeaf();
     }
 
     /**
