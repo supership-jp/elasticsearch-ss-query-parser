@@ -14,13 +14,6 @@ import java.util.List;
  */
 public interface Node<N extends Node> {
     /**
-     * Reprents each nodes' state.
-     */
-    public static class State {
-	// THIS IS PLACEHOLDER.
-    }
-
-    /**
      * Adds the child AST node to its children.
      * @param child the child node to be set.
      */

@@ -55,8 +55,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     protected class Metadata extends TreeHandler.Context {
 	/** Holds constructing tree. */
 	private ConcreteSyntaxTree tree = new ConcreteSyntaxTree();
-	/** Previously assigned fragment's state. */
-	private Fragment.State state = null;
+	/** Previously assigned fragment's tag. */
+	private Fragment.Tag tag = null;
 	/** Holds previously detected cunjuntion. */
 	private int conjunction = -1;
 	/** Holds previously detected modifier. */
@@ -87,14 +87,14 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	    clauses = clauses;
 	}
 
-	/** Returns the currently handling fragment state. */
-	public Fragment.State getState() {
-	    return this.state;
+	/** Returns the currently handling fragment tag. */
+	public Fragment.Tag getTag() {
+	    return this.tag;
 	}
 
-	/** Sets the currently handling fragment state. */
-	public void setState(Fragment.State state) {
-	    this.state = state;
+	/** Sets the currently handling fragment tag. */
+	public void setTag(Fragment.Tag tag) {
+	    this.tag = tag;
 	}
 
 	/** Returns the previous assigned conjunction. */
@@ -120,7 +120,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 	/** Clears currently handling properties. */
 	public void clear() {
 	    this.tree = new ConcreteSyntaxTree();
-	    this.state = null;
+	    this.tag = null;
 	    this.conjunction = -1;
 	    this.modifier = -1;
 	    super.clear();
@@ -250,10 +250,11 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
      * {@inheritDoc}
      */
     @Override
-    public void insert(Fragment node, Fragment.State state) {
+    public void insert(Fragment node, Fragment.Tag tag) {
 	ConcreteSyntaxTree tree = this.metadata.getTree();
 	if (tree != null) {
-	    tree.insert(node, state);
+	    node.setTag(tag);
+	    tree.insert(node, Boolean.TRUE);
 	}
     }
 
@@ -267,7 +268,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 		Fragment fragment = this.visit(expression);
 		if (fragment != null) {
 		    if (this.metadata.getConjunction() == -1) {
-			this.insert(fragment, this.metadata.getState());
+			this.insert(fragment, this.metadata.getTag());
 		    } else {
 			Fragment root = this.getRoot();
 			if (root != null) {
@@ -346,10 +347,8 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
 		this.metadata.getModifier(),
 		this.engine.getInOrder()
 	    );
-	    Fragment.State state = new Fragment.State();
-	    state.isNearQuery(true);
-	    this.metadata.setState(state);
-	    this.insert(fragment, this.metadata.getState());
+	    this.metadata.setTag(Fragment.Tag.NEAR);
+	    this.insert(fragment, this.metadata.getTag());
 	    this.descend(this.getChildCount() - 1, false);
 	    this.visit(context.query());
 	    this.ascend(false);
@@ -366,9 +365,7 @@ abstract class ExternalProximityDSQBaseHandler extends ExternalProximityQueryBas
     public Fragment visitBareTerm(ExternalProximityQueryParser.BareTermContext context) {
 	try {
 	    this.metadata.setTerm(context.SINGLE_LITERAL().getText());
-	    Fragment.State state = new Fragment.State();
-	    state.isTermQuery(true);
-	    this.metadata.setState(state);
+	    this.metadata.setTag(Fragment.Tag.TERM);
 	    return new Fragment(
 		this.metadata.getField(),
 		this.metadata.getTerm(),

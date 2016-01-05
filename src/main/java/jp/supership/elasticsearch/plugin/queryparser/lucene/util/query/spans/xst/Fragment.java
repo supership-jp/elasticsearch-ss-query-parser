@@ -36,80 +36,18 @@ public class Fragment implements Cloneable, Node<Fragment> {
     /** Holds weight operator. */
     public final static String WEIGHT_OPERATOR = "^";
 
-    public static class State extends Node.State {
-	// Holds true if the node represents SpanTermQuery.
-	private boolean isTermQuery = true;
-	// Holds true if the node represents SpanNearQuery.
-	private boolean isNearQuery = false;
-	// Holds true if the node represents SpanOrQuery.
-	private boolean isOrQuery = false;
-	// Holds true if the node represents SpanNotQuery.
-	private boolean isNotQuery = false;
-
-	// Constructor.
-	public State() {
-	    super();
-	}
-
-	// Returns true if the node represents SpanTermQuery.
-	public boolean isTermQuery() {
-	    return this.isTermQuery;
-	}
-
-	// Sets true if the node represents SpanTermQuery.
-	public void isTermQuery(boolean isTermQuery) {
-	    this.isTermQuery = isTermQuery;
-	    if (isTermQuery) {
-		this.isNearQuery(false);
-		this.isOrQuery(false);
-		this.isNotQuery(false);
-	    }
-	}
-
-	// Returns true if the node represents SpanTermQuery.
-	public boolean isNearQuery() {
-	    return this.isNearQuery;
-	}
-
-	// Sets true if the node represents SpanNearQuery.
-	public void isNearQuery(boolean isNearQuery) {
-	    this.isNearQuery = isNearQuery;
-	    if (isNearQuery) {
-		this.isTermQuery(false);
-		this.isOrQuery(false);
-		this.isNotQuery(false);
-	    }
-	}
-
-	// Returns true if the node represents SpanOrQuery.
-	public boolean isOrQuery() {
-	    return this.isOrQuery;
-	}
-
-	// Sets true if the node represents SpanOrQuery.
-	public void isOrQuery(boolean isOrQuery) {
-	    this.isOrQuery = isOrQuery;
-	    if (isOrQuery) {
-		this.isTermQuery(false);
-		this.isNearQuery(false);
-		this.isNotQuery(false);
-	    }
-	}
-
-	// Returns true if the node represents SpanNotQuery.
-	public boolean isNotQuery() {
-	    return this.isNotQuery;
-	}
-
-	// Sets true if the node represents SpanNotQuery.
-	public void isNotQuery(boolean isNotQuery) {
-	    this.isNotQuery = isNotQuery;
-	    if (isNotQuery) {
-		this.isTermQuery(false);
-		this.isNearQuery(false);
-		this.isOrQuery(false);
-	    }
-	}
+    /**
+     * Pre-defined {@code Fragment} token tags.
+     */
+    public enum Tag {
+	/** Specifies the assigned fragment is a {@code SpanTermQuery}. */
+	TERM,
+	/** Specifies the assigned fragment is a {@code SpanNearQuery}. */
+	NEAR,
+	/** Specifies the assigned fragment is a {@code SpanOrQuery}. */
+	OR,
+	/** Specifies the assigned fragment is a {@code SpanNotQuery}. */
+	NOT
     }
 
     /** Holds the parent composition. */
@@ -126,6 +64,9 @@ public class Fragment implements Cloneable, Node<Fragment> {
 
     /** Holds query text value. */
     private String queryText;
+
+    /** Holds assigned tag. */
+    private Tag tag;
 
     /** Holds weight value. */
     private float weight = 1.0f;
@@ -149,6 +90,7 @@ public class Fragment implements Cloneable, Node<Fragment> {
      * Constructor.
      */
     public Fragment(boolean infixed, int slop, int operator, boolean inOrder) {
+	this.tag = Tag.TERM;
 	this.slop = slop;
 	this.inOrder = inOrder;
 	this.operator = operator;
@@ -273,13 +215,13 @@ public class Fragment implements Cloneable, Node<Fragment> {
      * @param driver the driver which is responsible to instanciate queries.
      */
     protected SpanQuery toConcrete(String field, ConcreteSyntaxTree tree, ProximityQueryDriver driver) {
-	Fragment.State state = tree.getStateOf(this.getTreePath());
-	if (state != null) {
-	    if (state.isNearQuery()) {
+	Fragment.Tag tag = this.getTag();
+	if (tag != null) {
+	    if (tag == Fragment.Tag.NEAR) {
 		return this.toSpanNearQuery(field, tree, driver);
-	    } else if (state.isOrQuery()) {
+	    } else if (tag == Fragment.Tag.OR) {
 		return this.toSpanOrQuery(field, tree, driver);
-	    } else if (state.isNotQuery()) {
+	    } else if (tag == Fragment.Tag.NOT) {
 		return this.toSpanNotQuery(field, tree, driver);
 	    } else {
 		return this.toSpanTermQuery(field, tree, driver);
@@ -418,6 +360,22 @@ public class Fragment implements Cloneable, Node<Fragment> {
      */
     public String getQueryText() {
 	return this.queryText;
+    }
+
+    /**
+     * Sets the tag value.
+     * @param tag the tag value to be set.
+     */
+    public void setTag(Tag tag) {
+	this.tag = tag;
+    }
+
+    /**
+     * Returns the assigned tag value.
+     * @return the assigned tag value.
+     */
+    public Tag getTag() {
+	return this.tag;
     }
 
     /**

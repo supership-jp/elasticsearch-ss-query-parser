@@ -97,5 +97,5 @@ public interface TreeHandler extends QueryHandler {
      * Inserts the given node into the model.
      * @param node the node to be inserted.
      */
-    public void insert(Fragment node, Fragment.State state);
+    public void insert(Fragment node, Fragment.Tag tag);
 }

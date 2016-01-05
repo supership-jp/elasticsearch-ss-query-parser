@@ -28,8 +28,8 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
      * Represents parsing phase context.
      */
     private class Model implements Tree.Model<Fragment> {
-	/** Holds each nodes' states as hashtable. */
-	private Hashtable<TreePath<Fragment>, Fragment.State> states = new Hashtable<TreePath<Fragment>, Fragment.State>();
+	/** Holds each nodes' status as hashtable. */
+	private Hashtable<TreePath<Fragment>, Boolean> status = new Hashtable<TreePath<Fragment>, Boolean>();
 
 	/** Holds the marked nodes' path. */
 	private Stack<TreePath<Fragment>> marks = new Stack<TreePath<Fragment>>();
@@ -56,28 +56,28 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
 	/**
 	 * Constructor.
 	 */
-	public Model(Fragment root, Fragment.State state) {
-	    this(new TreePath<Fragment>(root), state);
+	public Model(Fragment root, Boolean status) {
+	    this(new TreePath<Fragment>(root), status);
 	}
 
 	/**
 	 * Constructor.
 	 */
 	public Model(TreePath<Fragment> root) {
-	    this(root, new Fragment.State());
+	    this(root, Boolean.TRUE);
 	}
 
 	/**
 	 * Constructor.
 	 */
-	public Model(TreePath<Fragment> root, Fragment.State state) {
+	public Model(TreePath<Fragment> root, Boolean status) {
 	    this.root = root;
 	    this.current = root;
-	    this.put(root, state);
+	    this.put(root, status);
 	}
 
 	/**
-	 * Registers the given node to the model with default state.
+	 * Registers the given node to the model with default status.
 	 * @param node the concerning node.
 	 */
 	public void put(Fragment node) {
@@ -85,28 +85,28 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
 	}
 
 	/**
-	 * Registers the given node to the model with the specified state.
+	 * Registers the given node to the model with the specified status.
 	 * @param node the concerning node.
-	 * @param state the concerning node's state.
+	 * @param status the concerning node's status.
 	 */
-	public void put(Fragment node, Fragment.State state) {
-	    this.put(this.current.getPathTo(node), state);
+	public void put(Fragment node, Boolean status) {
+	    this.put(this.current.getPathTo(node), status);
 	}
 
 	/**
-	 * Registers the given tree path to the model with default state.
+	 * Registers the given tree path to the model with default status.
 	 * @param path the concerning node's path.
 	 */
 	public void put(TreePath<Fragment> path) {
-	    this.put(path, new Fragment.State());
+	    this.put(path, Boolean.TRUE);
 	}
 
 	/**
-	 * Registers the given tree path to the model with default state.
+	 * Registers the given tree path to the model with default status.
 	 * @param path the concerning node's path.
-	 * @param state the concerning node's state.
+	 * @param status the concerning node's status.
 	 */
-	public void put(TreePath<Fragment> path, Fragment.State state) {
+	public void put(TreePath<Fragment> path, Boolean status) {
 	    Fragment node = path.getTail();
 	    node.setTreePath(path);
 	    TreePath<Fragment> parentPath = path.getParent();
@@ -117,16 +117,16 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
 		    parent.addChild(node);
 		}
 	    }
-	    this.states.put(path, state);
+	    this.status.put(path, status);
 	}
 
 	/**
-	 * Returns the bundled state of the specified path.
+	 * Returns the bundled status of the specified path.
 	 * @param  path the concerning node's path.
-	 * @return the state of the node which is specified with the given path.
+	 * @return the status of the node which is specified with the given path.
 	 */
-	public Fragment.State getStateOf(TreePath<Fragment> path) {
-	    return this.states.get(path);
+	public Boolean getStatusOf(TreePath<Fragment> path) {
+	    return this.status.get(path);
 	}
 
 	/**
@@ -264,9 +264,9 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
 	    Fragment source = (Fragment) event.getSource();
 	    TreePath<Fragment> parentPath = event.getPath().getParent();
 	    if (parentPath != null) {
-		Fragment.State parentState = this.model.getStateOf(parentPath);
+		Fragment parent = parentPath.getTail();
 		if (source.getOperator() == InternalQueryParser.MODIFIER_NEGATE) {
-		    parentState.isNotQuery(true);
+		    parent.setTag(Fragment.Tag.NOT);
 		}
 	    }
 	}
@@ -287,8 +287,10 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
 			isNotQuery = true;
 		    }
 		}
-		Fragment.State parentState = this.model.getStateOf(parentPath);
-		parentState.isNotQuery(isNotQuery);
+
+		if (isNotQuery) {
+		    parent.setTag(Fragment.Tag.NOT);
+		}
 	    }
 	}
 
@@ -343,9 +345,8 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
      * Constructor.
      */
     public ConcreteSyntaxTree(Fragment root) {
-	Fragment.State state = new Fragment.State();
-	state.isOrQuery(true);
-	this.model = new Model(new TreePath<Fragment>(root), state);
+	root.setTag(Fragment.Tag.OR);
+	this.model = new Model(new TreePath<Fragment>(root));
 	this.addListener(new TreeTransformationHandler(this.model));
     }
 
@@ -358,12 +359,12 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
     }
 
     /**
-     * Returns the bundled state of the specified path.
+     * Returns the bundled status of the specified path.
      * @param  path the concerning node's path.
-     * @return the state of the node which is specified with the given path.
+     * @return the status of the node which is specified with the given path.
      */
-    public Fragment.State getStateOf(TreePath<Fragment> path) {
-	return this.getModel().getStateOf(path);
+    public Boolean getStatusOf(TreePath<Fragment> path) {
+	return this.getModel().getStatusOf(path);
     }
 
     /**
@@ -378,8 +379,8 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
      * Inserts the given node into the model.
      * @param node the node to be inserted.
      */
-    public void insert(Fragment node, Fragment.State state) {
-	this.insert(node, state, false, false);
+    public void insert(Fragment node, Boolean status) {
+	this.insert(node, status, false, false);
     }
 
     /**
@@ -394,11 +395,11 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
     /**
      * Inserts the given node into the model.
      * @param node the node to be inserted.
-     * @param state the node state to be inserted.
+     * @param status the node status to be inserted.
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      */
-    public void insert(Fragment node, Fragment.State state, boolean proceed) {
-	this.insert(node, state, proceed, false);
+    public void insert(Fragment node, Boolean status, boolean proceed) {
+	this.insert(node, status, proceed, false);
     }
 
     /**
@@ -414,12 +415,12 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
     /**
      * Inserts the given node into the model.
      * @param node the node to be inserted.
-     * @param state the node state to be inserted.
+     * @param status the node status to be inserted.
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      * @param mark if this value is set to be true, the previous path is marked.
      */
-    public void insert(Fragment node, Fragment.State state, boolean proceed, boolean mark) {
-	this.insert(this.getModel().getCurrent().getPathTo(node), state, proceed, mark);
+    public void insert(Fragment node, Boolean status, boolean proceed, boolean mark) {
+	this.insert(this.getModel().getCurrent().getPathTo(node), status, proceed, mark);
     }
 
     /**
@@ -442,15 +443,15 @@ public class ConcreteSyntaxTree implements Tree<Fragment>, TreeEventNotifier {
     /**
      * Inserts the given path into the model.
      * @param path the node path to be inserted.
-     * @param state the node state to be inserted.
+     * @param status the node status to be inserted.
      * @param proceed if this value is set to be true, the current path proceeds to the very new node's one.
      * @param mark if this value is set to be true, the previous path is marked.
      */
-    public void insert(TreePath<Fragment> path, Fragment.State state, boolean proceed, boolean mark) {
+    public void insert(TreePath<Fragment> path, Boolean status, boolean proceed, boolean mark) {
 	if (mark) {
 	    this.getModel().mark();
 	}
-	this.getModel().put(path, state);
+	this.getModel().put(path, status);
 	this.fireNodesInserted(new TreeEvent<Fragment>(path.getTail(), path));
 	if (proceed) {
 	    this.getModel().setCurrent(path);
