@@ -46,6 +46,15 @@ public final class ObjectUtils {
     }
 
     /**
+     * Returns true if the provided reference is null otherwise returns false.
+     * @param  object a reference to be checked against null.
+     * @return true if the provided reference is null otherwise false.
+     */
+    public static boolean isNull(Object object) {
+	return object == null;
+    }
+
+    /**
      * Validates that the given value is not null.
      * @param value the value to be checked.
      */
