@@ -40,10 +40,10 @@ public abstract class Function<T, R> {
     public abstract R apply(T argument);
 
     /**
-     * Returns a composed function that first applies the {@code before} function to its input,
+     * Returns a composed function that first applies the before function to its input,
      * and then applies this function to the result.
      * @param  before the function to apply before this function is applied.
-     * @return a composed function that first applies the {@code before} function and then applies this function.
+     * @return a composed function that first applies the before function and then applies this function.
      * @throws NullPointerException if before is null.
      */
     public <V> Function<V, R> compose(final Function<? super V, ? extends T> before) {
@@ -58,9 +58,9 @@ public abstract class Function<T, R> {
 
     /**
      * Returns a composed function that first applies this function to its input,
-     * and then applies the {@code after} function to the result.
+     * and then applies the after function to the result.
      * @param  after the function to apply after this function is applied.
-     * @return a composed function that first applies this function and then applies the {@code after} function.
+     * @return a composed function that first applies this function and then applies the after function.
      * @throws NullPointerException if after is null.
      */
     public <V> Function<T, V> andThen(final Function<? super R, ? extends V> after) {

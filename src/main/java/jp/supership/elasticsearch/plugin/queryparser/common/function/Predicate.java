@@ -37,6 +37,13 @@ public abstract class Predicate<T> {
     }
 
     /**
+     * Constructor.
+     */
+    public Predicate() {
+	// DO NOTHING HERE.
+    }
+
+    /**
      * Evaluates this predicate on the given argument.
      * @param  argument the input argument.
      * @return true if the input argument matches the predicate, otherwise false.

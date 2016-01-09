@@ -55,6 +55,18 @@ public final class ObjectUtils {
     }
 
     /**
+     * Ensures that the given value is not null, and if it is the case, returns the given value.
+     * @param  value the value to be checked.
+     * @return not-null value.
+     */
+    public static Object ensureNotNull(Object value) throws NullPointerException {
+	if (value == null) {
+	    throw new NullPointerException();
+	}
+	return value;
+    }
+
+    /**
      * Validates that the given value is not null.
      * @param value the value to be checked.
      */
